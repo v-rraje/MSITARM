@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "windowsOSVersion": {
+      "value": "2012-Datacenter"
+    },
+    "vmName": {
+      "value": "beer"
+    },
+    "vmSize": {
+      "value": "Standard_A2"
+    },
+    "vnetId": {
+      "value": "/subscriptions/28077388-3f00-4938-9481-e4e87bc59972/resourceGroups/RGARMERVNET100/providers/Microsoft.Network/virtualNetworks/CUSARMVENT"
+    },
+    "storageAccountType": {
+      "value": "Standard_LRS"
+    },
+    "storageAccountContainerName": {
+      "value": "vhds"
+    },
+    "userImageStorageAccountName": {
+      "value": "armnagateststorage"
+    },
+    "userImageStorageContainerName": {
+      "value": "osvhd"
+    },
+    "userImageVhdName": {
+      "value": "VM2012R2_2015_7_10.vhd"
+    },
+    "domainName": {
+      "value": "redmond.corp.microsoft.com"
+    },
+    "appID": {
+      "value": "13579"
+    },
+    "orgID": {
+      "value": "97531"
+    },
+    "monitor": {
+      "value": "false"
+    },
+    "env": {
+      "value": "dev"
+    },
+    "snoozeDate": {
+      "value": "2016/01/08"
+    },
+    "numberOfInstances": {
+      "value": 2
+    },
+    "additionalAdmins": {
+      "value": "None"
+    }
+  }
+}
