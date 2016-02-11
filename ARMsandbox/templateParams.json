@@ -6,19 +6,16 @@
       "value": "2012-Datacenter"
     },
     "vmName": {
-      "value": "beer"
+      "value": "bputest"
     },
     "vmSize": {
       "value": "Standard_A2"
     },
     "vnetId": {
-      "value": "/subscriptions/28077388-3f00-4938-9481-e4e87bc59972/resourceGroups/RGARMERVNET100/providers/Microsoft.Network/virtualNetworks/CUSARMVENT"
+      "value": "/subscriptions/e4a74065-cc6c-4f56-b451-f07a3fde61de/resourceGroups/ARMERVNETUSCPOC/providers/Microsoft.Network/virtualNetworks/ARMERVNETUSC"
     },
     "storageAccountType": {
       "value": "Standard_LRS"
-    },
-    "storageAccountContainerName": {
-      "value": "vhds"
     },
     "userImageStorageAccountName": {
       "value": "armnagateststorage"
@@ -47,8 +44,11 @@
     "snoozeDate": {
       "value": "2016/01/08"
     },
+	"AppTechComponentID": {
+		"value": "123321"
+	},
     "numberOfInstances": {
-      "value": 2
+      "value": 1
     },
     "additionalAdmins": {
       "value": "None"

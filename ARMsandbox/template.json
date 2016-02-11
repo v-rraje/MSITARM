@@ -66,12 +66,6 @@
         "description": "The Storage Account type"
       }
     },
-    "storageAccountContainerName": {
-      "type": "string",
-      "metadata": {
-        "description": "The Storage Account Container name"
-      }
-    },
     "userImageStorageAccountName": {
       "type": "string",
       "metadata": {
@@ -140,6 +134,12 @@
         "description": "Snooze date"
       }
     },
+	"AppTechComponentID": {
+		"type": "string",
+		"metadata": {
+			"description": "AppTechComponentID"
+		}
+	},
     "numberOfInstances": {
       "type": "int",
       "defaultValue": 2,
@@ -184,7 +184,6 @@
     "userImageName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',parameters('userImageStorageContainerName'),'/',parameters('userImageVhdName'))]",
     "storageAccountName": "[concat('vhdstorage', uniqueString(resourceGroup().id))]",
     "storageAccountType": "[parameters('storageAccountType')]",
-    "storageAccountContainerName": "[parameters('storageAccountContainerName')]",
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
     "vnetId": "[parameters('vnetId')]",
@@ -199,7 +198,13 @@
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "StorageAccount"
+        "displayName": "StorageAccount",
+		"appID": "[parameters('appID')]",
+        "orgID": "[parameters('orgID')]",
+        "monitor": "[parameters('monitor')]",
+        "env": "[parameters('env')]",
+        "snoozeDate": "[parameters('snoozeDate')]",
+		"AppTechComponentID": "[parameters('AppTechComponentID')]"
       },
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -211,7 +216,13 @@
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "NetworkInterface"
+        "displayName": "NetworkInterface",
+		"appID": "[parameters('appID')]",
+        "orgID": "[parameters('orgID')]",
+        "monitor": "[parameters('monitor')]",
+        "env": "[parameters('env')]",
+        "snoozeDate": "[parameters('snoozeDate')]",
+		"AppTechComponentID": "[parameters('AppTechComponentID')]"
       },
       "copy": {
         "name": "nicLoop",
@@ -222,7 +233,7 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
@@ -242,7 +253,8 @@
         "orgID": "[parameters('orgID')]",
         "monitor": "[parameters('monitor')]",
         "env": "[parameters('env')]",
-        "snoozeDate": "[parameters('snoozeDate')]"
+        "snoozeDate": "[parameters('snoozeDate')]",
+		"AppTechComponentID": "[parameters('AppTechComponentID')]"
       },
       "copy": {
         "name": "virtualMachineLoop",
