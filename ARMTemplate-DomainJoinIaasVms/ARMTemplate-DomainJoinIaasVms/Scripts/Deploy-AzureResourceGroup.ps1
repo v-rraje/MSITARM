@@ -1,7 +1,7 @@
 ﻿#Requires -Version 3.0
 #Requires -Module AzureRM.Resources
 #Requires -Module Azure.Storage
-#Temp Comment to demo
+
 Param(
   [string] [Parameter(Mandatory=$true)] $ResourceGroupLocation,
   [string] $ResourceGroupName = 'MvpArmTemplateTest',  
