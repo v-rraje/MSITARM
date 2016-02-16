@@ -282,40 +282,56 @@ function Set-DevOpsPermissions
         [Parameter(Mandatory=$false)]
         [String] $location='Central US',
 
-        [parameter(parametersetname="byemail")]
-        $email,
+        [parameter(parametersetname="DevOpsUpn")]
+        $DevOpsUpn,
 
-        [parameter(parametersetname="byobjectID")]
-        $objectID
+        [parameter(parametersetname="DevOpsGroupAlias")]
+        $DevOpsGroupAlias
 
      )
 
-     switch($PsCmdlet.ParameterSetName)
+     switch($PsCmdlet.ParameterSetName){
 
-    {
-
-        "byemail" {
+        "DevOpsUpn" {
             
-            Write-Verbose 'Checking if Email acccount exists'
-            $objAD = Get-AzureRmADUser -Mail $email
-            $objectID = $objAD.Id
-            If ($objectID -eq $null) 
-            {
-                Write-Output 'Please specify a valid email address such as someuser@microsoft.com'
-                Write-Output "If this is a group, you will have to use -objectID here's an example"   
-                Write-Output "Get-AzureRmADGroup -SearchString 'Cloud Platform Tools - Team B'" 
+            Write-Verbose -Message "Checking if UPN '$($DevOpsUpn)' exists..."
+            $objAD = Get-AzureRmADUser -UserPrincipalName $DevOpsUpn
+            
+            If(!$objAD){ 
+
+                Write-Output "Please specify a valid UPN such as 'someuser@microsoft.com'"
                 Exit
+            
             } 
+
+            $objectID = $objAD.Id
+
+            Write-Verbose -Message "Found ObjectId: '$objectID'." 
              
         }
 
-        "byobjectID" { Write-Verbose "objectID: $objectID" }
+        "DevOpsGroupAlias" {
+
+            Write-Verbose -Message "Checking if group alias '$($DevOpsGroupAlias)'exists..."
+            $objAD = Get-AzureRmADGroup -SearchString $DevOpsGroupAlias
+            
+            If ($objAD.Count -ne 1) { # may return more than one result if a partial match is found
+            
+                Write-Output "Please specify a valid, full security group alias.  For example, use 'CPT-Reports' instead of 'CPT'."
+                Exit
+            
+            }
+
+            $objectID = $objAD.Id
+            
+            Write-Verbose -Message "Found ObjectId: '$objectID'." 
+        
+        }
 
     }
 
-
      #check if er rg exists, if not exit
-     Write-Verbose 'Checking if ER Resource Group exists'
+     Write-Verbose -Message 'Checking if ER Resource Group exists'
      $ERRGexist = Get-AzureRmResourceGroup -Name $ERRG
      If ($ERRGexist -eq $null) 
      {
@@ -324,7 +340,7 @@ function Set-DevOpsPermissions
      }
 
      #check if app rg exists, if not create it
-     Write-Verbose 'Checking if Application Resource Group exists'
+     Write-Verbose -Message 'Checking if Application Resource Group exists'
      $appRGexist = Get-AzureRmResourceGroup -Name $appRG -ErrorAction SilentlyContinue
      If ($appRGexist -eq $null) 
      {
@@ -334,71 +350,70 @@ function Set-DevOpsPermissions
 
      #assign nt group to er rg -> SDO Managed ExpressRoute User
      $roledef = 'SDO Managed ExpressRoute User'
-     Write-Verbose "Checking $roledef permissions"
+     Write-Verbose -Message "Checking $roledef permissions"
      If ((Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $ERRG) -eq $null)
      {
-        Write-Verbose 'Assigning ExpressRoute permissions'
+        Write-Verbose -Message 'Assigning ExpressRoute permissions'
         New-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $ERRG | Out-Null
      }
      Else
      {        
-        Write-Verbose 'ExpressRoute RG permissions already assigned, skipping' 
+        Write-Verbose -Message 'ExpressRoute RG permissions already assigned, skipping' 
      }
 
 
      #assign nt group to er rg -> SDO Managed ExpressRoute User
      $roledef = 'SDO Managed ExpressRoute User'
-     Write-Verbose "Checking $roledef permissions"
+     Write-Verbose -Message "Checking $roledef permissions"
      If ((Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $ERRG) -eq $null)
      {
-        Write-Verbose "Assigning $roledef permissions"
+        Write-Verbose -Message "Assigning $roledef permissions"
         New-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $ERRG | Out-Null
      }
      Else
      {        
-        Write-Verbose "$roledef permissions already assigned, skipping" 
+        Write-Verbose -Message "$roledef permissions already assigned, skipping" 
      }
 
      #assign User Access Administrator to application rg
      $roledef = 'User Access Administrator'
-     Write-Verbose "Checking $roledef permissions"
+     Write-Verbose -Message "Checking $roledef permissions"
      If ((Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG) -eq $null)
      {
-        Write-Verbose "Assigning $roledef permissions"
+        Write-Verbose -Message "Assigning $roledef permissions"
         New-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG | Out-Null
      }
      Else
      {        
-        Write-Verbose "$roledef permissions already assigned, skipping" 
+        Write-Verbose -Message "$roledef permissions already assigned, skipping" 
      }
 
      #assign Contributor to application rg
      $roledef = 'Contributor'
-     Write-Verbose "Checking $roledef permissions"
+     Write-Verbose -Message "Checking $roledef permissions"
      If ((Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG) -eq $null)
      {
-        Write-Verbose "Assigning $roledef permissions"
+        Write-Verbose -Message "Assigning $roledef permissions"
         New-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG | Out-Null
      }
      Else
      {        
-        Write-Verbose "$roledef permissions already assigned, skipping" 
+        Write-Verbose -Message "$roledef permissions already assigned, skipping" 
      }
 
      #assign reader at subscription level
      $roledef = 'Reader'
      $scope = '/subscriptions/{0}/' -f $subscriptionID
-     Write-Verbose "Checking $roledef permissions"
+     Write-Verbose -Message "Checking $roledef permissions"
      If ((Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef) -eq $null)
      {
-        Write-Verbose "Assigning $roledef permissions"
+        Write-Verbose -Message "Assigning $roledef permissions"
         New-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -Scope $scope | Out-Null
      }
      Else
      {        
-        Write-Verbose "$roledef permissions already assigned, skipping" 
+        Write-Verbose -Message "$roledef permissions already assigned, skipping" 
      }
-
 
     return $true
 
@@ -428,5 +443,8 @@ function Set-DevOpsPermissions
 Export-ModuleMember -Function Add-Policy
 Export-ModuleMember -Function Add-SDOManagedExpressRouteUserRole
 Export-ModuleMember -Function Set-DevOpsPermissions
+
+
+
 
 
