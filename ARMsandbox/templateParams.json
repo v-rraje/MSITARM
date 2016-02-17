@@ -6,7 +6,7 @@
       "value": "2012-Datacenter"
     },
     "vmName": {
-      "value": "bputest"
+      "value": "6redmond"
     },
     "vmSize": {
       "value": "Standard_A2"
@@ -18,10 +18,10 @@
       "value": "Standard_LRS"
     },
     "userImageStorageAccountName": {
-      "value": "armnagateststorage"
+      "value": "sandboxstore"
     },
     "userImageStorageContainerName": {
-      "value": "osvhd"
+      "value": "images"
     },
     "userImageVhdName": {
       "value": "VM2012R2_2015_7_10.vhd"

@@ -57,7 +57,7 @@
     "vnetId": {
       "type": "string",
       "metadata": {
-        "description": "The Virtual Network attached to the VM"
+        "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc."
       }
     },
     "storageAccountType": {
@@ -69,19 +69,19 @@
     "userImageStorageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "This is the name of the your storage account"
+        "description": "The Storage Account name that contains the image files"
       }
     },
     "userImageStorageContainerName": {
       "type": "string",
       "metadata": {
-        "description": "This is the name of the container in your storage account"
+        "description": "The Storage Account Container name that contains the image file"
       }
     },
     "userImageVhdName": {
       "type": "string",
       "metadata": {
-        "description": "This is the name of the your customized VHD"
+        "description": "This is the name of the customized VHD"
       }
     },
     "domainName": {
@@ -153,13 +153,6 @@
         "description": "Additional admins that can login to the VMs"
       }
     },
-    "addressPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/16",
-      "metadata": {
-        "description": "Address Prefix"
-      }
-    },
     "subnetName": {
       "type": "string",
       "defaultValue": "Subnet-1",
@@ -171,40 +164,50 @@
       "type": "string",
       "defaultValue": "10.0.0.0/24",
       "metadata": {
-        "description": "Subnet prefix"
+        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet"
       }
-    }
+    },
+	"ouPath": {
+		"type": "string",
+		"defaultValue": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
+		"metadata": {
+			"description": "The Organizational Unit the VM will join"
+		}
+	},
+	"storageAccountName": {
+		"type": "string",
+		"minLength": 1,
+		"metadata": {
+			"description": "The storage account name"
+		}
+	}
   },
   "variables": {
-    "addressPrefix": "[parameters('addressPrefix')]",
     "apiVersion": "2015-06-15",
     "nicName": "[parameters('vmName')]",
     "subnetName": "[parameters('subnetName')]",
     "subnetPrefix": "[parameters('subnetPrefix')]",
     "userImageName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',parameters('userImageStorageContainerName'),'/',parameters('userImageVhdName'))]",
-    "storageAccountName": "[concat('vhdstorage', uniqueString(resourceGroup().id))]",
     "storageAccountType": "[parameters('storageAccountType')]",
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
     "vnetId": "[parameters('vnetId')]",
-    "diagnosticsStorageName": "[variables('storageAccountName')]",
+    "diagnosticsStorageName": "[parameters('storageAccountName')]",
     "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk')]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
+      "name": "[parameters('storageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "StorageAccount",
 		"appID": "[parameters('appID')]",
         "orgID": "[parameters('orgID')]",
-        "monitor": "[parameters('monitor')]",
         "env": "[parameters('env')]",
-        "snoozeDate": "[parameters('snoozeDate')]",
-		"AppTechComponentID": "[parameters('AppTechComponentID')]"
+        "snoozeDate": "[parameters('snoozeDate')]"
       },
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -219,10 +222,8 @@
         "displayName": "NetworkInterface",
 		"appID": "[parameters('appID')]",
         "orgID": "[parameters('orgID')]",
-        "monitor": "[parameters('monitor')]",
         "env": "[parameters('env')]",
-        "snoozeDate": "[parameters('snoozeDate')]",
-		"AppTechComponentID": "[parameters('AppTechComponentID')]"
+        "snoozeDate": "[parameters('snoozeDate')]"
       },
       "copy": {
         "name": "nicLoop",
@@ -233,7 +234,7 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Static",
+              "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
@@ -251,17 +252,15 @@
         "displayName": "VirtualMachine",
         "appID": "[parameters('appID')]",
         "orgID": "[parameters('orgID')]",
-        "monitor": "[parameters('monitor')]",
         "env": "[parameters('env')]",
-        "snoozeDate": "[parameters('snoozeDate')]",
-		"AppTechComponentID": "[parameters('AppTechComponentID')]"
+        "snoozeDate": "[parameters('snoozeDate')]"
       },
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+		"[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex())]"
       ],
       "properties": {

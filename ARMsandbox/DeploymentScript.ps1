@@ -3,6 +3,7 @@ function deploy {
 	  [string] [Parameter(Mandatory=$true)] $SubscriptionId,
 	  [string] [Parameter(Mandatory=$true)] $ResourceGroupLocation,
 	  [string] [Parameter(Mandatory=$true)] $ResourceGroupName,
+	  [string] $OuPath = 'OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com',
 	  [string] $TemplateFile = 'template.json',
 	  [string] $TemplateParameterFile = 'templateParams.json'
 	)
@@ -66,12 +67,22 @@ function deploy {
 		
 		#Get IP address of the VM
 		'Getting VM IP address...'
-		$AzureIp = (Get-AzureRmNetworkInterface -Name ($ServerName + $i) -ResourceGroupName $ResourceGroupName).IpConfigurations.PrivateIpAddress
+		$AzureIp = (Get-AzureRmNetworkInterface -Name ($ServerName + $i) -ResourceGroupName $ResourceGroupName).IpConfigurations[0].PrivateIpAddress
 		$AzureIp
+		
+		#Setting PrivateIpAllocationMethod to Static
+		'Setting Private IP allocation method to Static...'
+		$Nic = (Get-AzureRmNetworkInterface -Name ($ServerName + $i) -ResourceGroupName $ResourceGroupName)
+		$Nic.IpConfigurations[0].PrivateIpAllocationMethod = 'Static'
+		Set-AzureRmNetworkInterface -NetworkInterface $Nic
+		
+		#Wait for VM to start
+		'Waiting for 1 minute before domain joining...'
+		Start-Sleep -s 60
 		
 		#Domain join the VM
 		'Domain joining the VM...'
-		Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential DOMAIN\UserName -LocalCredential LOCAL\UserName
+		Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential DOMAIN\UserName -LocalCredential LOCAL\UserName -OUPath 'OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com'
 		
 		#Restart the VM to reflect the changes
 		'Restarting the VM to reflect changes...'
