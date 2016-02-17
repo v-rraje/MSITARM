@@ -285,8 +285,8 @@ function Set-DevOpsPermissions
         [parameter(parametersetname="DevOpsUpn")]
         $DevOpsUpn,
 
-        [parameter(parametersetname="DevOpsGroupAlias")]
-        $DevOpsGroupAlias
+        [parameter(parametersetname="DevOpsGroupName")]
+        $DevOpsGroupName
 
      )
 
@@ -300,7 +300,7 @@ function Set-DevOpsPermissions
             If(!$objAD){ 
 
                 Write-Output "Please specify a valid UPN such as 'someuser@microsoft.com'"
-                Exit
+                Return $false
             
             } 
 
@@ -310,15 +310,15 @@ function Set-DevOpsPermissions
              
         }
 
-        "DevOpsGroupAlias" {
+        "DevOpsGroupName" {
 
-            Write-Verbose -Message "Checking if group alias '$($DevOpsGroupAlias)'exists..."
-            $objAD = Get-AzureRmADGroup -SearchString $DevOpsGroupAlias
+            Write-Verbose -Message "Checking if group alias '$($DevOpsGroupName)'exists..."
+            $objAD = Get-AzureRmADGroup -SearchString $DevOpsGroupName
             
             If ($objAD.Count -ne 1) { # may return more than one result if a partial match is found
             
-                Write-Output "Please specify a valid, full security group alias.  For example, use 'CPT-Reports' instead of 'CPT'."
-                Exit
+                Write-Output "Please specify a valid, full security group display name.  For example, use 'CPT-Reports' instead of 'CPT'."
+                Return $false
             
             }
 
@@ -336,7 +336,7 @@ function Set-DevOpsPermissions
      If ($ERRGexist -eq $null) 
      {
         Write-Output 'Please specify a valid ExpressRoute Resource Group -parameter ERRG' | Out-Null   
-        exit
+        Return $false
      }
 
      #check if app rg exists, if not create it
