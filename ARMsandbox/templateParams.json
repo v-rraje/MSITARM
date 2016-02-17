@@ -3,55 +3,64 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "windowsOSVersion": {
-      "value": "2012-Datacenter"
+      "value": "2012-Datacenter",
+	  "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
     },
     "vmName": {
-      "value": "6redmond"
+      "value": "demoCheck",
+	  "description": "Name for the Virtual Machine."
     },
     "vmSize": {
-      "value": "Standard_A2"
+      "value": "Standard_A2",
+	  "description": "Size of the Virtual Machine"
     },
     "vnetId": {
-      "value": "/subscriptions/e4a74065-cc6c-4f56-b451-f07a3fde61de/resourceGroups/ARMERVNETUSCPOC/providers/Microsoft.Network/virtualNetworks/ARMERVNETUSC"
+      "value": "/subscriptions/e4a74065-cc6c-4f56-b451-f07a3fde61de/resourceGroups/ARMERVNETUSCPOC/providers/Microsoft.Network/virtualNetworks/ARMERVNETUSC",
+	  "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc."
     },
     "storageAccountType": {
-      "value": "Standard_LRS"
+      "value": "Standard_LRS",
+	  "description": "The Storage Account type"
     },
     "userImageStorageAccountName": {
-      "value": "sandboxstore"
+      "value": "sandboxstore",
+	  "description": "The Storage Account name that contains the image files"
     },
     "userImageStorageContainerName": {
-      "value": "images"
+      "value": "images",
+	  "description": "The Storage Account Container name that contains the image file"
     },
     "userImageVhdName": {
-      "value": "VM2012R2_2015_7_10.vhd"
+      "value": "VM2012R2_2015_7_10.vhd",
+	  "description": "This is the name of the customized VHD"
     },
     "domainName": {
-      "value": "redmond.corp.microsoft.com"
+      "value": "redmond.corp.microsoft.com",
+	  "description": "The FQDN of the AD domain"
     },
     "appID": {
-      "value": "13579"
+      "value": "13579",
+	  "description": "appID tag for the Virtual Machine."
     },
     "orgID": {
-      "value": "97531"
-    },
-    "monitor": {
-      "value": "false"
+      "value": "97531",
+	  "description": "orgID tag for the Virtual Machine."
     },
     "env": {
-      "value": "dev"
+      "value": "dev",
+	  "description": "environment tag for the Virtual Machine."
     },
     "snoozeDate": {
-      "value": "2016/01/08"
+      "value": "2016/01/08",
+	  "description": "Snooze date"
     },
-	"AppTechComponentID": {
-		"value": "123321"
-	},
     "numberOfInstances": {
-      "value": 1
+      "value": 1,
+	  "description": "Number of VMs to deploy"
     },
     "additionalAdmins": {
-      "value": "None"
+      "value": "None",
+	  "description": "Additional admins that can login to the VMs"
     }
   }
 }

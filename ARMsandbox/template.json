@@ -16,20 +16,6 @@
         "description": "Local Password for the Virtual Machine."
       }
     },
-    "domainAdminUserName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Username for domain joining"
-      }
-    },
-    "domainAdminPassword": {
-      "type": "securestring",
-      "minLength": 1,
-      "metadata": {
-        "description": "Password for domain joining"
-      }
-    },
     "windowsOSVersion": {
       "type": "string",
       "defaultValue": "2012-R2-Datacenter",
@@ -105,17 +91,6 @@
         "description": "orgID tag for the Virtual Machine."
       }
     },
-    "monitor": {
-      "type": "string",
-      "minLength": 1,
-      "allowedValues": [
-        "true",
-        "false"
-      ],
-      "metadata": {
-        "description": "monitor status tag for the Virtual Machine."
-      }
-    },
     "env": {
       "type": "string",
       "minLength": 1,
@@ -134,12 +109,6 @@
         "description": "Snooze date"
       }
     },
-	"AppTechComponentID": {
-		"type": "string",
-		"metadata": {
-			"description": "AppTechComponentID"
-		}
-	},
     "numberOfInstances": {
       "type": "int",
       "defaultValue": 2,
