@@ -282,24 +282,24 @@ function Set-DevOpsPermissions
         [Parameter(Mandatory=$false)]
         [String] $location='Central US',
 
-        [parameter(parametersetname="DevOpsUpn")]
-        $DevOpsUpn,
+        [parameter(parametersetname="UserEmail")]
+        $UserEmail,
 
-        [parameter(parametersetname="DevOpsGroupName")]
-        $DevOpsGroupName
+        [parameter(parametersetname="GroupDisplayName")]
+        $GroupDisplayName
 
      )
 
      switch($PsCmdlet.ParameterSetName){
 
-        "DevOpsUpn" {
+        "UserEmail" {
             
-            Write-Verbose -Message "Checking if UPN '$($DevOpsUpn)' exists..."
-            $objAD = Get-AzureRmADUser -UserPrincipalName $DevOpsUpn
+            Write-Verbose -Message "Checking if UPN '$($UserEmail)' exists..."
+            $objAD = Get-AzureRmADUser -UserPrincipalName $UserEmail
             
             If(!$objAD){ 
 
-                Write-Output "Please specify a valid UPN such as 'someuser@microsoft.com'"
+                Write-Output "Please specify a valid email such as 'someuser@microsoft.com'"
                 Return $false
             
             } 
@@ -310,10 +310,10 @@ function Set-DevOpsPermissions
              
         }
 
-        "DevOpsGroupName" {
+        "GroupDisplayName" {
 
-            Write-Verbose -Message "Checking if group alias '$($DevOpsGroupName)'exists..."
-            $objAD = Get-AzureRmADGroup -SearchString $DevOpsGroupName
+            Write-Verbose -Message "Checking if group alias '$($GroupDisplayName)'exists..."
+            $objAD = Get-AzureRmADGroup -SearchString $GroupDisplayName
             
             If ($objAD.Count -ne 1) { # may return more than one result if a partial match is found
             
@@ -419,23 +419,21 @@ function Set-DevOpsPermissions
 
     <#
             .SYNOPSIS
-            Creates and applies standard SDO policies at the subscription level
+            Applies standard DevOps role permissions for a given resource group
             .DESCRIPTION
-            This is broken by 3 functional areas: network, tags, and region
+             Applies these permissions for a given user or group
+             Subscription permissions: Reader
+             Application resource group: User Access Administrator, Contributor
+             ExpressRoute resource group: SDO Managed ExpressRoute User                
             .INPUTS
-            Policy from this set: 'SDOStdPolicyTags','SDOStdPolicyNetwork','SDOStdPolicyRegion' 
+            see examples
             .OUTPUTS
             $true or $false
             -Verbose gives step by step output
             .EXAMPLE
-            $subID = e8a32032-cc6c-4x56-b451-f07x3fdx47xx 		 
-            Set-DevOpsPermissions -subscriptionID $subID -appRG cptApp1 -ERRG ARMERVNETUSCPOC -email 'cptarm@microsoft.com' -Verbose
+            Set-DevOpsPermissions -subscriptionID e8a32032-cc6c-4x56-b451-f07x3fdx47xx -appRG cptApp1 -ERRG ARMERVNETUSCPOC -GroupDisplayName 'Cloud Platform Tools - Team B' -Verbose
             .EXAMPLE
-            $subID = e8a32032-cc6c-4x56-b451-f07x3fdx47xx 
-            Set-DevOpsPermissions -subscriptionID $subID -appRG cptApp2 -ERRG ARMERVNETUSCPOC -objectID cc0244b9-eac5-4abf-a463-19f9efa90c60 -Verbose
-            
-            Use objectID for email groups
-            To find objectID example: Get-AzureRmADGroup -SearchString 'Cloud Platform Tools - Team B' 
+            Set-DevOpsPermissions -subscriptionID e8a32032-cc6c-4x56-b451-f07x3fdx47xx -appRG cptApp2 -ERRG ARMERVNETUSCPOC -UserEmail 'cptarm@microsoft.com' -Verbose  
     #>	
 }
 
