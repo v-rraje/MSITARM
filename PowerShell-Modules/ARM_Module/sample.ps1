@@ -9,7 +9,7 @@ Set-AzureRmContext -SubscriptionId $subID
 Import-Module -Name .\arm_module.psm1 #navigate to the directory, first
 
 #Sample commands
-Set-DevOpsPermissions -subscriptionID $subID -appRG ndavids -ERRG ARMERVNETUSCPOC -email 'ndavids@microsoft.com' -Verbose
+#Set-DevOpsPermissions -subscriptionID $subID -appRG ndavids -ERRG ARMERVNETUSCPOC -email 'ndavids@microsoft.com' -Verbose
 
 
 
