@@ -40,15 +40,15 @@
     },
     "appID": {
       "value": "13579",
-	  "description": "appID tag for the Virtual Machine."
+	  "description": "appID tag for the Virtual Machine.  See subscription document for how to get"
     },
     "orgID": {
       "value": "97531",
-	  "description": "orgID tag for the Virtual Machine."
+	  "description": "orgID tag for the Virtual Machine.  See subscription document for how to get"
     },
     "env": {
       "value": "dev",
-	  "description": "environment tag for the Virtual Machine."
+	  "description": "environment tag for the Virtual Machine.  Production will come through as production.  Any other value or blank will be marked as Pre-Production"
     },
     "snoozeDate": {
       "value": "2016/01/08",
