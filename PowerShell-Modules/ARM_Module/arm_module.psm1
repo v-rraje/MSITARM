@@ -285,8 +285,8 @@ function Set-DevOpsPermissions
         [parameter(parametersetname="byemail")]
         $email,
 
-        [parameter(parametersetname="byobjectID")]
-        $objectID
+        [parameter(parametersetname="byGroupName")]
+        $groupName
 
      )
 
@@ -309,7 +309,23 @@ function Set-DevOpsPermissions
              
         }
 
-        "byobjectID" { Write-Verbose "objectID: $objectID" }
+        "byGroupName" {
+
+            Write-Verbose -Message "Checking if group alias '$($groupName)'exists..."
+            $objAD = Get-AzureRmADGroup -SearchString $groupName
+            
+            If ($objAD.Count -ne 1) { # may return more than one result if a partial match is found
+            
+                Write-Output "Please specify a valid, full security group display name.  For example, use 'CPT-Reports' instead of 'CPT'."
+                Return $false
+            
+            }
+
+            $objectID = $objAD.Id
+            
+            Write-Verbose -Message "Found ObjectId: '$objectID'." 
+        
+        }
 
     }
 
@@ -332,7 +348,7 @@ function Set-DevOpsPermissions
      }
 
      #Get AppRGID
-     $AppRGIDs = (Get-AzureRmResourceGroup -Name cptapp5).ResourceID
+     $AppRGIDs = (Get-AzureRmResourceGroup -Name $appRG).ResourceID
 
      #assign nt group to er rg -> SDO Managed ExpressRoute User
      $roledef = 'SDO Managed ExpressRoute User'
@@ -415,19 +431,16 @@ function Set-DevOpsPermissions
              Application resource group: User Access Administrator, Contributor
              ExpressRoute resource group: SDO Managed ExpressRoute User                
             .INPUTS
-            see examples
+            Individual Users: use -email
+            Groups: use -groupname  
             .OUTPUTS
             $true or $false
             -Verbose gives step by step output
             .EXAMPLE
-            $subID = e8a32032-cc6c-4x56-b451-f07x3fdx47xx 		 
-            Set-DevOpsPermissions -subscriptionID $subID -appRG cptApp1 -ERRG ARMERVNETUSCPOC -email 'cptarm@microsoft.com' -Verbose
+            Set-DevOpsPermissions -subscriptionID e4a7xxx65-css6c-4fcd-b4s1-f0xxx3fde61de -appRG cptapp7 -ERRG ARMERVNETUSCPOC -groupName 'Cloud Platform Tools - Team B' -Verbose
             .EXAMPLE
-            $subID = e8a32032-cc6c-4x56-b451-f07x3fdx47xx 
-            Set-DevOpsPermissions -subscriptionID $subID -appRG cptApp2 -ERRG ARMERVNETUSCPOC -objectID cc0244b9-eac5-4abf-a463-19f9efa90c60 -Verbose
-            
-            Use objectID for email groups
-            To find objectID example: Get-AzureRmADGroup -SearchString 'Cloud Platform Tools - Team B' 
+            Set-DevOpsPermissions -subscriptionID e4a74065-cc6c-4f56-b451-f07a3fde61de -appRG cptapp7 -ERRG ARMERVNETUSCPOC -email cptarm@microsoft.com -Verbose
+
     #>	
 }
 
