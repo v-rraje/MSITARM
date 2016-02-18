@@ -304,7 +304,7 @@ function Set-DevOpsPermissions
                 Write-Output 'Please specify a valid email address such as someuser@microsoft.com'
                 Write-Output "If this is a group, you will have to use -objectID here's an example"   
                 Write-Output "Get-AzureRmADGroup -SearchString 'Cloud Platform Tools - Team B'" 
-                Exit
+                return $false
             } 
              
         }
@@ -331,6 +331,8 @@ function Set-DevOpsPermissions
         New-AzureRmResourceGroup -Name $appRG -Location $location| Out-Null  
      }
 
+     #Get AppRGID
+     $AppRGIDs = (Get-AzureRmResourceGroup -Name cptapp5).ResourceID
 
      #assign nt group to er rg -> SDO Managed ExpressRoute User
      $roledef = 'SDO Managed ExpressRoute User'
@@ -361,8 +363,9 @@ function Set-DevOpsPermissions
 
      #assign User Access Administrator to application rg
      $roledef = 'User Access Administrator'
+     $assignID = (Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG).scope
      Write-Verbose "Checking $roledef permissions"
-     If ((Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG) -eq $null)
+     If ($assignID -ne $AppRGIDs)
      {
         Write-Verbose "Assigning $roledef permissions"
         New-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG | Out-Null
@@ -374,8 +377,9 @@ function Set-DevOpsPermissions
 
      #assign Contributor to application rg
      $roledef = 'Contributor'
+     $assignID = (Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG).scope
      Write-Verbose "Checking $roledef permissions"
-     If ((Get-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG) -eq $null)
+     If ($assignID -ne $AppRGIDs)
      {
         Write-Verbose "Assigning $roledef permissions"
         New-AzureRmRoleAssignment -ObjectId $objectID -RoleDefinitionName $roledef -ResourceGroupName $appRG | Out-Null
@@ -404,11 +408,14 @@ function Set-DevOpsPermissions
 
     <#
             .SYNOPSIS
-            Creates and applies standard SDO policies at the subscription level
+            Applies standard DevOps role permissions for a given resource group
             .DESCRIPTION
-            This is broken by 3 functional areas: network, tags, and region
+             Applies these permissions for a given user or group
+             Subscription permissions: Reader
+             Application resource group: User Access Administrator, Contributor
+             ExpressRoute resource group: SDO Managed ExpressRoute User                
             .INPUTS
-            Policy from this set: 'SDOStdPolicyTags','SDOStdPolicyNetwork','SDOStdPolicyRegion' 
+            see examples
             .OUTPUTS
             $true or $false
             -Verbose gives step by step output

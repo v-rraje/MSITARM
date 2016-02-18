@@ -1,6 +1,6 @@
 ﻿#Authenticate
-#Add-AzureRmAccount 
-$subID ='e4xxx065-cc6c-4f56-b451-f07a3fdxxxxe' #Fake Sub
+Add-AzureRmAccount 
+$subID ='e4a74065-cc6c-4f56-b451-f07a3fde61de' #Sandbox Sub
 
 #Sandbox Corp
 Set-AzureRmContext -SubscriptionId $subID
