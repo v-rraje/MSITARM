@@ -286,7 +286,11 @@ function Set-DevOpsPermissions
         $email,
 
         [parameter(parametersetname="byGroupName")]
-        $groupName
+        $groupName,
+
+        [parameter(parametersetname="byObjectID")]
+        $objectID
+
 
      )
 
@@ -317,6 +321,8 @@ function Set-DevOpsPermissions
             If ($objAD.Count -ne 1) { # may return more than one result if a partial match is found
             
                 Write-Output "Please specify a valid, full security group display name.  For example, use 'CPT-Reports' instead of 'CPT'."
+                Write-Output "If this is a group with multiple matches, you will have to use -objectID here's an example"   
+                Write-Output "Get-AzureRmADGroup -SearchString 'Cloud Platform Tools - Team B'" 
                 Return $false
             
             }
@@ -325,6 +331,12 @@ function Set-DevOpsPermissions
             
             Write-Verbose -Message "Found ObjectId: '$objectID'." 
         
+        }
+
+        "byObjectID" { 
+        
+              Write-Verbose -Message "Using $objectID"
+       
         }
 
     }
@@ -432,14 +444,17 @@ function Set-DevOpsPermissions
              ExpressRoute resource group: SDO Managed ExpressRoute User                
             .INPUTS
             Individual Users: use -email
-            Groups: use -groupname  
+            Groups: use -groupname
+            ObjectId:   
             .OUTPUTS
             $true or $false
             -Verbose gives step by step output
             .EXAMPLE
             Set-DevOpsPermissions -subscriptionID e4a7xxx65-css6c-4fcd-b4s1-f0xxx3fde61de -appRG cptapp7 -ERRG ARMERVNETUSCPOC -groupName 'Cloud Platform Tools - Team B' -Verbose
             .EXAMPLE
-            Set-DevOpsPermissions -subscriptionID e4a74065-cc6c-4f56-b451-f07a3fde61de -appRG cptapp7 -ERRG ARMERVNETUSCPOC -email cptarm@microsoft.com -Verbose
+            Set-DevOpsPermissions -subscriptionID e4a7xxx65-css6c-4fcd-b4s1-f0xxx3fde61de -appRG cptapp7 -ERRG ARMERVNETUSCPOC -email cptarm@microsoft.com -Verbose
+            .EXAMPLE
+            Set-DevOpsPermissions -subscriptionID e4a7xxx65-css6c-4fcd-b4s1-f0xxx3fde61de -appRG ISRMCS -ERRG ARMERVNETUSCPOC -objectID c8240b0d-77d3-4f56-8497-2a6cb9e20990  -Verbose
 
     #>	
 }
