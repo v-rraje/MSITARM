@@ -1,23 +1,28 @@
-﻿#Authenticate
-#Add-AzureRmAccount 
-$subID ='e4xxx065-cc6c-4f56-b451-f07a3fdxxxxe' #Fake Sub
+﻿
+#Authenticate against Azure and set context to your subscription
+$subID ='e4xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
 
-#Sandbox Corp
+Login-AzureRmAccount -SubscriptionId $subID
+
 Set-AzureRmContext -SubscriptionId $subID
 
 #Import Module
-Import-Module -Name .\arm_module.psm1 #navigate to the directory, first
+Import-Module .\CPTARM -Force 
 
 #Sample commands
-Set-DevOpsPermissions -subscriptionID $subID -appRG ndavids -ERRG ARMERVNETUSCPOC -DevOpsUpn 'ndavids@microsoft.com' -Verbose
+Get-Help Set-DevOpsPermissions -Full
 
+Set-DevOpsPermissions -subscriptionID $subID -appRG ResourceGroupName -ERRG ARMERVNETUSCPOC -DevOpsUpn 'user@microsoft.com' -Verbose
 
+Set-DevOpsPermissions -subscriptionID $subID -appRG ResourceGroupName -ERRG ARMERVNETUSCPOC -DevOpsGroupName 'SG Display Name' -Verbose
 
 #Discover our commandlets
-#get-command -Module arm_module
+#get-command -Module CPTARM
 
 #get details just like any other commandlet
-#help add-policy -full
-#help Add-SDOManagedExpressRouteUserRole -full
-#help Set-DevOpsPermissions -Full
+#help add-policy -Full
+
+#help Add-SDOManagedExpressRouteUserRole -Full
+
+
 
