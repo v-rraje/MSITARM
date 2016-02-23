@@ -13,10 +13,10 @@ Import-Module .\CPTARM.psm1 -Force
 Get-Help Set-DevOpsPermissions -Full
 
 # Add a user by UPN
-Set-DevOpsPermissions -subscriptionID $subID -appRG ResourceGroupName -ERRG ARMERVNETUSCPOC -DevOpsUpn 'user@microsoft.com' -Verbose
+Set-DevOpsPermissions -subscriptionID $subID -appRG ResourceGroupName -ERRG ARMERVNETUSCPOC -UserEmail 'user@microsoft.com' -Verbose
 
 # Add multiple users by SG membership
-Set-DevOpsPermissions -subscriptionID $subID -appRG ResourceGroupName -ERRG ARMERVNETUSCPOC -DevOpsGroupName 'SG Display Name' -Verbose
+Set-DevOpsPermissions -subscriptionID $subID -appRG ResourceGroupName -ERRG ARMERVNETUSCPOC -GroupDisplayName 'SG Display Name' -Verbose
 
 
 
