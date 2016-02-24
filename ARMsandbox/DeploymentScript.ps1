@@ -4,8 +4,8 @@ function deploy {
          [string] [Parameter(Mandatory=$true)] $ResourceGroupLocation,
          [string] [Parameter(Mandatory=$true)] $ResourceGroupName,
          [string] $OuPath = 'OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com',
-         [string] $TemplateFile = 'template.json',
-         [string] $TemplateParameterFile = 'templateParams.json'
+         [string] $TemplateFile = (Get-Location).Path + '\template.json',
+         [string] $TemplateParameterFile = (Get-Location).Path + '\templateParams.json'
        )
 
        if (Get-Module -ListAvailable | Where-Object { $_.Name -eq 'AzureResourceManager' -and $_.Version -ge '0.9.9' }) {
