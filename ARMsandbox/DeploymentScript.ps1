@@ -8,11 +8,41 @@ function deploy {
          [string] $TemplateParameterFile = (Get-Location).Path + '\templateParams.json'
        )
 
+       #Check if PS Module is installed
+       try {
+            Import-Module Azure -ErrorAction SilentlyContinue
+       }
+       catch {
+            Throw 'You need to install Azure Powershell.  For help updating this module visit: https://azure.microsoft.com/en-us/downloads/'
+       }
+
+       #Check if PS Module is right version
        if (Get-Module -ListAvailable | Where-Object { $_.Name -eq 'AzureResourceManager' -and $_.Version -ge '0.9.9' }) {
               Throw "The version of the Azure PowerShell cmdlets installed on this machine are not compatible with this script.  For help updating this script visit: http://go.microsoft.com/fwlink/?LinkID=623011"
        }
 
-       Import-Module Azure -ErrorAction SilentlyContinue
+       #check if Path to resource JSON is ok
+       If (Test-Path -Path $TemplateFile)
+       {
+            Write-Output "$TemplateFile found"
+       }
+       Else
+       {
+            Write-Output "$TemplateFile not found, please navigate to the directory where deployscript.ps1 is located and re-run"
+            return $false           
+       }
+
+       #check if Path to parameter JSON is ok
+       If (Test-Path -Path $TemplateParameterFile)
+       {
+            Write-Verbose "$TemplateParameterFile found"
+       }
+       Else
+       {
+            Write-Output "$TemplateFile not found, please navigate to the directory where deployscript.ps1 is located and re-run"
+            return $false             
+       }
+
 
        try {
               #Check if the user is already logged in for this session
@@ -97,4 +127,4 @@ function deploy {
        }
 }
 
-deploy -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" 
+deploy -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp3" 
