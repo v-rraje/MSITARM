@@ -39,11 +39,11 @@
 	  "description": "The FQDN of the AD domain"
     },
     "appID": {
-      "value": "13579",
+      "value": "ICTO-11627",
 	  "description": "appID tag for the Virtual Machine.  See subscription document for how to get"
     },
     "orgID": {
-      "value": "97531",
+      "value": "500084",
 	  "description": "orgID tag for the Virtual Machine.  See subscription document for how to get"
     },
     "env": {
@@ -55,7 +55,7 @@
 	  "description": "Snooze date"
     },
     "numberOfInstances": {
-      "value": 1,
+      "value": 2,
 	  "description": "Number of VMs to deploy"
     },
     "additionalAdmins": {
