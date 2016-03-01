@@ -43,7 +43,7 @@
       "description": "The Storage Account where the VM image(s) will be created"
     },
     "vmName": {
-      "value": "van-img-3",
+      "value": "smokey-2",
       "description": "Name prefix for the Virtual Machine(s)."
     },
     "vmSize": {
