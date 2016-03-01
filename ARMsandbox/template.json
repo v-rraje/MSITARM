@@ -165,6 +165,8 @@
     "subnetName": "[parameters('subnetName')]",
     "subnetPrefix": "[parameters('subnetPrefix')]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
+    "autologonContent": "[concat('<AutoLogon><Password><Value>',parameters('localAdminPassword'),'</Value></Password><Domain>.</Domain><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>',parameters('localAdminUserName'),'</Username></AutoLogon>')]",
+    "firstLogonCommands": "<FirstLogonCommands><SynchronousCommand><CommandLine>netsh advfirewall firewall set rule group=&quot;Windows Management Instrumentation (WMI)&quot; new enable=Yes</CommandLine><Description>Update Firewall Settings</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>logoff.exe</CommandLine><Description>Logoff</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>",
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
     "vnetId": "[parameters('vnetId')]"
@@ -233,7 +235,7 @@
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-		"[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex())]"
       ],
       "properties": {
@@ -243,38 +245,61 @@
         "osProfile": {
           "computerName": "[concat(variables('vmName'),copyIndex())]",
           "adminUsername": "[parameters('localAdminUserName')]",
-          "adminPassword": "[parameters('localAdminPassword')]"
+          "adminPassword": "[parameters('localAdminPassword')]",
+          "windowsConfiguration": {
+            "additionalUnattendContent": [
+              {
+                "passName": "oobesystem",
+                "componentName": "Microsoft-Windows-Shell-Setup",
+                "settingName": "Autologon",
+                "content": "[variables('autologonContent')]"
+              },
+              {
+                "passName": "oobesystem",
+                "componentName": "Microsoft-Windows-Shell-Setup",
+                "settingName": "FirstLogonCommands",
+                "content": "[variables('firstLogonCommands')]"
+              }
+            ],
+            "winRM": {
+              "listeners": [
+                {
+                  "protocol": "Http"
+                }
+              ]
+            }
+          }
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('sku')]",
-            "version": "latest"
+              "imageReference": {
+              "publisher": "[variables('imagePublisher')]",
+              "offer": "[variables('imageOffer')]",
+              "sku": "[parameters('sku')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "caching": "ReadWrite",
+              "createOption": "FromImage",
+              "name": "[concat(variables('vmName'),copyindex(),'-osDisk')]",
+              "vhd": {
+                "uri": "[concat(variables('osDiskVhdName'),copyindex(),'.vhd')]"
+              }
+            }
           },
-          "osDisk": {
-            "caching": "ReadWrite",
-            "createOption": "FromImage",
-            "name": "[concat(variables('vmName'),copyindex(),'-osDisk')]",
-            "vhd": {
-              "uri": "[concat(variables('osDiskVhdName'),copyindex(),'.vhd')]",
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex()))]"
+              }
+            ]
+          },
+          "diagnosticsProfile": {
+            "bootDiagnostics": {
+              "enabled": true,
+              "storageUri": "[concat('http://', variables('diagnosticsStorageName'), '.blob.core.windows.net')]"
             }
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex()))]"
-            }
-          ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[concat('http://', variables('diagnosticsStorageName'), '.blob.core.windows.net')]"
           }
         }
-      }
     }
   ]
 }
