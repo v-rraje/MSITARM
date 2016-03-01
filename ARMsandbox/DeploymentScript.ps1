@@ -105,12 +105,12 @@ function deploy {
 		  
 		  #Get IP address of the VM
 		  'Getting VM IP address...'
-		  $AzureIp = (Get-AzureRmNetworkInterface -Name ($ServerName + $i) -ResourceGroupName $ResourceGroupName).IpConfigurations[0].PrivateIpAddress
+		  $AzureIp = (Get-AzureRmNetworkInterface -Name ($ServerName + $i + 'nic1') -ResourceGroupName $ResourceGroupName).IpConfigurations[0].PrivateIpAddress
 		  $AzureIp
 		  
 		  #Setting PrivateIpAllocationMethod to Static
 		  'Setting Private IP allocation method to Static...'
-		  $Nic = (Get-AzureRmNetworkInterface -Name ($ServerName + $i) -ResourceGroupName $ResourceGroupName)
+		  $Nic = (Get-AzureRmNetworkInterface -Name ($ServerName + $i + 'nic1') -ResourceGroupName $ResourceGroupName)
 		  $Nic.IpConfigurations[0].PrivateIpAllocationMethod = 'Static'
 		  Set-AzureRmNetworkInterface -NetworkInterface $Nic
 		  
