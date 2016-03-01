@@ -2,65 +2,57 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "windowsOSVersion": {
-      "value": "2012-Datacenter",
-	  "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
-    },
-    "vmName": {
-      "value": "azurevmname0",
-	  "description": "Name for the Virtual Machine."
-    },
-    "vmSize": {
-      "value": "Standard_A2",
-	  "description": "Size of the Virtual Machine"
-    },
-    "vnetId": {
-      "value": "/subscriptions/e4a74065-cc6c-4f56-b451-f07a3fde61de/resourceGroups/ARMERVNETUSCPOC/providers/Microsoft.Network/virtualNetworks/ARMERVNETUSC",
-	  "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc."
-    },
-    "storageAccountType": {
-      "value": "Standard_LRS",
-	  "description": "The Storage Account type"
-    },
-    "userImageStorageAccountName": {
-      "value": "sandboxstore",
-	  "description": "The Storage Account name that contains the image files"
-    },
-    "userImageStorageContainerName": {
-      "value": "images",
-	  "description": "The Storage Account Container name that contains the image file"
-    },
-    "userImageVhdName": {
-      "value": "VM2012R2_2015_7_10.vhd",
-	  "description": "This is the name of the customized VHD"
-    },
-    "domainName": {
-      "value": "redmond.corp.microsoft.com",
-	  "description": "The FQDN of the AD domain"
+    "additionalAdmins": {
+      "value": "None",
+      "description": "Additional admins that can login to the VMs"
     },
     "appID": {
       "value": "ICTO-11627",
-	  "description": "appID tag for the Virtual Machine.  See subscription document for how to get"
+      "description": "appID tag for the Virtual Machine.  See subscription document for how to get"
     },
-    "orgID": {
-      "value": "500084",
-	  "description": "orgID tag for the Virtual Machine.  See subscription document for how to get"
+    "domainName": {
+      "value": "redmond.corp.microsoft.com",
+      "description": "The FQDN of the AD domain"
     },
     "env": {
       "value": "dev",
-	  "description": "environment tag for the Virtual Machine.  Production will come through as production.  Any other value or blank will be marked as Pre-Production"
+      "description": "environment tag for the Virtual Machine.  Production will come through as production.  Any other value or blank will be marked as Pre-Production"
+    },
+    "numberOfInstances": {
+      "value": 1,
+      "description": "Number of VMs to deploy"
+    },
+    "orgID": {
+      "value": "500084",
+      "description": "orgID tag for the Virtual Machine.  See subscription document for how to get"
+    },
+    "sku": {
+      "value": "2012-R2-Datacenter",
+      "description": "OS Image SKU.  Valid options are available via the Get-AzureRmVMImageSku PoSh cmdlet and include 2008-R2-SP1, 2012-Datacenter and 2012-R2-Datacenter"
     },
     "snoozeDate": {
       "value": "2016/01/08",
-	  "description": "Snooze date"
+      "description": "Snooze date"
     },
-    "numberOfInstances": {
-      "value": 2,
-	  "description": "Number of VMs to deploy"
+    "storageAccountType": {
+      "description": "The Storage Account type",
+      "value": "Standard_LRS"
     },
-    "additionalAdmins": {
-      "value": "None",
-	  "description": "Additional admins that can login to the VMs"
+    "userImageStorageAccountName": {
+      "value": "sandboxstore",
+      "description": "The Storage Account where the VM image(s) will be created"
+    },
+    "vmName": {
+      "value": "van-img-3",
+      "description": "Name prefix for the Virtual Machine(s)."
+    },
+    "vmSize": {
+      "value": "Standard_A2",
+      "description": "Size of the Virtual Machine"
+    },
+    "vnetId": {
+      "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc.",
+      "value": "/subscriptions/e4a74065-cc6c-4f56-b451-f07a3fde61de/resourceGroups/ARMERVNETUSCPOC/providers/Microsoft.Network/virtualNetworks/ARMERVNETUSC"
     }
   }
 }

@@ -11,24 +11,12 @@
     },
     "localAdminPassword": {
       "type": "securestring",
-	  "minLength": 1,
+      "minLength": 1,
       "metadata": {
         "description": "Local Password for the Virtual Machine."
       }
     },
-    "windowsOSVersion": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
-      "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter"
-      ],
-      "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
-      }
-    },
-	"vmName": {
+    "vmName": {
       "type": "string",
       "metadata": {
         "description": "Name for the Virtual Machine."
@@ -46,6 +34,32 @@
         "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc."
       }
     },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftWindowsServer",
+      "metadata": {
+        "description": "OS Image Publisher"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "WindowsServer",
+      "metadata": {
+        "description": "OS Image Offer"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+      }
+    },
     "storageAccountType": {
       "type": "string",
       "metadata": {
@@ -55,19 +69,7 @@
     "userImageStorageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "The Storage Account name that contains the image files"
-      }
-    },
-    "userImageStorageContainerName": {
-      "type": "string",
-      "metadata": {
-        "description": "The Storage Account Container name that contains the image file"
-      }
-    },
-    "userImageVhdName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the name of the customized VHD"
+        "description": "The Storage Account where the VM image(s) will be created"
       }
     },
     "domainName": {
@@ -136,34 +138,36 @@
         "description": "Subnet prefix that defines how many IP addresses are available on the Subnet"
       }
     },
-	"ouPath": {
-		"type": "string",
-		"defaultValue": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
-		"metadata": {
-			"description": "The Organizational Unit the VM will join"
-		}
-	},
-	"storageAccountName": {
-		"type": "string",
-		"minLength": 1,
-		"metadata": {
-			"description": "The storage account name"
-		}
-	}
+    "ouPath": {
+      "type": "string",
+      "defaultValue": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The storage account name"
+      }
+    }
   },
   "variables": {
     "apiVersion": "2015-06-15",
+    "diagnosticsStorageName": "[parameters('storageAccountName')]",
+    "imageOffer": "WindowsServer",
+    "imagePublisher": "MicrosoftWindowsServer",
     "nicName": "[parameters('vmName')]",
+    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk')]",
+    "sku": "[parameters('sku')]",
+    "storageAccountType": "[parameters('storageAccountType')]",
     "subnetName": "[parameters('subnetName')]",
     "subnetPrefix": "[parameters('subnetPrefix')]",
-    "userImageName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',parameters('userImageStorageContainerName'),'/',parameters('userImageVhdName'))]",
-    "storageAccountType": "[parameters('storageAccountType')]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
-    "vnetId": "[parameters('vnetId')]",
-    "diagnosticsStorageName": "[parameters('storageAccountName')]",
-    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk')]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]"
+    "vnetId": "[parameters('vnetId')]"
   },
   "resources": [
     {
@@ -242,16 +246,18 @@
           "adminPassword": "[parameters('localAdminPassword')]"
         },
         "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('sku')]",
+            "version": "latest"
+          },
           "osDisk": {
             "caching": "ReadWrite",
             "createOption": "FromImage",
-            "image": {
-              "uri": "[variables('userImageName')]"
-            },
             "name": "[concat(variables('vmName'),copyindex(),'-osDisk')]",
-            "osType": "Windows",
             "vhd": {
-              "uri": "[concat(variables('osDiskVhdName'),copyindex(),'.vhd')]"
+              "uri": "[concat(variables('osDiskVhdName'),copyindex(),'.vhd')]",
             }
           }
         },
