@@ -88,6 +88,7 @@ function deploy {
                                                                  -TemplateParameterFile $TemplateParameterFilePath `
                                                                  -Force -Verbose
 
+       $sleep = $false	
 
        for ($i = 0; $i -lt $NumberOfInstances; $i++) {
             #Check VM status
@@ -113,17 +114,92 @@ function deploy {
 		  $Nic = (Get-AzureRmNetworkInterface -Name ($ServerName + $i + 'nic1') -ResourceGroupName $ResourceGroupName)
 		  $Nic.IpConfigurations[0].PrivateIpAllocationMethod = 'Static'
 		  Set-AzureRmNetworkInterface -NetworkInterface $Nic
-		  
-		  'Waiting for 5 minutes before domain joining...'
-		  Start-Sleep -s 300
-		  
-		  #Domain join the VM
-		  'Domain joining the VM...'
-		  Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential $DomainCreds -LocalCredential $LocalCreds
-		  
-		  #Restart the VM to reflect the changes
-		  'Restarting the VM to reflect changes...'
-		  Restart-AzureRmVm -ResourceGroupName $ResourceGroupName -Name ($ServerName + $i)
+		  	  
+            if(!$sleep){  # only need to wait once
+                'Waiting for 5 minutes before beginning domain join(s)...'
+		        Start-Sleep -s (5*60)
+                $sleep = $true
+            }
+
+            #Get the domain user's SID
+            'Getting domain user SID...'
+            $DomainCredsString =  $DomainCreds.UserName
+            $index = $DomainCredsString.IndexOf('\')
+             
+            $domain = $DomainCredsString.Substring(0, $index)
+            $alias =  $DomainCredsString.Substring($index + 1,$DomainCredsString.length - $index -1)
+    
+            $objUser = New-Object System.Security.Principal.NTAccount($domain, $alias)
+            $Sid = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
+            $strSid = $Sid.Value  
+
+
+            #Add the Domain user to the administrators group on the new VM by SID 
+            'Configuring remove computer''s administrators group...'
+            
+            $script = {
+                $ip = $args[0]
+                iex $("winrm set winrm/config/client `'@{TrustedHosts=`"$ip`"}`'")
+            }
+
+            Invoke-Command -ScriptBlock $script -ArgumentList $AzureIp
+            
+            $script = {
+                $mysid = $args[0]
+                $computer = [ADSI]("WinNT://localhost,computer")
+                $AdminsGroup=Get-WmiObject -Class Win32_Group -computername localhost -Filter "SID='S-1-5-32-544' AND LocalAccount='True'"
+                $grp = $computer.psbase.children.find($AdminsGroup.Name)
+                $grp.Add("WinNT://$($mysid)")
+            }
+    
+            invoke-command -computername $AzureIp -ScriptBlock $script -Credential $LocalCreds -ArgumentList $strSid -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
+          		  
+		    
+            # Get the destination OU for our domain...
+            if($DomainName -imatch "redmond"){
+                $OU           = "OU=ITManaged,OU=ITServices,DC=REDMOND,DC=CORP,DC=MICROSOFT,DC=COM"
+            }
+            elseif ($DomainName -imatch "europe"){
+                $OU           = "OU=ITManaged,OU=ITServices,DC=europe,DC=corp,DC=microsoft,DC=com"
+            }
+            elseif ($DomainName -imatch "northamerica"){
+                $OU           = "OU=ITManaged,OU=ITServices,DC=northamerica,DC=corp,DC=microsoft,DC=com"
+            }
+            elseif ($DomainName -imatch "southpacific"){
+                $OU           = "OU=ITManaged,OU=ITServices,DC=southpacific,DC=corp,DC=microsoft,DC=com"
+            }
+            elseif ($DomainName -imatch "southamerica"){
+                $OU           = "OU=ITManaged,OU=ITServices,DC=southamerica,DC=corp,DC=microsoft,DC=com"
+            }
+            elseif ($DomainName -imatch "africa"){
+                $OU           = "OU=ITManaged,OU=ITServices,DC=africa,DC=corp,DC=microsoft,DC=com"
+            }
+            elseif ($DomainName -imatch "middleeast"){
+                $OU           = "OU=ITManaged,OU=ITServices,DC=middleeast,DC=corp,DC=microsoft,DC=com"
+            }
+            elseif ($DomainName -imatch "fareast"){
+                $OU           = "OU=ITManaged,OU=ITServices,DC=fareast,DC=CORP,DC=MICROSOFT,DC=COM"
+            }
+            else{
+                $OU = "Other" 
+                "Skipping OU move for domain '$($DomainName)'."             
+            }
+            
+            if($OU -ne 'Other'){
+
+                "Joining computer to the '$($DomainName)' domain in the ITManaged OU..."
+    		    Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential $DomainCreds -LocalCredential $LocalCreds -OUPath $OU -Restart
+
+	        }
+            else{
+            
+
+                "Joining computer to the '$($DomainName)' domain in the default OU..."
+    		    Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential $DomainCreds -LocalCredential $LocalCreds -Restart
+
+            }	  
+
+       
        }
 }
 

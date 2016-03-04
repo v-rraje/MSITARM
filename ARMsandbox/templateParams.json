@@ -43,7 +43,7 @@
       "description": "The Storage Account where the VM image(s) will be created"
     },
     "vmName": {
-      "value": "smokey-2",
+      "value": "az-youwish-0",
       "description": "Name prefix for the Virtual Machine(s)."
     },
     "vmSize": {
