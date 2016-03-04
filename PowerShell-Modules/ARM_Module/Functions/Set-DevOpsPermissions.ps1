@@ -46,7 +46,7 @@
         "GroupDisplayName" {
 
             Write-Verbose -Message "Checking if group alias '$($GroupDisplayName)'exists..."
-            $objAD = Get-AzureRmADGroup -SearchString $GroupDisplayName
+            $objAD = Get-AzureRmADGroup -SearchString $GroupDisplayName | ?{$_.DisplayName -eq $GroupDisplayName} 
             
             If ($objAD.Count -ne 1) { # may return more than one result if a partial match is found
             
