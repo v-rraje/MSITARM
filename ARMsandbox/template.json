@@ -18,6 +18,8 @@
     },
     "vmName": {
       "type": "string",
+      "minLength": 3,
+      "defaultValue": "trworthtest4",
       "metadata": {
         "description": "Name for the Virtual Machine."
       }
@@ -113,13 +115,14 @@
     },
     "numberOfInstances": {
       "type": "int",
-      "defaultValue": 2,
+      "defaultValue": 0,
       "metadata": {
         "description": "Number of VMs to deploy"
       }
     },
     "additionalAdmins": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "Additional admins that can login to the VMs"
       }
@@ -149,7 +152,7 @@
       "type": "string",
       "minLength": 1,
       "metadata": {
-        "description": "The storage account name"
+        "description": "The storage account name for diagnostic data"
       }
     }
   },

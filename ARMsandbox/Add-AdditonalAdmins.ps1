@@ -31,9 +31,9 @@
     
   )
 
-write-verbose  ("testing {0}" -f $Computer)
-    if(Test-Connection -ComputerName $Computer -Count 1 -Quiet) {
-        write-verbose "$Computer is Online"
+write-verbose  ("testing {0}" -f $computername)
+    if(Test-Connection -ComputerName $computername -Count 1 -Quiet) {
+        write-verbose "$computername is Online"
     }
 
 $script={
@@ -84,7 +84,7 @@ $script={
   
 }
 
-Invoke-Command -ComputerName $computer -ScriptBlock $script -ArgumentList $UserAccounts -Credential $cred -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck) 
+Invoke-Command -ComputerName $computername -ScriptBlock $script -ArgumentList $UserAccounts -Credential $creds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck) 
 
 }
 

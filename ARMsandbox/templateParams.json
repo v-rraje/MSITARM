@@ -2,8 +2,16 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "localAdminUserName": {
+      "value": "",
+      "description": "Local Username for the Virtual Machine."
+    },
+    "localAdminPassword": {
+      "value": "",
+      "description": "Local Password for the Virtual Machine."
+    },
     "additionalAdmins": {
-      "value": "None",
+      "value": "redmond\\trworth,redmond\\cptteamb",
       "description": "Additional admins that can login to the VMs"
     },
     "appID": {
@@ -19,7 +27,7 @@
       "description": "environment tag for the Virtual Machine.  Production will come through as production.  Any other value or blank will be marked as Pre-Production"
     },
     "numberOfInstances": {
-      "value": 1,
+      "value": 0,
       "description": "Number of VMs to deploy"
     },
     "orgID": {
@@ -42,8 +50,12 @@
       "value": "sandboxstore",
       "description": "The Storage Account where the VM image(s) will be created"
     },
+    "storageAccountName": {
+      "value": "[prompt]",
+      "description": "The storage account name for diagnostic data"
+    },
     "vmName": {
-      "value": "az-youwish-0",
+      "value": "[prompt]",
       "description": "Name prefix for the Virtual Machine(s)."
     },
     "vmSize": {
