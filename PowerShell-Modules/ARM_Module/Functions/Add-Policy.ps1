@@ -4,7 +4,7 @@
     [CmdletBinding()]
     Param( 
         [Parameter(Mandatory=$true)]
-        [ValidateSet('SDOStdPolicyTags','SDOStdPolicyNetwork','SDOStdPolicyRegion')] 
+        [ValidateSet('SDOStdPolicyTags','SDOStdPolicyNetwork','SDOStdPolicyRegion','SDOStdPolicyNetworkAllowV1')] 
         [String] 
         $policy,
         
@@ -131,6 +131,46 @@
             }
 
         } 
+        'sdostdpolicynetworkallowv1' 
+        {
+            try
+            {
+                #Set Policy for SDOStdPolicyNetwork
+                $polDef = New-AzureRmPolicyDefinition -Name SDOStdPolicyNetworkAllowV1 -Description 'No endpoints, only some network resources, and allow V1' -Policy '{
+                    "if": {
+                    "anyOf": [
+                    {
+                    "source": "action",
+                    "like": "Microsoft.Network/publicIPAddresses/*"
+                    },
+                    {
+                    "source": "action",
+                    "like": "Microsoft.Network/routeTables/*"
+                    },
+                    {
+                    "source": "action",
+                    "like": "Microsoft.Network/networkSecurityGroups/*"
+                    }
+                    ]
+                    },
+                    "then": {
+                    "effect": "deny"
+                    }
+                }'
+                
+                         
+                #apply at subscription level
+                New-AzureRmPolicyAssignment -Name SDOStdPolicyNetworkAllowV1 -PolicyDefinition $polDef -Scope $scope | Out-Null
+          
+                Write-Verbose 'SDOStdPolicyNetworkAllowV1 policy created successfully'
+            }
+            catch 
+            {
+                Write-Verbose 'SDOStdPolicyNetworkAllowV1 policy creation failed'
+                exit
+            }
+
+        } 
         'sdostdpolicyregion' 
         {
             try
@@ -147,9 +187,8 @@
                     "effect": "deny"
                   }
                 }'
-                
-
-          
+             
+       
                 #apply at subscription level
                 New-AzureRmPolicyAssignment -Name SDOStdPolicyRegion -PolicyDefinition $polDef -Scope $scope | Out-Null
           
@@ -188,6 +227,11 @@
             .EXAMPLE 
             $subID = e8a32032-cc6c-4x56-b451-f07x3fdx47xx 
             Add-Policy -policy SDOStdPolicyRegion -subscriptionID  $subID -Verbose
+            .EXAMPLE 
+            $subID = e8a32032-cc6c-4x56-b451-f07x3fdx47xx 
+            Add-Policy -policy SDOStdPolicyNetworkAllowV1 -subscriptionID  $subID -Verbose
 
     #>	
 }
+
+
