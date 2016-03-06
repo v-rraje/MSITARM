@@ -4,6 +4,7 @@
   "parameters": {
     "localAdminUserName": {
       "type": "string",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "Local Username for the Virtual Machine."
@@ -11,6 +12,7 @@
     },
     "localAdminPassword": {
       "type": "securestring",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "Local Password for the Virtual Machine."
@@ -19,7 +21,6 @@
     "vmName": {
       "type": "string",
       "minLength": 3,
-      "defaultValue": "trworthtest4",
       "metadata": {
         "description": "Name for the Virtual Machine."
       }
@@ -114,8 +115,7 @@
       }
     },
     "numberOfInstances": {
-      "type": "int",
-      "defaultValue": 0,
+      "type": "int", 
       "metadata": {
         "description": "Number of VMs to deploy"
       }
@@ -150,6 +150,7 @@
     },
     "storageAccountName": {
       "type": "string",
+     "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "The storage account name for diagnostic data"
@@ -246,7 +247,7 @@
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'),copyIndex())]",
+          "computerName": "[concat(variables('vmName'),copyindex())]",
           "adminUsername": "[parameters('localAdminUserName')]",
           "adminPassword": "[parameters('localAdminPassword')]",
           "windowsConfiguration": {
