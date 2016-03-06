@@ -1,6 +1,6 @@
 #Requires -RunAsAdministrator
 
-function deploy {
+function Invoke-ArmTemplate {
        Param(
          [string] [Parameter(Mandatory=$true)] $SubscriptionId,
          [string] [Parameter(Mandatory=$true)] $ResourceGroupLocation,
@@ -432,5 +432,5 @@ function deploy {
 #install IIS Server
 #deploy -TemplateFile template.json -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" -InstallIIS #-Verbose
 
-
-#.\Deploy.ps1 -TemplateFile template.json -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" -InstallIIS #-Verbose
+#install SQL Server
+#deploy -TemplateFile templatesql.json -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" #-Verbose
