@@ -20,4 +20,8 @@
         if(!$variable) {$global:numberOfInstances=$null}
         Write-host -f blue "     numberOfInstances=$($numberOfInstances)"
 
+        $variable = Get-Variable -Name sku -Scope Global -ErrorAction SilentlyContinue
+        if(!$variable) {$global:sku=$null}
+        Write-host -f blue "     SKU=$($sku)"
+
 }

@@ -1,4 +1,4 @@
-﻿function Remove-CachedData(){
+﻿function Reset-Cache(){
      
      $variable = Get-Variable -Name vmNamePart -Scope Global -ErrorAction SilentlyContinue
      if($variable) {$global:vmNamePart=$null}
@@ -15,6 +15,8 @@
      $variable = Get-Variable -Name LocalCreds -Scope Global -ErrorAction SilentlyContinue
      if($variable) {$global:LocalCreds=$null}
 
+      $variable = Get-Variable -Name sku -Scope Global -ErrorAction SilentlyContinue
+     if($variable) {$global:sku=$null}
+
      show-cache
 }
-set-alias Reset-Cache Remove-CachedData

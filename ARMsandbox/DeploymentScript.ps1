@@ -140,16 +140,34 @@ function deploy {
         $error.Clear()
         $global:DomainCreds=$domainCreds
         
-        $variable = Get-Variable -Name localCreds -Scope Global -ErrorAction SilentlyContinue
-        if(!$variable) {$global:localCreds=$null}
-        if($global:localCreds) {
-                Write-Host -f Green "using Cached local Credentials for $($LocalCreds.UserName)."	
-                $localCreds=$global:localCreds 
-            } else {
-		        #Request for local account credentials
-		        $LocalCreds = Get-Credential -Message 'LOCAL ACCOUNT: Please enter the credentials' 
-                $global:localCreds=$LocalCreds
-        }
+        do {
+            $variable = Get-Variable -Name localCreds -Scope Global -ErrorAction SilentlyContinue
+            if(!$variable) {$global:localCreds=$null}
+            if($global:localCreds) {
+                    Write-Host -f Green "using Cached local Credentials for $($LocalCreds.UserName)."	
+                    $localCreds=$global:localCreds 
+                } else {
+		            #Request for local account credentials
+		            $LocalCreds = Get-Credential -Message 'LOCAL ACCOUNT: Please enter the credentials' 
+                    $global:localCreds=$LocalCreds
+            }
+            if( $localcreds.UserName -match "^\w{1,19}$")   {
+                $validCredential=$true
+             }Else {
+                $validCredential=$false
+            }
+ 
+            if($validCredential -eq $false){
+                Write-host -f red "Invalid Credentials!"
+                $cont = read-host "Try again? (Y)es"
+                if($cont -ne 'Y') {
+                    write-host -f Gray "Stopping."
+                    return $false
+                } else {$global:localCreds=$null}
+               }
+
+         } until ($validcredential -eq $true -or $cont -ne 'Y')
+         $global:localCreds="redmond\trworth"
 
        #Get contents of the template parameters file
        Write-host -f Gray 'Reading template file contents...'
@@ -206,6 +224,26 @@ function deploy {
                 Write-Host -f Green "using Cached numberOfInstances $($global:numberOfInstances)."
                 $JsonParams.parameters.numberOfInstances.value = $global:numberOfInstances
             }
+
+        $variable = Get-Variable -Name sku -Scope Global -ErrorAction SilentlyContinue
+        if(!$variable) {$global:sku=$null}
+
+        if(!$global:sku) {
+            if($JsonParams.parameters.sku.value.length -eq 0 -or $JsonParams.parameters.sku.value -eq "[prompt]" ) {
+               
+		        #Request for local account credentials
+                write-host -f Gray "Available SKU"
+                $JsonTemp.parameters.sku.allowedValues 
+		        $sku = [string] $(Read-Host 'SKU?') 
+                $global:sku=$sku
+                
+            } 
+            $JsonParams.parameters.sku.value=$sku
+        } else {
+                Write-Host -f Green "using Cached SKU for $($sku)."	
+                $sku=$global:sku 
+                $JsonParams.parameters.sku.value=$sku
+        }
         
 
        #Get server name
@@ -230,11 +268,11 @@ function deploy {
                    "localAdminPassword"=$JsonParams.parameters.LocalAdminPassword.Value; 
                    "vmName"=$JsonParams.parameters.vmName.Value; 
                    "additionalAdmins"=$JsonParams.parameters.additionalAdmins.Value; 
+                   "sku"=$JsonParams.parameters.sku.Value; 
                    "APPid"=$JsonParams.parameters.APPid.Value; 
                    "orgID"=$JsonParams.parameters.orgID.Value; 
                    "domainName"=$JsonParams.parameters.domainName.Value; 
                    "env"=$JsonParams.parameters.env.Value;
-                   "sku"=$JsonParams.parameters.sku.Value;
                    "snoozeDate"=$JsonParams.parameters.snoozeDate.Value;
                    "storageAccountType"=$JsonParams.parameters.storageAccountType.Value;
                    "userImageStorageAccountName"=$JsonParams.parameters.userImageStorageAccountName.Value;
@@ -283,8 +321,13 @@ function deploy {
                                                                  -TemplateParameterObject $params `
                                                                  -Force -Verbose
 
-                write-host -f Green "$($buildTemplate.DeploymentName) status of $($buildTemplate.ProvisioningState) on $($buildTemplate.Timestamp)"
+                
 
+                if($($buildTemplate.ProvisioningState) -eq "Failed") {
+                    throw "$($buildTemplate.DeploymentName) status of $($buildTemplate.ProvisioningState) on $($buildTemplate.Timestamp)"
+                } else {
+                    write-host -f Green "$($buildTemplate.DeploymentName) status of $($buildTemplate.ProvisioningState) on $($buildTemplate.Timestamp)"
+                }
             } catch {
                 Write-host -f red "stopping due to errors"
                 Write-host -f red $error[0]
