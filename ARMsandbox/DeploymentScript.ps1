@@ -518,6 +518,7 @@ function deploy {
             }
 
             if($error) {
+                $error[0]
                 write-host -f red "Stopping due to errors"
                 $error.Clear()
                 return $false
@@ -532,6 +533,7 @@ function deploy {
             }
 
             if($error) {
+                $error[0]
                 write-host -f red "Stopping due to errors"
                 $error.Clear()
                 return $false
@@ -544,6 +546,7 @@ function deploy {
                            
             }
             if($error) {
+                $error[0]
                 write-host -f red "Stopping due to errors"
                 $error.Clear()
                 return $false
@@ -557,7 +560,7 @@ function deploy {
             }
 
             if(!$error) {
-
+                $error[0]
                 write-host -f Green "$($ServerName + $i) is Completed Sucessfully. "
                 return $true
 
