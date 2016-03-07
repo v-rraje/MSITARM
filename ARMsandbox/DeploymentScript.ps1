@@ -167,7 +167,7 @@ function deploy {
                }
 
          } until ($validcredential -eq $true -or $cont -ne 'Y')
-         $global:localCreds="redmond\trworth"
+         
 
        #Get contents of the template parameters file
        Write-host -f Gray 'Reading template file contents...'
