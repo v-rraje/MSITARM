@@ -12,9 +12,9 @@
         if(!$variable) {$global:vmNamePart=$null}
         Write-host -f blue "     vmNamePart=$($vmNamePart)"
 
-        $variable = Get-Variable -Name Diagnosticsstorage -Scope Global -ErrorAction SilentlyContinue
-       if(!$variable) {$global:DiagnosticsStorage=$null}
-       Write-host -f blue "     StorageAccountName=$($Diagnosticsstorage)"
+        $variable = Get-Variable -Name AdditionalAdmins -Scope Global -ErrorAction SilentlyContinue
+       if(!$variable) {$global:AdditionalAdmins=$null}
+       Write-host -f blue "     AdditionalAdmins=$($AdditionalAdmins)"
 
         $variable = Get-Variable -Name numberOfInstances -Scope Global -ErrorAction SilentlyContinue
         if(!$variable) {$global:numberOfInstances=$null}

@@ -129,7 +129,7 @@
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "Subnet-1",
+      "defaultValue": "Subnet-2",
       "metadata": {
         "description": "Name for the subnet"
       }
@@ -138,7 +138,7 @@
       "type": "string",
       "defaultValue": "10.0.0.0/24",
       "metadata": {
-        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet"
+        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24 or 10.107.89.192/26)"
       }
     },
     "ouPath": {
@@ -147,19 +147,11 @@
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
-    },
-    "storageAccountName": {
-      "type": "string",
-     "defaultValue": "",
-      "minLength": 1,
-      "metadata": {
-        "description": "The storage account name for diagnostic data"
-      }
+    
     }
   },
   "variables": {
     "apiVersion": "2015-06-15",
-    "diagnosticsStorageName": "[parameters('storageAccountName')]",
     "imageOffer": "WindowsServer",
     "imagePublisher": "MicrosoftWindowsServer",
     "nicName": "[parameters('vmName')]",
@@ -176,23 +168,7 @@
     "vnetId": "[parameters('vnetId')]"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "StorageAccount",
-		"appID": "[parameters('appID')]",
-        "orgID": "[parameters('orgID')]",
-        "env": "[parameters('env')]",
-        "snoozeDate": "[parameters('snoozeDate')]"
-      },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
+     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),copyindex(),'nic1')]",
       "apiVersion": "[variables('apiVersion')]",
@@ -239,7 +215,6 @@
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex(),'nic1')]"
       ],
       "properties": {
@@ -296,12 +271,6 @@
                 "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(),'nic1'))]"
               }
             ]
-          },
-          "diagnosticsProfile": {
-            "bootDiagnostics": {
-              "enabled": true,
-              "storageUri": "[concat('http://', variables('diagnosticsStorageName'), '.blob.core.windows.net')]"
-            }
           }
         }
     }

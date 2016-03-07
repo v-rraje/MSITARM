@@ -6,8 +6,8 @@
      $variable = Get-Variable -Name numberOfInstances -Scope Global -ErrorAction SilentlyContinue
      if($variable) {$global:numberOfInstances=$null}
 
-     $variable = Get-Variable -Name Diagnosticsstorage -Scope Global -ErrorAction SilentlyContinue
-     if($variable) {$global:Diagnosticsstorage=$null}
+     $variable = Get-Variable -Name AdditionalAdmins -Scope Global -ErrorAction SilentlyContinue
+     if($variable) {$global:AdditionalAdmins=$null}
 
      $variable = Get-Variable -Name DomainCreds -Scope Global -ErrorAction SilentlyContinue
      if($variable) {$global:DomainCreds=$null}

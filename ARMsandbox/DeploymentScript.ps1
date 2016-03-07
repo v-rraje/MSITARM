@@ -192,27 +192,24 @@ function deploy {
             $JsonParams.parameters.vmName.value = $global:vmNamePart
         }
 
-       $variable = Get-Variable -Name Diagnosticsstorage -Scope Global -ErrorAction SilentlyContinue
-       if(!$variable) {$global:DiagnosticsStorage=$null}
+       $variable = Get-Variable -Name AdditionalAdmins -Scope Global -ErrorAction SilentlyContinue
+       if(!$variable) {$global:AdditionalAdmins=$null}
 
-       if(!$global:DiagnosticsStorage) {
-	       if($JsonParams.parameters.storageAccountName.value.length -eq 0 -or $JsonParams.parameters.storageAccountName.value -eq "[prompt]" ) {
-                $JsonParams.parameters.storageAccountName.value =  $(read-host "storageAccountName for diagnostics? ").ToString()  
-                $global:DiagnosticsStorage = $JsonParams.parameters.storageAccountName.value
+       if(!$global:AdditionalAdmins) {
+	       if($JsonParams.parameters.AdditionalAdmins.value.length -eq 0 -or $JsonParams.parameters.AdditionalAdmins.value -eq "[prompt]" ) {
+                $JsonParams.parameters.AdditionalAdmins.value =  $(read-host "AdditionalAdmins ? ").ToString()  
+                $global:AdditionalAdmins = $JsonParams.parameters.AdditionalAdmins.value
             }else {
-             $global:DiagnosticsStorage = $JsonParams.parameters.storageAccountName.value
-             $DiagnosticsStorage = $global:DiagnosticsStorage 
+             $global:AdditionalAdmins = $JsonParams.parameters.AdditionalAdmins.value
+             $AdditionalAdmins = $global:AdditionalAdmins 
             } 
          }else 
             {
-                Write-Host -f Green "using Cached storageAccountName $($global:DiagnosticsStorage)."
-                $JsonParams.parameters.storageAccountName.value = $global:DiagnosticsStorage
+                Write-Host -f Green "using Cached AdditionalAdmins $($global:AdditionalAdmins)."
+                $JsonParams.parameters.AdditionalAdmins.value = $global:AdditionalAdmins
             }
        
-        if($JsonParams.parameters.AdditionalAdmins.value.length -eq 0 -or $JsonParams.parameters.AdditionalAdmins.value -eq "" ) {
-            $JsonParams.parameters.AdditionalAdmins.value =  $(read-host "Additional Admins to add? ").ToString() 
-        }
-
+        
         $variable = Get-Variable -Name numberOfInstances -Scope Global -ErrorAction SilentlyContinue
         if(!$variable) {$global:numberOfInstances=$null}
 
@@ -292,7 +289,6 @@ function deploy {
                    "userImageStorageAccountName"=$JsonParams.parameters.userImageStorageAccountName.Value;
                    "vmSize"=$JsonParams.parameters.vmSize.Value;
                    "vnetId"=$JsonParams.parameters.vnetId.Value;
-                   "storageAccountName"=$JsonParams.parameters.storageAccountName.Value;
                    "numberOfInstances"=[int]$JsonParams.parameters.numberOfInstances.Value;
                   }
 

@@ -11,7 +11,7 @@
       "description": "Local Password for the Virtual Machine."
     },
     "additionalAdmins": {
-      "value": "redmond\\trworth,redmond\\cptteamb",
+      "value": "",
       "description": "Additional admins that can login to the VMs"
     },
     "appID": {
@@ -49,10 +49,6 @@
     "userImageStorageAccountName": {
       "value": "sandboxstore",
       "description": "The Storage Account where the VM image(s) will be created"
-    },
-    "storageAccountName": {
-      "value": "",
-      "description": "The storage account name for diagnostic data"
     },
     "vmName": {
       "value": "[prompt]",
