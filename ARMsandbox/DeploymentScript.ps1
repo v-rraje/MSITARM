@@ -311,6 +311,13 @@ function deploy {
                 Show-Cache
 
             write-host -f gray "################################################################"
+
+                $cont = read-host "Continue? (Y)es"
+                if($cont -ne 'Y') {
+                    write-host -f Gray "Stopping."
+                    return $false
+                }
+                $error.clear()
             ################################################################
             Write-host -f Gray 'Checking for deployments in progress...'
            do {
@@ -492,20 +499,37 @@ function deploy {
              write-host -f Green "$($ServerName + $i) is  Domain Joined. "
             }         
 
-            Write-host -f Gray "Begin VM Health check"
+            Write-host -f Gray "Begin VM Health check in 2 min..."
             #Check VM status, wait until its ready
             try {
+                
+               start-sleep -Seconds (2*60)
+
                 get-VMBuildStatus $($ServerName + $i) -ResourceGroupName $ResourceGroupName -waitfor  
                 get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
-                Write-host -f Green "VM Construction Complete"
+                Write-host -f Green "VM is healthy"
+
             } catch {
-                write-host -f red $error[0]
-                Write-host -f red "VM Construction Failed"
+                write-host -f red $error
+                Write-host -f red "VM health check Failed"
                 Return $false
                 $error.Clear()
             }
+                       
+            if($AzureIp) {
+               Write-host -f Gray "Begin VM Configuration"
+               get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
+               Write-host -f Gray  'Configure Virtual machine'
+               $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $VMConfiguration -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
+               Write-host -f Green "VM Construction Complete"            
+            }
 
-            Write-host -f Gray "Begin VM Configuration"
+            if($error) {
+                write-host -f red $error
+                write-host -f red "Stopping due to errors"
+                $error.Clear()
+                return $false
+            }
 
             if($JsonParams.parameters.additionalAdmins.value.length -gt 0) {
                                           
@@ -518,7 +542,7 @@ function deploy {
             }
 
             if($error) {
-                $error[0]
+                write-host -f red $error
                 write-host -f red "Stopping due to errors"
                 $error.Clear()
                 return $false
@@ -533,7 +557,7 @@ function deploy {
             }
 
             if($error) {
-                $error[0]
+                write-host -f red $error
                 write-host -f red "Stopping due to errors"
                 $error.Clear()
                 return $false
@@ -546,7 +570,7 @@ function deploy {
                            
             }
             if($error) {
-                $error[0]
+                write-host -f red $error
                 write-host -f red "Stopping due to errors"
                 $error.Clear()
                 return $false
@@ -560,7 +584,7 @@ function deploy {
             }
 
             if(!$error) {
-                $error[0]
+               
                 write-host -f Green "$($ServerName + $i) is Completed Sucessfully. "
                 return $true
 
