@@ -183,6 +183,9 @@ function deploy {
             if($JsonParams.parameters.vmName.value.length -eq 0 -or $JsonParams.parameters.vmName.value -eq "[prompt]" ) {
                 $JsonParams.parameters.vmName.value = $(read-host "VMName name part? ").ToString() 
                 $global:vmNamePart= $JsonParams.parameters.vmName.value
+            } else {
+                $global:vmNamePart= $JsonParams.parameters.vmName.value
+                 $vmNamePart= $global:vmNamePart
             }
         }else {
             Write-Host -f Green "using Cached VM Name Part $($global:vmNamePart)."
@@ -196,6 +199,9 @@ function deploy {
 	       if($JsonParams.parameters.storageAccountName.value.length -eq 0 -or $JsonParams.parameters.storageAccountName.value -eq "[prompt]" ) {
                 $JsonParams.parameters.storageAccountName.value =  $(read-host "storageAccountName for diagnostics? ").ToString()  
                 $global:DiagnosticsStorage = $JsonParams.parameters.storageAccountName.value
+            }else {
+             $global:DiagnosticsStorage = $JsonParams.parameters.storageAccountName.value
+             $DiagnosticsStorage = $global:DiagnosticsStorage 
             } 
          }else 
             {
@@ -218,11 +224,16 @@ function deploy {
                     return $false
                 }
                 $global:numberOfInstances=$JsonParams.parameters.numberOfInstances.value
+                $numberOfInstances=$global:numberOfInstances
+            } else {
+                $numberOfInstances=$JsonParams.parameters.numberOfInstances.value
+                $global:numberOfInstances=$numberOfInstances
             }
         } else
             {
                 Write-Host -f Green "using Cached numberOfInstances $($global:numberOfInstances)."
                 $JsonParams.parameters.numberOfInstances.value = $global:numberOfInstances
+                $numberOfInstances=$global:numberOfInstances
             }
 
         $variable = Get-Variable -Name sku -Scope Global -ErrorAction SilentlyContinue
@@ -235,10 +246,13 @@ function deploy {
                 write-host -f Gray "Available SKU"
                 $JsonTemp.parameters.sku.allowedValues 
 		        $sku = [string] $(Read-Host 'SKU?') 
-                $global:sku=$sku
-                
-            } 
-            $JsonParams.parameters.sku.value=$sku
+                $global:sku=$sku  
+                $JsonParams.parameters.sku.value=$sku        
+                      
+            }  else {
+                $sku=$JsonParams.parameters.sku.value
+                $global:sku=$sku 
+            }
         } else {
                 Write-Host -f Green "using Cached SKU for $($sku)."	
                 $sku=$global:sku 
@@ -502,20 +516,39 @@ function deploy {
                 write-host -f Green "Adding Additional Admin is Completed. "                
 
             }
-         
+
+            if($error) {
+                write-host -f red "Stopping due to errors"
+                $error.Clear()
+                return $false
+            }
+
             if($InstallIIS) {
-            
+                
+               get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
                Write-host -f Gray  'Installing IIS'
                $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $IISSetup -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
                            
             }
 
+            if($error) {
+                write-host -f red "Stopping due to errors"
+                $error.Clear()
+                return $false
+            }
+
             if($InstallWPI){
-            
+               get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
                Write-host -f Gray  'Installing Web Platform Installer(x64) 5.0'
                $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $WebPlatformInstaller -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
                            
             }
+            if($error) {
+                write-host -f red "Stopping due to errors"
+                $error.Clear()
+                return $false
+            }
+
             if($InstallWebdeploy -and $InstallWPI){
             
                Write-host -f Gray  'Installing Web Deploy 3.5 (requires WPI)'
@@ -526,7 +559,12 @@ function deploy {
             if(!$error) {
 
                 write-host -f Green "$($ServerName + $i) is Completed Sucessfully. "
+                return $true
 
+            }else {
+                write-host -f red "Stopping due to errors"
+                $error.Clear()
+                return $false
             }
        }
 }
