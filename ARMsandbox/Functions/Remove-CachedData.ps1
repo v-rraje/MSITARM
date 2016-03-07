@@ -3,9 +3,18 @@
      $variable = Get-Variable -Name vmNamePart -Scope Global -ErrorAction SilentlyContinue
      if($variable) {$global:vmNamePart=$null}
 
-     $variable = Get-Variable -Name DiagStore -Scope Global -ErrorAction SilentlyContinue
-     if($variable) {$global:DiagStore=$null}
+     $variable = Get-Variable -Name numberOfInstances -Scope Global -ErrorAction SilentlyContinue
+     if($variable) {$global:numberOfInstances=$null}
 
-    $Global:DomainCreds=$null
-    $Global:LocalCreds=$null
+     $variable = Get-Variable -Name Diagnosticsstorage -Scope Global -ErrorAction SilentlyContinue
+     if($variable) {$global:Diagnosticsstorage=$null}
+
+     $variable = Get-Variable -Name DomainCreds -Scope Global -ErrorAction SilentlyContinue
+     if($variable) {$global:DomainCreds=$null}
+     
+     $variable = Get-Variable -Name LocalCreds -Scope Global -ErrorAction SilentlyContinue
+     if($variable) {$global:LocalCreds=$null}
+
+     show-cache
 }
+set-alias Reset-Cache Remove-CachedData
