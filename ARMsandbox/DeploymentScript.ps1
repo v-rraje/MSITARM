@@ -550,7 +550,7 @@ function deploy {
             }
 
             if($InstallWebdeploy -and $InstallWPI){
-            
+               get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
                Write-host -f Gray  'Installing Web Deploy 3.5 (requires WPI)'
                $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $InstallWebDeploy35 -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
                            
