@@ -8,9 +8,11 @@ function Invoke-ArmTemplate {
          [string] $OuPath = 'OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com',
          [string] $TemplateFile =  'template.json',
          [string] $TemplateParameterFile = 'templateParams.json',
-         [switch] $InstallIIS         
+         [switch] $InstallIIS,         
+         [switch] $InstallWebdeploy, 
+         [switch] $InstallWPI     
        )
-
+       
        Set-StrictMode -Version 3
        $error.Clear()
 
@@ -169,20 +171,42 @@ function Invoke-ArmTemplate {
             $JsonParams.parameters.vmName.value = $global:vmNamePart
         }
 
-	   if($JsonParams.parameters.storageAccountName.value.length -eq 0 -or $JsonParams.parameters.storageAccountName.value -eq "[prompt]" ) {
-            $JsonParams.parameters.storageAccountName.value =  $(read-host "storageAccountName for diagnostics? ").ToString()  
-        }
+       $variable = Get-Variable -Name Diagnosticsstorage -Scope Global -ErrorAction SilentlyContinue
+       if(!$variable) {$global:DiagnosticsStorage=$null}
+
+       if(!$global:DiagnosticsStorage) {
+	       if($JsonParams.parameters.storageAccountName.value.length -eq 0 -or $JsonParams.parameters.storageAccountName.value -eq "[prompt]" ) {
+                $JsonParams.parameters.storageAccountName.value =  $(read-host "storageAccountName for diagnostics? ").ToString()  
+                $global:DiagnosticsStorage = $JsonParams.parameters.storageAccountName.value
+            } 
+         }else 
+            {
+                Write-Host -f Green "using Cached storageAccountName $($global:DiagnosticsStorage)."
+                $JsonParams.parameters.storageAccountName.value = $global:DiagnosticsStorage
+            }
+       
         if($JsonParams.parameters.AdditionalAdmins.value.length -eq 0 -or $JsonParams.parameters.AdditionalAdmins.value -eq "" ) {
             $JsonParams.parameters.AdditionalAdmins.value =  $(read-host "Additional Admins to add? ").ToString() 
         }
-        if($JsonParams.parameters.numberOfInstances.value -eq 0 ) {
-            $JsonParams.parameters.numberOfInstances.value =  $(read-host "Number of Instances? ") 
-            if(!$([int]$($JsonParams.parameters.numberOfInstances.value.Replace('"',"")) -ge 1)){
-                write-host -f red "Number of instances must be => 1"
-                return $false
+
+        $variable = Get-Variable -Name numberOfInstances -Scope Global -ErrorAction SilentlyContinue
+        if(!$variable) {$global:numberOfInstances=$null}
+
+        if(!$global:numberOfInstances) {
+            if($JsonParams.parameters.numberOfInstances.value -eq 0 ) {
+                $JsonParams.parameters.numberOfInstances.value =  $(read-host "Number of Instances? ") 
+                if(!$([int]$($JsonParams.parameters.numberOfInstances.value.Replace('"',"")) -ge 1)){
+                    write-host -f red "Number of instances must be => 1"
+                    return $false
+                }
+                $global:numberOfInstances=$JsonParams.parameters.numberOfInstances.value
             }
-        }
-        #$JsonParams.parameters.numberOfInstances.value= $JsonTemp.parameters.numberOfInstances.defaultValue
+        } else
+            {
+                Write-Host -f Green "using Cached numberOfInstances $($global:numberOfInstances)."
+                $JsonParams.parameters.numberOfInstances.value = $global:numberOfInstances
+            }
+        
 
        #Get server name
        $ServerName = $JsonParams.parameters.vmName.value
@@ -228,6 +252,14 @@ function Invoke-ArmTemplate {
             }
             Write-host -f Green 'Data loaded.'
             
+            ################################################################
+               write-host -f gray "################################################################"
+               Write-Host -f blue "reset-cache to clear the cached data."
+
+                Show-Cache
+
+            write-host -f gray "################################################################"
+            ################################################################
             Write-host -f Gray 'Checking for deployments in progress...'
            do {
 
@@ -403,16 +435,21 @@ function Invoke-ArmTemplate {
              write-host -f Green "$($ServerName + $i) is  Domain Joined. "
             }         
 
-            if($JsonParams.parameters.additionalAdmins.value.length -gt 0) {
-                                  
-                #Check VM status, wait until its ready
+            Write-host -f Gray "Begin VM Health check"
+            #Check VM status, wait until its ready
                 get-VMBuildStatus $($ServerName + $i) -ResourceGroupName $ResourceGroupName -waitfor  
-                          
+                get-WinRMStatus  $($ServerName + $i) -waitfor -creds $DomainCreds
+            Write-host -f Green "VM Construction Complete"
+
+            Write-host -f Gray "Begin VM Configuration"
+
+            if($JsonParams.parameters.additionalAdmins.value.length -gt 0) {
+                                          
                 Write-host -f Gray  'Adding Additional Admins'
                
                 Add-AdditionalAdmins -computername $AzureIp -UserAccounts $JsonParams.parameters.additionalAdmins.value -creds $DomainCreds 
-
-                write-host -f Green "$($ServerName + $i) is Completed Sucessfully. "
+               
+                write-host -f Green "Adding Additional Admin is Completed. "                
 
             }
          
@@ -421,6 +458,25 @@ function Invoke-ArmTemplate {
                Write-host -f Gray  'Installing IIS'
                $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $IISSetup -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
                            
+            }
+
+            if($InstallWPI){
+            
+               Write-host -f Gray  'Installing Web Platform Installer(x64) 5.0'
+               $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $WebPlatformInstaller -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
+                           
+            }
+            if($InstallWebdeploy -and $InstallWPI){
+            
+               Write-host -f Gray  'Installing Web Deploy 3.5 (requires WPI)'
+               $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $InstallWebDeploy35 -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
+                           
+            }
+
+            if(!$error) {
+
+                write-host -f Green "$($ServerName + $i) is Completed Sucessfully. "
+
             }
        }
 }

@@ -253,8 +253,8 @@ function deploy {
             Write-host -f Green 'Data loaded.'
             
             ################################################################
-            write-host -f gray "################################################################"
-               Write-Host -f blue "reset-cache to clear the cached data.
+               write-host -f gray "################################################################"
+               Write-Host -f gray " reset-cache to clear the cached data. Show-Cache to see it."
 
                 Show-Cache
 
@@ -435,11 +435,23 @@ function deploy {
              write-host -f Green "$($ServerName + $i) is  Domain Joined. "
             }         
 
-            if($JsonParams.parameters.additionalAdmins.value.length -gt 0) {
-                                  
-                #Check VM status, wait until its ready
+            Write-host -f Gray "Begin VM Health check"
+            #Check VM status, wait until its ready
+            try {
                 get-VMBuildStatus $($ServerName + $i) -ResourceGroupName $ResourceGroupName -waitfor  
-                          
+                get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
+                Write-host -f Green "VM Construction Complete"
+            } catch {
+                write-host -f red $error[0]
+                Write-host -f red "VM Construction Failed"
+                Return $false
+                $error.Clear()
+            }
+
+            Write-host -f Gray "Begin VM Configuration"
+
+            if($JsonParams.parameters.additionalAdmins.value.length -gt 0) {
+                                          
                 Write-host -f Gray  'Adding Additional Admins'
                
                 Add-AdditionalAdmins -computername $AzureIp -UserAccounts $JsonParams.parameters.additionalAdmins.value -creds $DomainCreds 
@@ -481,7 +493,21 @@ function deploy {
 #deploy -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" #-Verbose
 
 #install IIS Server
-deploy -TemplateFile template.json -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" -InstallIIS -InstallWPI -InstallWebdeploy #-Verbose
+#deploy -TemplateFile template.json -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" -InstallIIS -InstallWPI -InstallWebdeploy #-Verbose
 
 
-#.\Deploy.ps1 -TemplateFile template.json -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" -InstallIIS #-Verbose
+ $params = @{
+                   "TemplateFile"="template.json"; 
+                   "SubscriptionId"="e4a74065-cc6c-4f56-b451-f07a3fde61de"; 
+                   "ResourceGroupLocation"="central us"; 
+                   "ResourceGroupName"="cptApp1";
+                   
+                  }
+
+deploy -TemplateFile $params.TemplateFile `
+       -SubscriptionId $params.SubscriptionId `
+       -ResourceGroupLocation $params.ResourceGroupLocation `
+       -ResourceGroupName $params.ResourceGroupName `
+       -InstallIIS  `
+       -InstallWPI  `
+       -InstallWebdeploy  

@@ -25,6 +25,9 @@
       HelpMessage='What  credentials can be used?')]
     [System.Management.Automation.PSCredential]$creds
   )   
+
+           $VmIsReady=$false
+
     while(!$VmIsReady) {
 
                 Write-host -f Gray  "Checking VM $($ServerName) WINRM status..." -NoNewline
@@ -34,7 +37,7 @@
                         $c=$args[0]; 
                         if($c=$env:COMPUTERNAME) {return "Ready"}else {return "NotReady"}
                     }
-				    $VmStatuses = (Invoke-Command -ComputerName $ServerName -ScriptBlock $script -ArgumentList $ServerName -Credential $creds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck))
+				    $VmStatuses = (Invoke-Command -ComputerName $ServerName -ScriptBlock $script -ArgumentList $ServerName -Credential $creds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck) -ErrorAction SilentlyContinue ) 
 
 				    If($VmStatuses -eq 'Ready'){
 					    Write-host -f Green $VmStatuses

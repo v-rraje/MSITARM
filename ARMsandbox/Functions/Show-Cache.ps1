@@ -1,4 +1,5 @@
 ﻿  Function Show-Cache(){
+
         $variable = Get-Variable -Name localCreds -Scope Global -ErrorAction SilentlyContinue
         if(!$variable) {$global:localCreds=$null}
         Write-host -f blue "     localcreds=$($localCreds.UserName)"
