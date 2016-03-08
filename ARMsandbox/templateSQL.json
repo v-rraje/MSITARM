@@ -39,20 +39,13 @@
     },
     "imagePublisher": {
       "type": "string",
-      "defaultValue": "MicrosoftSQLServer",
+      "allowedValues": ["MicrosoftWindowsServer","MicrosoftSQLServer"],
       "metadata": {
         "description": "OS Image Publisher"
       }
     },
     "imageOffer": {
       "type": "string",
-      "defaultValue": "SQL2014-WS2012R2",
-      "allowedValues": [
-        "SQL2012SP2-WS2012R2",
-        "SQL2014-WS2012R2",
-        "SQL2012SP2-WS2012R2",
-        "SQL2008R2SP3-WS2008R2SP1"
-      ],
       "metadata": {
         "description": "OS Image Offer"
       }
@@ -60,11 +53,6 @@
     "sku": {
       "type": "string",
        "minLength": 1,
-       "allowedValues": [
-        "Enterprise",
-        "Standard",
-        "web"
-      ],
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
@@ -160,9 +148,9 @@
     "apiVersion": "2015-06-15",
     "imageOffer": "[parameters('imageOffer')]",
     "imagePublisher": "[parameters('imagePublisher')]",
+    "sku": "[parameters('sku')]",
     "nicName": "[parameters('vmName')]",
     "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk')]",
-    "sku": "[parameters('sku')]",
     "storageAccountType": "[parameters('storageAccountType')]",
     "subnetName": "[parameters('subnetName')]",
     "subnetPrefix": "[parameters('subnetPrefix')]",

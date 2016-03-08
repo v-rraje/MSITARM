@@ -4,7 +4,7 @@
   "parameters": {
     "localAdminUserName": {
       "value": "",
-      "description": "Local Username for the Virtual Machine."
+      "description": "Local Username for the Virtual Machine. example: cptarm"
     },
     "localAdminPassword": {
       "value": "",
@@ -12,8 +12,7 @@
     },
     "additionalAdmins": {
       "value": "",
-      "description": "Additional admins that can login to the VMs"
-    },
+      "description": "Additional admins that can login to the VMs. example redmond\\user,redmond\\group "   },
     "appID": {
       "value": "ICTO-11627",
       "description": "appID tag for the Virtual Machine.  See subscription document for how to get"
@@ -27,15 +26,23 @@
       "description": "environment tag for the Virtual Machine.  Production will come through as production.  Any other value or blank will be marked as Pre-Production"
     },
     "numberOfInstances": {
-      "value": 0,
+      "value": 1,
       "description": "Number of VMs to deploy"
     },
     "orgID": {
       "value": "500084",
       "description": "orgID tag for the Virtual Machine.  See subscription document for how to get"
     },
+    "imagePublisher": {
+      "value": "",
+      "description": "MicrosoftWindowsServer or MicrosoftSQLServer"
+    },
+    "imageOffer": {
+      "value": "",
+      "description": "offer based on ImagePublisher"
+    },
     "sku": {
-      "value": "[prompt]",
+      "value": "",
       "description": "OS Image SKU.  Valid options are available via the Get-AzureRmVMImageSku PoSh cmdlet and include 2008-R2-SP1, 2012-Datacenter and 2012-R2-Datacenter"
     },
     "snoozeDate": {
@@ -60,7 +67,7 @@
     },
     "vnetId": {
       "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc.",
-      "value": "/subscriptions/e4a74065-cc6c-4f56-b451-f07a3fde61de/resourceGroups/ARMERVNETUSCPOC/providers/Microsoft.Network/virtualNetworks/ARMERVNETUSC"
+      "value": "/subscriptions/e4a74065-cc6c-4f56-b451-f07a3fde61de/resourceGroups/ERNETWORK/providers/Microsoft.Network/virtualnetworks/MSITPILOT01-CORP-CUS-1"
     }
   }
 }

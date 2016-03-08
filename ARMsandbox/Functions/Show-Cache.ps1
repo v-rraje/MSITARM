@@ -20,6 +20,14 @@
         if(!$variable) {$global:numberOfInstances=$null}
         Write-host -f blue "     numberOfInstances=$($numberOfInstances)"
 
+        $variable = Get-Variable -Name imagePublisher -Scope Global -ErrorAction SilentlyContinue
+        if(!$variable) {$global:imagePublisher=$imagePublisher}
+        Write-host -f blue "     imagePublisher=$($imagePublisher)"
+
+        $variable = Get-Variable -Name imageOffer -Scope Global -ErrorAction SilentlyContinue
+        if(!$variable) {$global:imageOffer=$null}
+        Write-host -f blue "     imageOffer=$($imageOffer)"
+
         $variable = Get-Variable -Name sku -Scope Global -ErrorAction SilentlyContinue
         if(!$variable) {$global:sku=$null}
         Write-host -f blue "     SKU=$($sku)"

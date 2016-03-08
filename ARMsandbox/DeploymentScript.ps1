@@ -8,9 +8,7 @@ function deploy {
          [string] $OuPath = 'OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com',
          [string] $TemplateFile =  'template.json',
          [string] $TemplateParameterFile = 'templateParams.json',
-         [switch] $InstallIIS,         
-         [switch] $InstallWebdeploy, 
-         [switch] $InstallWPI
+         [switch] $PromptToContinue
        )
 
        Set-StrictMode -Version 3
@@ -24,8 +22,8 @@ function deploy {
         } else {
             $VerbosePreference = "SilentlyContinue"
         }
-       #check root to ensure we are in sandbox
 
+       
        #Check if PS Module is installed
        try {
             Import-Module Azure -ErrorAction SilentlyContinue
@@ -100,21 +98,32 @@ function deploy {
             }
        write-host -f Green "Connected to subcription $SubscriptionId."
   
+       #Get contents of the template parameters file
+       Write-host -f Gray 'Reading template file contents...'
        $params = New-Object -TypeName Hashtable
        $TemplateFilePath = [System.IO.Path]::Combine($PSScriptRoot, $TemplateFile)
        $TemplateParameterFilePath = [System.IO.Path]::Combine($PSScriptRoot, $TemplateParameterFile)
-       		
+       
+       $JsonParams = Get-Content $TemplateParameterFile | ConvertFrom-Json
+       $JsonTemp = Get-Content $TemplateFilePath | ConvertFrom-Json
+
 		#Request for domain join credentials
         $variable = Get-Variable -Name DomainCreds -Scope Global -ErrorAction SilentlyContinue
         if(!$variable) {$global:DomainCreds=$null}
 
 		do {
+            #$domainCreds=[Security.Principal.WindowsIdentity]::getcurrent()
+            #$global:DomainCreds=$domainCreds
+
 		   if($global:DomainCreds) {
-                Write-Host -f Green "using Cached Domain Credentials for $($DomainCreds.UserName)."
-                $DomainCreds = $global:DomainCreds
+              
+                    Write-Host -f Green "using Cached Domain Credentials for $($DomainCreds.UserName)."
+                    $DomainCreds = $global:DomainCreds
+                    $ValidCredential = $true
+                
             }else{
 		        $DomainCreds = Get-Credential -Message 'DOMAIN ACCOUNT: Please enter the domain credentials'
-            }
+            
                 Add-Type -AssemblyName System.DirectoryServices.AccountManagement
                 $DS = New-Object System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
         
@@ -135,6 +144,7 @@ function deploy {
                     return $false
                 }
                }
+            }
 
         } until ($validcredential -eq $true -or $cont -ne 'Y')
         $error.Clear()
@@ -143,17 +153,29 @@ function deploy {
         do {
             $variable = Get-Variable -Name localCreds -Scope Global -ErrorAction SilentlyContinue
             if(!$variable) {$global:localCreds=$null}
-            if($global:localCreds) {
-                    Write-Host -f Green "using Cached local Credentials for $($LocalCreds.UserName)."	
-                    $localCreds=$global:localCreds 
-                } else {
+            
+            if(!$global:localCreds) {
+                if($JsonParams.parameters.localAdminUserName.value.length -eq 0 -or $JsonParams.parameters.localAdminUserName.value -eq "[prompt]" ) {
 		            #Request for local account credentials
 		            $LocalCreds = Get-Credential -Message 'LOCAL ACCOUNT: Please enter the credentials' 
                     $global:localCreds=$LocalCreds
-            }
+                     $JsonParams.parameters.localAdminUserName.value=$($global:localCreds).UserName
+                     $JsonParams.parameters.localAdminPassword.value=$($global:localCreds).Password
+                 } else {
+                    Write-Host -f Green "using parameter values local Credentials for $($JsonParams.parameters.localAdminUserName.value)."	
+                        $secpasswd = ConvertTo-SecureString  $JsonParams.parameters.localAdminPassword.value -AsPlainText -Force
+                        $global:localCreds = New-Object System.Management.Automation.PSCredential ($JsonParams.parameters.localAdminUserName.value, $secpasswd)
+                        $localCreds=$global:localCreds 
+                                         }
+                }else {
+                    $localCreds=$global:localCreds 
+                    $JsonParams.parameters.localAdminUserName.value=$($global:localCreds).UserName
+                    $JsonParams.parameters.localAdminPassword.value=$($global:localCreds).Password
+                }
+               
             if( $localcreds.UserName -match "^\w{1,19}$")   {
                 $validCredential=$true
-             }Else {
+             }else {
                 $validCredential=$false
             }
  
@@ -168,12 +190,6 @@ function deploy {
 
          } until ($validcredential -eq $true -or $cont -ne 'Y')
          
-
-       #Get contents of the template parameters file
-       Write-host -f Gray 'Reading template file contents...'
-       $JsonParams = Get-Content $TemplateParameterFile | ConvertFrom-Json
-       $JsonTemp = Get-Content $TemplateFilePath | ConvertFrom-Json
-            
        #ensure we have values for VM's, Additional Admins and Diagnostics Storage.
 
        $variable = Get-Variable -Name vmNamePart -Scope Global -ErrorAction SilentlyContinue
@@ -233,6 +249,79 @@ function deploy {
                 $numberOfInstances=$global:numberOfInstances
             }
 
+        $variable = Get-Variable -Name imagePublisher -Scope Global -ErrorAction SilentlyContinue
+        if(!$variable) {$global:imagePublisher=$null}
+
+        if(!$global:imagePublisher) {
+            if($JsonParams.parameters.imagePublisher.value.length -eq 0 -or $JsonParams.parameters.imagePublisher.value -eq "[prompt]" ) {
+               
+		        #Request for local account credentials
+                write-host -f Gray "Available imagePublisher"
+                $JsonTemp.parameters.imagePublisher.allowedValues 
+                 
+                $tries=1
+                $valid=$false
+                do {
+		        $imagePublisher = [string] $(Read-Host 'imagePublisher?') 
+               
+                    if(!$($JsonTemp.parameters.imagePublisher.allowedValues -match $imagePublisher)) {
+                        write-host -f red "$imagepublisher is not valid"
+                        $valid= $false
+                        $tries+=1
+                    }else {$valid=$true}
+                    if($tries -gt 3){return $false}
+                } until ($valid)
+
+                $global:imagePublisher=$imagePublisher  
+                $JsonParams.parameters.imagePublisher.value=$imagePublisher        
+                      
+            }  else {
+                $imagePublisher=$JsonParams.parameters.imagePublisher.value
+                $global:imagePublisher=$imagePublisher 
+            }
+        } else {
+                Write-Host -f Green "using Cached imagePublisher for $($imagePublisher)."	
+                $sku=$global:imagePublisher 
+                $JsonParams.parameters.imagePublisher.value=$imagePublisher
+        }
+
+                
+        $variable = Get-Variable -Name imageOffer -Scope Global -ErrorAction SilentlyContinue
+        if(!$variable) {$global:imageOffer=$null}
+
+        if(!$global:imageOffer) {
+            if($JsonParams.parameters.imageOffer.value.length -eq 0 -or $JsonParams.parameters.imageOffer.value -eq "[prompt]" ) {
+               
+		        #Request for local account credentials
+                write-host -f Gray "Available imageOffer"
+                $results=(Get-AzureRmVMImageOffer -Location $ResourceGroupLocation -PublisherName $imagePublisher) | select Publisher -ExpandProperty Offer | where { $_ -like '*Windows*' -or $_ -like '*SQL*' } 
+                $results 
+                $tries=1
+                $valid=$false
+                do {
+		        $imageOffer = [string] $(Read-Host 'Offer?') 
+
+                    if(!$($results -match $imageOffer)) {
+                        write-host -f red "$imageOffer is not valid"
+                        $valid= $false
+                        $tries+=1
+                    }else {$valid=$true}
+                    if($tries -gt 3){return $false}
+                 } until ($valid)
+
+                $global:imageOffer=$imageOffer  
+                $JsonParams.parameters.imageOffer.value=$imageOffer        
+                      
+            }  else {
+                $imageOffer=$JsonParams.parameters.imageOffer.value
+                $global:imageOffer=$imageOffer 
+            }
+        } else {
+                Write-Host -f Green "using Cached imageOffer for $($imageOffer)."	
+                $imageOffer=$global:imageOffer 
+                $JsonParams.parameters.imageOffer.value=$imageOffer
+        }
+
         $variable = Get-Variable -Name sku -Scope Global -ErrorAction SilentlyContinue
         if(!$variable) {$global:sku=$null}
 
@@ -241,8 +330,21 @@ function deploy {
                
 		        #Request for local account credentials
                 write-host -f Gray "Available SKU"
-                $JsonTemp.parameters.sku.allowedValues 
+                $results = (Get-AzureRmVMImageSku -Location $ResourceGroupLocation -PublisherName $imagePublisher -Offer $imageOffer) | select -ExpandProperty Skus 
+                $results 
+                $tries=1
+                $valid=$false
+                do {
 		        $sku = [string] $(Read-Host 'SKU?') 
+
+                    if(!$($results -match $sku)) {
+                        write-host -f red "$sku is not valid"
+                        $valid= $false
+                        $tries+=1
+                    }else {$valid=$true}
+                    if($tries -gt 3){return $false}
+                } until ($valid)
+
                 $global:sku=$sku  
                 $JsonParams.parameters.sku.value=$sku        
                       
@@ -279,6 +381,8 @@ function deploy {
                    "localAdminPassword"=$JsonParams.parameters.LocalAdminPassword.Value; 
                    "vmName"=$JsonParams.parameters.vmName.Value; 
                    "additionalAdmins"=$JsonParams.parameters.additionalAdmins.Value; 
+                   "imagePublisher"=$JsonParams.parameters.imagePublisher.Value; 
+                   "imageOffer"=$JsonParams.parameters.imageOffer.Value; 
                    "sku"=$JsonParams.parameters.sku.Value; 
                    "APPid"=$JsonParams.parameters.APPid.Value; 
                    "orgID"=$JsonParams.parameters.orgID.Value; 
@@ -294,9 +398,9 @@ function deploy {
 
             } catch {
          
-            write-host -f red $error[0]
-            $error.Clear()
-            return $false
+                write-host -f red $error[0]
+                $error.Clear()
+                return $false
             }
             Write-host -f Green 'Data loaded.'
             
@@ -307,12 +411,13 @@ function deploy {
                 Show-Cache
 
             write-host -f gray "################################################################"
-
+            if($PromptToContinue) {
                 $cont = read-host "Continue? (Y)es"
                 if($cont -ne 'Y') {
                     write-host -f Gray "Stopping."
                     return $false
                 }
+            }
                 $error.clear()
             ################################################################
             Write-host -f Gray 'Checking for deployments in progress...'
@@ -402,7 +507,7 @@ function deploy {
             try {
             
                 #Get the domain user's SID
-               Write-host -f Gray  "Peparing Remote machine: adding $($DomainCreds.UserName) to administrators and Configuring Winrm using$()..."
+               Write-host -f Gray  "Peparing Remote machine: adding $($DomainCreds.userName) to administrators and Configuring Winrm using$()..."
                 $DomainCredsString =  $DomainCreds.UserName
                 $index = $DomainCredsString.IndexOf('\')
              
@@ -412,8 +517,7 @@ function deploy {
                 $objUser = New-Object System.Security.Principal.NTAccount($domain, $alias)
                 $Sid = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
                 $strSid = $Sid.Value  
-
-
+        
                 #Add the Domain user to the administrators group on the new VM by SID 
                 $PrepareScript = {
                     try{
@@ -537,48 +641,7 @@ function deploy {
 
             }
 
-            if($error) {
-                write-host -f red $error
-                write-host -f red "Stopping due to errors"
-                $error.Clear()
-                return $false
-            }
-
-            if($InstallIIS) {
-                
-               get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
-               Write-host -f Gray  'Installing IIS'
-               $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $IISSetup -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
-                           
-            }
-
-            if($error) {
-                write-host -f red $error
-                write-host -f red "Stopping due to errors"
-                $error.Clear()
-                return $false
-            }
-
-            if($InstallWPI){
-               get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
-               Write-host -f Gray  'Installing Web Platform Installer(x64) 5.0'
-               $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $WebPlatformInstaller -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
-                           
-            }
-            if($error) {
-                write-host -f red $error
-                write-host -f red "Stopping due to errors"
-                $error.Clear()
-                return $false
-            }
-
-            if($InstallWebdeploy -and $InstallWPI){
-               get-WinRMStatus  $($AzureIp) -waitfor -creds $DomainCreds
-               Write-host -f Gray  'Installing Web Deploy 3.5 (requires WPI)'
-               $InstallResults= invoke-command -ComputerName $AzureIp -ScriptBlock $InstallWebDeploy35 -Credential $DomainCreds -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
-                           
-            }
-
+           
             if(!$error) {
                
                 write-host -f Green "$($ServerName + $i) is Completed Sucessfully. "
@@ -602,6 +665,7 @@ function deploy {
 
  $params = @{
                    "TemplateFile"="template.json"; 
+                   "TemplateParameterFile"="templateParam.json"; 
                    "SubscriptionId"="e4a74065-cc6c-4f56-b451-f07a3fde61de"; 
                    "ResourceGroupLocation"="central us"; 
                    "ResourceGroupName"="cptApp1";
@@ -612,6 +676,4 @@ deploy -TemplateFile $params.TemplateFile `
        -SubscriptionId $params.SubscriptionId `
        -ResourceGroupLocation $params.ResourceGroupLocation `
        -ResourceGroupName $params.ResourceGroupName `
-       -InstallIIS  `
-       -InstallWPI  `
-       -InstallWebdeploy  
+       -PromptToContinue

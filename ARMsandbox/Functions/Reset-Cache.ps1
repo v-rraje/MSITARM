@@ -15,6 +15,12 @@
      $variable = Get-Variable -Name LocalCreds -Scope Global -ErrorAction SilentlyContinue
      if($variable) {$global:LocalCreds=$null}
 
+     $variable = Get-Variable -Name imagePublisher -Scope Global -ErrorAction SilentlyContinue
+     if($variable) {$global:imagePublisher=$null}
+
+     $variable = Get-Variable -Name imageOffer -Scope Global -ErrorAction SilentlyContinue
+     if($variable) {$global:imageOffer=$null}
+
       $variable = Get-Variable -Name sku -Scope Global -ErrorAction SilentlyContinue
      if($variable) {$global:sku=$null}
 
