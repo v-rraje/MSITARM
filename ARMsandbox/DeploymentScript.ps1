@@ -651,7 +651,7 @@ function deploy {
             if(!$error) {
                
                 write-host -f Green "$($ServerName + $i) is Completed Sucessfully. "
-                return $true
+             
 
             }else {
                 write-host -f red "Stopping due to errors"

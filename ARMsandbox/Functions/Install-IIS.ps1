@@ -1,6 +1,6 @@
 ﻿#Requires -RunAsAdministrator
 
-function Setup-IIS {
+function Install-IIS {
        Param(
          [string] [Parameter(Mandatory=$true)] $AzureIp,
          [string] [Parameter(Mandatory=$true)] $SubscriptionId,
