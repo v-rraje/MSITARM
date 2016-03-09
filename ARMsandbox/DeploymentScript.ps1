@@ -119,6 +119,7 @@ function deploy {
               
                     Write-Host -f Green "using Cached Domain Credentials for $($DomainCreds.UserName)."
                     $DomainCreds = $global:DomainCreds
+                    $ValidCredential = $true
                 
             }else{
 
@@ -177,6 +178,9 @@ function deploy {
                 $validCredential=$true
              }else {
                 $validCredential=$false
+                 $localCreds=$null
+                 $global:localCreds=$null
+                 $JsonParams.parameters.localAdminUserName.value = ""
             }
  
             if($validCredential -eq $false){
@@ -660,13 +664,6 @@ function deploy {
             }
        }
 }
-
-
-#install basic Server
-#deploy -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" #-Verbose
-
-#install IIS Server
-#deploy -TemplateFile template.json -SubscriptionId e4a74065-cc6c-4f56-b451-f07a3fde61de -ResourceGroupLocation "central us" -ResourceGroupName "cptApp1" -InstallIIS -InstallWPI -InstallWebdeploy #-Verbose
 
 
  $params = @{
