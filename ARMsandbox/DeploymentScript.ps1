@@ -595,6 +595,10 @@ function deploy {
                             $error.Clear()
                             Return $false
                         }
+                } else {
+                    write-host -f red $error[0]
+                    $error.Clear()
+                    Return $false
                 }
 
             } else {
