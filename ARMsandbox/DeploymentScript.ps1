@@ -119,9 +119,9 @@ function deploy {
               
                     Write-Host -f Green "using Cached Domain Credentials for $($DomainCreds.UserName)."
                     $DomainCreds = $global:DomainCreds
-                    $ValidCredential = $true
                 
             }else{
+
 		        $DomainCreds = Get-Credential -Message 'DOMAIN ACCOUNT: Please enter the domain credentials'
             
                 Add-Type -AssemblyName System.DirectoryServices.AccountManagement
@@ -486,7 +486,7 @@ function deploy {
                     $ip = $args[0]
                     iex $("winrm set winrm/config/client `'@{TrustedHosts=`"$ip`"}`'")
                 }
-
+             
                 $result = Invoke-Command -ScriptBlock $LocalWinRMscript -ArgumentList $AzureIp
                         
             if(!$sleep){  # only need to wait once
@@ -507,7 +507,7 @@ function deploy {
             try {
             
                 #Get the domain user's SID
-               Write-host -f Gray  "Peparing Remote machine: adding $($DomainCreds.userName) to administrators and Configuring Winrm using$()..."
+               Write-host -f Gray  "Peparing Remote machine: adding $($DomainCreds.userName) to administrators and Configuring Winrm..."
                 $DomainCredsString =  $DomainCreds.UserName
                 $index = $DomainCredsString.IndexOf('\')
              
@@ -560,6 +560,7 @@ function deploy {
                     }
                 }
     
+                get-WinRMStatus  $($AzureIp) -waitfor -creds $LocalCreds
                 $ret= invoke-command -computername $AzureIp -ScriptBlock $PrepareScript -Credential $LocalCreds -ArgumentList $strSid,$LocalCreds.UserName,$($LocalCreds.GetNetworkCredential().Password) -SessionOption (New-PsSessionOption -SkipCACheck -SkipCNCheck)
                 $ret                
 
@@ -569,32 +570,33 @@ function deploy {
              }
 
             #only if the above completes succeffully do we want to join the domain.
-            if(!$error) { 
+                if(!$error) { 
 		        
-                try {
-                       #Get the OU based on DomainName
-                       $OU=Get-DomainOu $DomainName
+                    try {
+                           #Get the OU based on DomainName
+                           $OU=Get-DomainOu $DomainName
             
-                        if($OU -ne 'Other'){
+                            if($OU -ne 'Other'){
 
-                           Write-host -f Gray  "Joining computer to the '$($DomainName)' domain in the ITManaged OU..."
-    		                Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential $DomainCreds -LocalCredential $LocalCreds -OUPath $OU -Restart
-                            write-host -f Green "Added $($ServerName + $i) to '$($DomainName)'. ou=$OU "
-	                    }
-                        else{
+                               Write-host -f Gray  "Joining computer to the '$($DomainName)' domain in the ITManaged OU..."
+    		                    Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential $DomainCreds -LocalCredential $LocalCreds -OUPath $OU -Restart
+                                write-host -f Green "Added $($ServerName + $i) to '$($DomainName)'. ou=$OU "
+	                        }
+                            else{
             
 
-                            Write-host -f Gray "Joining computer to the '$($DomainName)' domain in the default OU..."
-    		                Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential $DomainCreds -LocalCredential $LocalCreds -Restart
-                            write-host -f Green "Added $($ServerName + $i) to '$($DomainName)'. "
-                        }	  
+                                Write-host -f Gray "Joining computer to the '$($DomainName)' domain in the default OU..."
+    		                    Add-Computer -ComputerName $AzureIp -DomainName $DomainName -Credential $DomainCreds -LocalCredential $LocalCreds -Restart
+                                write-host -f Green "Added $($ServerName + $i) to '$($DomainName)'. "
+                            }	  
             
-                    } catch {
-                        write-host -f red $error[0]
-                        $error.Clear()
-                        Return $false
-                    }
-            }
+                        } catch {
+                            write-host -f red $error[0]
+                            $error.Clear()
+                            Return $false
+                        }
+                }
+
             } else {
              write-host -f Green "$($ServerName + $i) is  Domain Joined. "
             }         

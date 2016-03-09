@@ -123,7 +123,7 @@
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "Subnet-2",
+      "defaultValue": "Subnet-1",
       "metadata": {
         "description": "Name for the subnet"
       }
