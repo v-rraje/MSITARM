@@ -19,3 +19,4 @@ if(!$Exists){
 
  install-module -name $moduleName -RequiredVersion $module.Version -force
 }
+Initialize-CloudMS

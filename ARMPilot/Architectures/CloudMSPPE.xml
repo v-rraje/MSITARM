@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<Configuration Environment="S" Version="3.96" Locked="False" SubScriptionID="e4a74065-cc6c-4f56-b451-f07a3fde61de"  >
+  <Domain>
+    <DomainAccount name="redmond\cptarm" />
+    <DomainPassword Password="Zer0Zer0" />
+  </Domain>
+  <Servers>
+    <Environment Type="pre-production">
+      <Server Name="ArmPilot-IIS-" ResourceGroupName="cptApp1" Location="CentralUS" IP="10.0.0.10" Role="AP" Size="Standard_a2" StorageName="SandboxStore" publisher="" Image="" SubNet="Subnet-1" ou="dc=mgmt,dc=msft,dc=net" Dom="Redmond" Domain="Redmond.corp.microsoft.com" DomAccount="Redmond\cptarm" DomPassword="" LocalAccount="cptarm" LocalPassword="" JoinToDomain="True" Status="" InstanceStatus="">
+        <Disks>
+          <Disk index="2" id="E" SizeinGB="500" />
+        </Disks>
+      </Server>
+     
+      <Server Name="ArmPilot-SQL-" ResourceGroupName="cptApp1" Location="CentralUS" IP="10.0.0.10" Role="AP" Size="Standard_a2" StorageName="SandboxStore" publisher="" Image="" SubNet="Subnet-1" ou="dc=mgmt,dc=msft,dc=net" Dom="Redmond" Domain="Redmond.corp.microsoft.com" DomAccount="Redmond\cptarm" DomPassword="" LocalAccount="cptarm" LocalPassword="" JoinToDomain="True" Status="" InstanceStatus="">
+        <Disks>
+          <Disk index="0" id="E" SizeinGB="500" />
+          <Disk index="1" id="H" SizeinGB="500" />
+	  <Disk index="2" id="O" SizeinGB="500" />
+          <Disk index="3" id="T" SizeinGB="500" />
+        </Disks>
+      </Server>
+    </Environment>
+  </Servers>
+</Configuration>
