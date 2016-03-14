@@ -6,13 +6,14 @@
   </Domain>
   <Servers>
     <Environment Type="pre-production">
-      <Server Name="ArmPilot-IIS-" ResourceGroupName="cptApp1" Location="CentralUS" IP="10.0.0.10" Role="AP" Size="Standard_a2" StorageName="SandboxStore" publisher="" Image="" SubNet="Subnet-1" ou="dc=mgmt,dc=msft,dc=net" Dom="Redmond" Domain="Redmond.corp.microsoft.com" DomAccount="Redmond\cptarm" DomPassword="" LocalAccount="cptarm" LocalPassword="" JoinToDomain="True" Status="" InstanceStatus="">
+     
+      <Server Name="ArmPilot-IIS-" ResourceGroupName="cptApp1" Location="CentralUS" IP="10.0.0.10" Role="AP" Size="Standard_a2" StorageName="SandboxStore" publisher="MicrosoftWindowsServer" Image="WindowsServer" Sku="2012-R2-Datacenter" Version="Latest" Network="" SubNet="Subnet-1" ou="dc=mgmt,dc=msft,dc=net" Dom="Redmond" Domain="Redmond.corp.microsoft.com" DomAccount="Redmond\cptarm" DomPassword="" LocalAccount="cptarm" LocalPassword="" JoinToDomain="True" Status="" InstanceStatus="">
         <Disks>
           <Disk index="2" id="E" SizeinGB="500" />
         </Disks>
       </Server>
      
-      <Server Name="ArmPilot-SQL-" ResourceGroupName="cptApp1" Location="CentralUS" IP="10.0.0.10" Role="AP" Size="Standard_a2" StorageName="SandboxStore" publisher="" Image="" SubNet="Subnet-1" ou="dc=mgmt,dc=msft,dc=net" Dom="Redmond" Domain="Redmond.corp.microsoft.com" DomAccount="Redmond\cptarm" DomPassword="" LocalAccount="cptarm" LocalPassword="" JoinToDomain="True" Status="" InstanceStatus="">
+      <Server Name="ArmPilot-SQL-" ResourceGroupName="cptApp1" Location="CentralUS" IP="10.0.0.10" Role="AP" Size="Standard_a2" StorageName="SandboxStore" publisher="MicrosoftSQLServer" Image="SQL2012SP2-WS2012R2" Sku="Enterprise" Version="Latest" Network="" SubNet="Subnet-1" ou="dc=mgmt,dc=msft,dc=net" Dom="Redmond" Domain="Redmond.corp.microsoft.com" DomAccount="Redmond\cptarm" DomPassword="" LocalAccount="cptarm" LocalPassword="" JoinToDomain="True" Status="" InstanceStatus="">
         <Disks>
           <Disk index="0" id="E" SizeinGB="500" />
           <Disk index="1" id="H" SizeinGB="500" />
