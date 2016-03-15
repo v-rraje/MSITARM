@@ -35,7 +35,6 @@ $serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
                         -SubscriptionId $params.SubscriptionId `
                         -ResourceGroupLocation $params.ResourceGroupLocation `
                         -ResourceGroupName $params.ResourceGroupName `
-                        -Vm "MyArmTestVM" `
                         -creds $domainUserCredential 
 
 write-host "-----------------------------"
