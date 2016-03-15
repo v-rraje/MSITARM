@@ -2,7 +2,7 @@
 
 # Image SQL
 
-import-module cloudms
+#import-module cloudms
 
 
     $params = @{
@@ -26,6 +26,7 @@ $domainUserCredential = New-Object System.Management.Automation.PSCredential -Ar
 
  $LocalUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $u,$p
 
+if(!$ServersBuilt) {
 write-host "-----------------------------"
 Write-host "Invoke-Arm"            
 write-host "-----------------------------"                 
@@ -36,6 +37,7 @@ $serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
                         -ResourceGroupLocation $params.ResourceGroupLocation `
                         -ResourceGroupName $params.ResourceGroupName `
                         -creds $domainUserCredential 
+}
 
 write-host "-----------------------------"
 Write-host "Install-VMDomainJoin"
@@ -51,9 +53,10 @@ Install-VMDomainJoin -Servers $serversBuilt `
 write-host "-----------------------------"
 write-host "Install-AdditionalAdmin"
 write-host "-----------------------------"
-
+write-host $serversBuilt
 Install-AdditionalAdmins -Servers $serversBuilt `
                          -SubscriptionId $params.SubscriptionId `
                          -resourceGroupName $params.ResourceGroupName `
                          -creds $domainUserCredential `
-                         -AdditionalAdminList $TempParams.additionalAdmins
+                         -AdditionalAdminList $TempParams.additionalAdmins 
+                         
