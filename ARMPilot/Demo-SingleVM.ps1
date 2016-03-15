@@ -23,6 +23,10 @@ $domainUserCredential = New-Object System.Management.Automation.PSCredential -Ar
  $params.Domain = $TempParams.domainName
 
  $LocalUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $u,$p
+
+write-host "-----------------------------"
+Write-host "Invoke-Arm"            
+write-host "-----------------------------"
                  
 #Enter your name and specifications for the IIS server.
 $serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
@@ -33,12 +37,21 @@ $serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
                         -Vm "MyArmTestVM" `
                         -creds $domainUserCredential 
 
+write-host "-----------------------------"
+Write-host "Install-VMDomainJoin"
+write-host "-----------------------------"
+
 Install-VMDomainJoin -Servers $serversBuilt `
                         -SubscriptionId $params.SubscriptionId `
                         -resourceGroupName $params.ResourceGroupName  `
                         -DomainCredential $domainUserCredential `
                         -LocalCredential $localUserCredential `
                         -Domain $params.domain
+
+
+write-host "-----------------------------"
+write-host "Install-AdditionalAdmin"
+write-host "-----------------------------"
 
 Install-AdditionalAdmins -Servers $serversBuilt `
                          -SubscriptionId $params.SubscriptionId `

@@ -19,13 +19,16 @@ $username= Read-Host -Prompt "Domain UserName (domainname\alias)"
 $password =Read-Host -Prompt "Password for $username" -AsSecureString
 $domainUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $username, $password
 
- $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile -vm "MyArmTestVM"
+ $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile 
  $u=$([string] $TempParams.localAdminUserName)
  $p= ConvertTo-SecureString $([string] $TempParams.localAdminPassword) -asplaintext -force
  $params.Domain = $TempParams.domainName
 
  $LocalUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $u,$p
-                 
+
+write-host "-----------------------------"
+Write-host "Invoke-Arm"            
+write-host "-----------------------------"                 
 #Enter your name and specifications for the IIS server.
 $serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
                         -TemplateParameterFile $params.TemplateParameterFile `
@@ -35,12 +38,20 @@ $serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
                         -Vm "MyArmTestVM" `
                         -creds $domainUserCredential 
 
+write-host "-----------------------------"
+Write-host "Install-VMDomainJoin"
+write-host "-----------------------------"
+
 Install-VMDomainJoin -Servers $serversBuilt `
                         -SubscriptionId $params.SubscriptionId `
                         -resourceGroupName $params.ResourceGroupName  `
                         -DomainCredential $domainUserCredential `
                         -LocalCredential $localUserCredential `
                         -Domain $params.domain
+
+write-host "-----------------------------"
+write-host "Install-AdditionalAdmin"
+write-host "-----------------------------"
 
 Install-AdditionalAdmins -Servers $serversBuilt `
                          -SubscriptionId $params.SubscriptionId `
