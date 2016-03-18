@@ -5,10 +5,10 @@ $params = @{
                    "TemplateParameterFile"="C:\Azure\Repos\SI-HDC-CPT-ARM\ARMPilot\templateParams.json"; 
                    "DscConfigurationPath" ="C:\Azure\Repos\SI-HDC-CPT-ARM\ARMPilot\DSC\DeployWebServer"; 
                    "SubscriptionId"       ="e4a74065-cc6c-4f56-b451-f07a3fde61de"; 
-                   "ResourceGroupLocation"="central us"; 
+                   "ResourceGroupLocation"="west us"; 
                    "ResourceGroupName"    ="cptApp1";
                    "Domain"               ="Redmond.corp.microsoft.com"
-                   "VmName"               ="figaro-11"
+                   "VmName"               ="noodleman-13"
                   }
 
 #import-module cloudms
@@ -43,16 +43,16 @@ write-host "-----------------------------"
 Write-host "Install-VMDomainJoin"
 write-host "-----------------------------"
 
-Install-VMDomainJoin    -Servers $serversBuilt `
+Install-VMDomainJoin -Servers $serversBuilt `
                         -SubscriptionId $params.SubscriptionId `
                         -resourceGroupName $params.ResourceGroupName  `
                         -DomainCredential $domainUserCredential `
                         -LocalCredential $localUserCredential `
-                        -Domain $params.Domain
+                        -Domain $params.domain
 
 
 write-host "-----------------------------"
-write-host "Install-AdditionalAdmins"
+write-host "Install-AdditionalAdmin"
 write-host "-----------------------------"
 
 Install-AdditionalAdmins -Servers $serversBuilt `
@@ -66,17 +66,15 @@ write-host "-----------------------------"
 write-host "Install-IIS via DSC"
 write-host "-----------------------------"
 
-if(Test-Path -Path $($params.DscConfigurationPath + "\localhost.mof")){Remove-Item -Path $($params.DscConfigurationPath + "\" + $params.VmName + ".mof")}
-Copy-Item -Path $($params.DscConfigurationPath + "\localhost.mof") -Destination $($params.DscConfigurationPath + "\" + $params.VmName + ".mof")
+$ip = (Get-AzureRmNetworkInterface -Name ($params.VmName + 'nic1') -ResourceGroupName $params.ResourceGroupName).IpConfigurations[0].PrivateIpAddress
+Remove-Item -Path $($params.DscConfigurationPath + "\" + $ip + ".mof") -ErrorAction SilentlyContinue
+Copy-Item -Path $($params.DscConfigurationPath + "\localhost.mof") -Destination $($params.DscConfigurationPath + "\" + $ip + ".mof")
 try{
-    $ErrorActionPreference = "Stop"
-    $Session = New-CimSession -ComputerName $params.VmName -Credential $domainUserCredential
-    $Config  = Start-DscConfiguration -Path $params.DscConfigurationPath -CimSession $Session -Wait -Force
+    $Session = New-CimSession -ComputerName $ip -Credential $domainUserCredential -ErrorAction Stop
+    $Config  = Start-DscConfiguration -Path $params.DscConfigurationPath -CimSession $Session -Wait -Force -ErrorAction Stop
+    write-host -Fore Green 'Complete.'
 }
 catch{
-    Error}
-finally{
-    $ErrorActionPreference = "Continue"
-    $error[0]
+        $error[0]
 }
-Remove-Item -Path $($params.DscConfigurationPath + "\" + $params.VmName + ".mof") 
+Remove-Item -Path $($params.DscConfigurationPath + "\" + $ip + ".mof") -ErrorAction SilentlyContinue
