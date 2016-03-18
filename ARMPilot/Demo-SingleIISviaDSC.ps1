@@ -8,7 +8,7 @@ $params = @{
                    "ResourceGroupLocation"="west us"; 
                    "ResourceGroupName"    ="cptApp1";
                    "Domain"               ="Redmond.corp.microsoft.com"
-                   "VmName"               ="noodleman-11"
+                   "VmName"               ="noodleman-13"
                   }
 
 #import-module cloudms
@@ -72,6 +72,7 @@ Copy-Item -Path $($params.DscConfigurationPath + "\localhost.mof") -Destination 
 try{
     $Session = New-CimSession -ComputerName $ip -Credential $domainUserCredential -ErrorAction Stop
     $Config  = Start-DscConfiguration -Path $params.DscConfigurationPath -CimSession $Session -Wait -Force -ErrorAction Stop
+    write-host -Fore Green 'Complete.'
 }
 catch{
         $error[0]
