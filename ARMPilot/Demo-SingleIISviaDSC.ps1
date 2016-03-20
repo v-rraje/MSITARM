@@ -1,4 +1,4 @@
-# Scenario - Build 1 by Name
+# Scenario - Build a single web server using DSC to install IIS
 
 $params = @{
                    "TemplateFile"         ="C:\Azure\Repos\SI-HDC-CPT-ARM\ARMPilot\template-SingleVM.json"; 
@@ -8,7 +8,7 @@ $params = @{
                    "ResourceGroupLocation"="west us"; 
                    "ResourceGroupName"    ="cptApp1";
                    "Domain"               ="Redmond.corp.microsoft.com"
-                   "VmName"               ="noodleman-13"
+                   "VmName"               ="cimcim-55"
                   }
 
 #import-module cloudms
