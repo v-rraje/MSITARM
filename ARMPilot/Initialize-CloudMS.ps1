@@ -16,7 +16,7 @@ $Exists=Get-PSRepository | ? {$_.SourceLocation -match "co1-cu-sjobs01"}
 
 if(!$Exists){
 
-	$ret=Register-PSRepository -Name $repoName -SourceLocation \\co1-cu-sjobs01\e$\PackageRoot -PublishLocation http://co1-cu-sjobs01/ -InstallationPolicy Trusted -ScriptSourceLocation \\co1-cu-sjobs01\e$\PackageRoot
+	$ret=Register-PSRepository -Name $repoName -SourceLocation \\co1-cu-sjobs01\CloudMSPSRepository -PublishLocation http://co1-cu-sjobs01/ -InstallationPolicy Trusted -ScriptSourceLocation \\co1-cu-sjobs01\CloudMSPSRepository
   
 } else {
 	$repoName = $exists.name
