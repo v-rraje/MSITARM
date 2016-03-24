@@ -48,7 +48,8 @@ Install-VMDomainJoin -Servers $serversBuilt `
                         -resourceGroupName $params.ResourceGroupName  `
                         -DomainCredential $domainUserCredential `
                         -LocalCredential $localUserCredential `
-                        -Domain $params.domain
+                        -Domain $params.domain `
+                        -isSQLServerImage
 
 write-host "-----------------------------"
 write-host "Install-AdditionalAdmin"
