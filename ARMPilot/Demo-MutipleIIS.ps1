@@ -57,3 +57,14 @@ Install-AdditionalAdmins -Servers $serversBuilt `
                          -resourceGroupName $params.ResourceGroupName `
                          -creds $domainUserCredential `
                          -AdditionalAdminList $TempParams.additionalAdmins
+
+
+write-host "-----------------------------"
+write-host "Install-IIS"
+write-host "-----------------------------"
+
+Install-iis -Servers $serversBuilt `
+            -SubscriptionId $params.SubscriptionId `
+            -resourceGroupName $params.ResourceGroupName `
+            -creds $domainUserCredential `
+            -installIIS -InstallWebdeploy -installwpi
