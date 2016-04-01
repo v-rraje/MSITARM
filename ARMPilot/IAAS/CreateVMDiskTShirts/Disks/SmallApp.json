@@ -1,0 +1,46 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string",
+            "defaultValue": "",
+            "minLength": 1,
+            "metadata": {
+                "description": "vmName for the Virtual Machine."
+            }
+        },
+        "userImageStorageAccountName": {
+            "type": "string",
+            "defaultValue": "",
+            "minLength": 1,
+            "metadata": {
+                "description": "Local storageaccount for the Virtual Machine."
+            }
+        }
+
+    },
+    "variables": {
+        "Disk1": "E",
+        "vmStorageAccountContainerName": "vhds",
+        "sizeOfDisk1InGB": 500,
+        "dataDisk1": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'))]"
+    },
+    "resources": [
+        {
+            "dataDisks": [
+                {
+                    "name": "datadisk1",
+                    "diskSizeGB": "[variables('sizeOfDisk1InGB')]",
+                    "lun": 0,
+                    "vhd": {
+                        "Uri": "[concat(variables('dataDisk1'),'','dataDisk1.vhd')]"
+                    },
+                    "createOption": "Empty"
+                },
+               
+            ]
+        }
+        ]
+    }
+}

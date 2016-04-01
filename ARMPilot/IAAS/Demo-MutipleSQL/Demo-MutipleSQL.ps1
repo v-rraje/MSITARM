@@ -6,8 +6,8 @@
 
 
     $params = @{
-                "TemplateFile"="C:\Users\trworth\Source\Repos\SI-HDC-CPT-ARM\ARMPilot\templateSQL.json"; 
-                "TemplateParameterFile"="C:\Users\trworth\Source\Repos\SI-HDC-CPT-ARM\ARMPilot\templateSQLParams.json"; 
+                "TemplateFile"=".\templateSQL.json"; 
+                "TemplateParameterFile"=".\templateSQLParams.json"; 
                 "SubscriptionId"="e4a74065-cc6c-4f56-b451-f07a3fde61de"; 
                 "ResourceGroupLocation"="central us"; 
                 "ResourceGroupName"="cptApp1";

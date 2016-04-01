@@ -1,0 +1,318 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "localAdminUserName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Username for the Virtual Machine."
+      }
+    },
+    "localAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Password for the Virtual Machine."
+      }
+    },
+    "domainAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Username for domain joining"
+      }
+    },
+    "domainAdminPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "numberOfInstances": {
+      "type": "int", 
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine"
+      }
+    },
+    "vnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "allowedValues": ["MicrosoftWindowsServer","MicrosoftSQLServer"],
+      "metadata": {
+        "description": "OS Image Publisher"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "OS Image Offer"
+      }
+    },
+    "sku": {
+      "type": "string",
+       "minLength": 1,
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "The Storage Account type"
+      }
+    },
+    "userImageStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Storage Account where the VM image(s) will be created"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "redmond.corp.microsoft.com",
+      "metadata": {
+        "description": "The FQDN of the AD domain"
+      }
+    },
+    "appID": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "appID tag for the Virtual Machine."
+      }
+    },
+    "orgID": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "orgID tag for the Virtual Machine."
+      }
+    },
+    "env": {
+      "type": "string",
+      "minLength": 1,
+      "allowedValues": [
+        "dev",
+        "test",
+        "prod"
+      ],
+      "metadata": {
+        "description": "environment tag for the Virtual Machine."
+      }
+    },
+    "snoozeDate": {
+      "type": "string",
+      "metadata": {
+        "description": "Snooze date"
+      }
+    },
+    "additionalAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Additional admins that can login to the VMs"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "Subnet-1",
+      "metadata": {
+        "description": "Name for the subnet"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24 or 10.107.89.192/26)"
+      }
+    },
+    "ouPath": {
+      "type": "string",
+      "defaultValue": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "imageOffer": "[parameters('imageOffer')]",
+    "imagePublisher": "[parameters('imagePublisher')]",
+    "sku": "[parameters('sku')]",
+    "nicName": "[parameters('vmName')]",
+    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk')]",
+    "storageAccountType": "[parameters('storageAccountType')]",
+    "subnetName": "[parameters('subnetName')]",
+    "subnetPrefix": "[parameters('subnetPrefix')]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
+    "autologonContent": "[concat('<AutoLogon><Password><Value>',parameters('localAdminPassword'),'</Value></Password><Domain>.</Domain><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>',parameters('localAdminUserName'),'</Username></AutoLogon>')]",
+    "firstLogonCommands": "<FirstLogonCommands><SynchronousCommand><CommandLine>netsh advfirewall firewall set rule group=&quot;Windows Management Instrumentation (WMI)&quot; new enable=Yes</CommandLine><Description>Update Firewall Settings</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>logoff.exe</CommandLine><Description>Logoff</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>",
+    "vmName": "[parameters('vmName')]",
+    "vmSize": "[parameters('vmSize')]",
+    "vnetId": "[parameters('vnetId')]",
+    "customScriptStorageAccountName": "sdoscriptslibrarydev",
+    "customScriptFileUri": "https://sdoscriptslibrarydev.blob.core.windows.net/scripts/sdonewmachine.ps1",
+    "customScriptFileToRun": "sdonewmachine.ps1",
+    "domainJoinOptions": 3,
+    "vmExtensionName": "DomainJoin.ps1",
+    "modulesUrl": "http://sdoscriptslibrarydev.blob.core.windows.net/scripts/DomainJoin.ps1.zip",
+    "commandToExecute": "[concat('powershell.exe -File', ' ', variables('customScriptFileToRun'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'),'','nic1')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface",
+		"appID": "[parameters('appID')]",
+        "orgID": "[parameters('orgID')]",
+        "env": "[parameters('env')]",
+        "snoozeDate": "[parameters('snoozeDate')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmName'),'')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachine",
+        "appID": "[parameters('appID')]",
+        "orgID": "[parameters('orgID')]",
+        "env": "[parameters('env')]",
+        "snoozeDate": "[parameters('snoozeDate')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),'','nic1')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmName'),'')]",
+          "adminUsername": "[parameters('localAdminUserName')]",
+          "adminPassword": "[parameters('localAdminPassword')]",
+          "windowsConfiguration": {
+            "additionalUnattendContent": [
+              {
+                "passName": "oobesystem",
+                "componentName": "Microsoft-Windows-Shell-Setup",
+                "settingName": "Autologon",
+                "content": "[variables('autologonContent')]"
+              },
+              {
+                "passName": "oobesystem",
+                "componentName": "Microsoft-Windows-Shell-Setup",
+                "settingName": "FirstLogonCommands",
+                "content": "[variables('firstLogonCommands')]"
+              }
+            ],
+            "winRM": {
+              "listeners": [
+                {
+                  "protocol": "Http"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('sku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "name": "[concat(variables('vmName'),'','-osDisk')]",
+            "vhd": {
+              "uri": "[concat(variables('osDiskVhdName'),'','.vhd')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),'','nic1'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.8",
+        "settings": {
+          "ModulesUrl": "[variables('modulesUrl')]",
+          "SasToken": "",
+          "ConfigurationFunction": "DomainJoin.ps1\\DomainJoin",
+          "Properties": {
+            "Domain": "[parameters('DomainName')]",
+            "Admincreds": {
+              "UserName": "[parameters('domainAdminUserName')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
+            },
+            "AdditionalAdmins": "[parameters('AdditionalAdmins')]",
+            "OU": "[parameters('ouPath')]"
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('domainAdminPassword')]"
+          }
+        }
+      }
+    }
+  ]
+}
