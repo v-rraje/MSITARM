@@ -25,12 +25,6 @@
         "description": "Name for the Virtual Machine."
       }
     },
-    "vmSize": {
-      "type": "string",
-      "metadata": {
-        "description": "Size of the Virtual Machine"
-      }
-    },
     "vnetId": {
       "type": "string",
       "metadata": {
@@ -108,12 +102,7 @@
         "description": "Snooze date"
       }
     },
-    "numberOfInstances": {
-      "type": "int", 
-      "metadata": {
-        "description": "Number of VMs to deploy"
-      }
-    },
+
     "additionalAdmins": {
       "type": "string",
       "defaultValue": "",
@@ -142,6 +131,18 @@
         "description": "The Organizational Unit the VM will join"
       }
     
+    },
+    "tshirtSize": {
+      "type": "string",
+      "defaultValue": "Large",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large"
+      ],
+      "metadata": {
+        "Description": "T-shirt size of the VM"
+      }
     }
   },
   "variables": {
@@ -158,11 +159,44 @@
     "autologonContent": "[concat('<AutoLogon><Password><Value>',parameters('localAdminPassword'),'</Value></Password><Domain>.</Domain><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>',parameters('localAdminUserName'),'</Username></AutoLogon>')]",
     "firstLogonCommands": "<FirstLogonCommands><SynchronousCommand><CommandLine>netsh advfirewall firewall set rule group=&quot;Windows Management Instrumentation (WMI)&quot; new enable=Yes</CommandLine><Description>Update Firewall Settings</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>logoff.exe</CommandLine><Description>Logoff</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>",
     "vmName": "[parameters('vmName')]",
-    "vmSize": "[parameters('vmSize')]",
     "vnetId": "[parameters('vnetId')]",
     "vmStorageAccountContainerName": "vhds",
-    "diskSizeGB": 200,
-    "diskCaching": "None"
+     "modulesUrl": "http://cptteamb.blob.core.windows.net/pilottemplates/",
+    "tshirtSizeLarge": {
+      "vmSize": "Standard_A2",
+      "diskCount": 4,
+      "diskSize": 200,
+      "vmTemplate": "[concat(variables('modulesUrl'), 'Template-SingleVM.json')]",
+      "vmDiskTemplate": "[concat(variables('modulesUrl'), 'LargeSQL.json')]",
+      "vmCount": 1
+    },
+    "tshirtSizeMedium": {
+      "vmSize": "Standard_A2",
+      "diskCount": 2,
+      "diskSize": 200,
+      "vmTemplate": "[concat(variables('modulesUrl'), 'Template-SingleVM.json')]",
+      "vmDiskTemplate": "[concat(variables('modulesUrl'), 'MediumSQL.json')]",
+      "vmCount": 1
+    },
+    "tshirtSizeSmall": {
+      "vmSize": "Standard_A2",
+      "diskCount": 1,
+      "diskCaching": "none",
+      "diskSizeGB": 200,
+      "vmTemplate": "[concat(variables('modulesUrl'), 'Template-SingleVM.json')]",
+      "vmDiskTemplate": "[concat(variables('modulesUrl'), 'SmallSQL.json')]",
+      "vmCount": 1
+    },
+    "tshirtSizeStandard": {
+      "vmSize": "Standard_A2",
+      "diskCount": 1,
+      "diskCaching": "none",
+      "diskSizeGB": 200,
+      "vmTemplate": "[concat(variables('modulesUrl'), 'Template-SingleVM.json')]",
+      "vmDiskTemplate": "[concat(variables('modulesUrl'), 'SmallSQL.json')]",
+      "vmCount": 1
+    },
+    "tshirtSize": "[variables(concat('tshirtSize', parameters('tshirtSize')))]"
     },
   "resources": [
      { 
@@ -177,7 +211,7 @@
              }, 
              "parameters": {
               "vmName": { "value": "[parameters('vmName')]" },
-              "diskCaching": { "value": "[variables('diskCaching')]" },
+              "diskCaching": { "value": "[variables('tshirtSizediskCaching')]" },
                "diskSizeGB": { "value": "[variables('diskSizeGB')]" },
                "userImageStorageAccountName":  { "value": "[parameters('userImageStorageAccountName')]" }
              } 
@@ -222,11 +256,12 @@
         "snoozeDate": "[parameters('snoozeDate')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),'','nic1')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),'','nic1')]",
+        "[concat('Microsoft.Resources/deployments/', 'DiskTemplate')]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[variables('tshirtSize').vmSize]"
         },
         "osProfile": {
           "computerName": "[concat(variables('vmName'),'')]",

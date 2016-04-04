@@ -1,6 +1,11 @@
 ﻿
 # Scenario - Build 1 IIS server by namepart
-#import-module cloudms
+if (Get-Module -ListAvailable -Name CloudMS) {
+    import-module cloudms
+} else {
+    Write-Host "Module CloudMS does not exist, you must instal it first."
+    break;
+}
 
 # Image IIS
 
@@ -11,6 +16,7 @@
                    "ResourceGroupLocation"="central us"; 
                    "ResourceGroupName"="cptApp1";
                    "Domain"="Redmond.corp.microsoft.com"
+                   "vmName"="myarmtestIISVM-"
                   }
 
 #Get domain credentials that need to be used for domain joining the VMs
@@ -18,7 +24,7 @@ $username= Read-Host -Prompt "Domain UserName (domainname\alias)"
 $password =Read-Host -Prompt "Password for $username" -AsSecureString
 $domainUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $username, $password
 
- $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile
+ $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile  -vm $params.vmName
  $u=$([string] $TempParams.localAdminUserName)
  $p= ConvertTo-SecureString $([string] $TempParams.localAdminPassword) -asplaintext -force
  $params.Domain = $TempParams.domainName
@@ -35,6 +41,7 @@ $serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
                         -SubscriptionId $params.SubscriptionId `
                         -ResourceGroupLocation $params.ResourceGroupLocation `
                         -ResourceGroupName $params.ResourceGroupName `
+                        -Vm $params.vmName `
                         -creds $domainUserCredential 
 
 write-host "-----------------------------"

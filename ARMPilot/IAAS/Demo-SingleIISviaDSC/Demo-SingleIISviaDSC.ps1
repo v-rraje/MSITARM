@@ -11,7 +11,12 @@ $params = @{
                    "VmName"               ="cimcim-55"
                   }
 
-#import-module cloudms
+if (Get-Module -ListAvailable -Name CloudMS) {
+    import-module cloudms
+} else {
+    Write-Host "Module CloudMS does not exist, you must instal it first."
+    break;
+}
 
 # Image 
 #Get domain credentials that need to be used for domain joining the VMs

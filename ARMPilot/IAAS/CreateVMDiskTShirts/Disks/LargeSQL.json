@@ -110,8 +110,8 @@
   },
     "outputs": {
       "dataDiskArray": {
-        "type": "array",
-        "value": "[variables('disksArray')[4]]"
+        "value": "[variables('disksArray')[4]]",
+        "type": "array"
       }
     },
  "resources": [ ]

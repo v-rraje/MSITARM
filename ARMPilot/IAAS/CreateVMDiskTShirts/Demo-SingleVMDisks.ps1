@@ -7,7 +7,7 @@ $params = @{
                    "ResourceGroupLocation"="central us"; 
                    "ResourceGroupName"="cptApp1";
                    "Domain"="Redmond.corp.microsoft.com";
-                   "vmName"="trworthDisksVM"
+                   "vmName"="trworthDisksVM1"
                   }
 
 #import-module cloudms
@@ -18,7 +18,7 @@ $username= Read-Host -Prompt "Domain UserName (domainname\alias)"
 $password =Read-Host -Prompt "Password for $username" -AsSecureString
 $domainUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $username, $password
 
- $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile -vm "MyArmTestVM"
+ $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile -vm $params.vmName
  $u=$([string] $TempParams.localAdminUserName)
  $p= ConvertTo-SecureString $([string] $TempParams.localAdminPassword) -asplaintext -force
  $params.Domain = $TempParams.domainName

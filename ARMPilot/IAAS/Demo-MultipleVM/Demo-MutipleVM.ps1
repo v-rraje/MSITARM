@@ -1,7 +1,12 @@
 ﻿
 # Scenario - Build mulitple Servers by namepart
-#import-module cloudms
-
+#
+if (Get-Module -ListAvailable -Name CloudMS) {
+    import-module cloudms
+} else {
+    Write-Host "Module CloudMS does not exist, you must instal it first."
+    break;
+}
 
 # Image IIS
 
@@ -12,6 +17,7 @@
                    "ResourceGroupLocation"="central us"; 
                    "ResourceGroupName"="cptApp1";
                    "Domain"="Redmond.corp.microsoft.com"
+                   "vmName"="myarmtestVM-"
                   }
 
      #Get domain credentials that need to be used for domain joining the VMs
@@ -20,7 +26,7 @@
     $domainUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $username, $password
 
     #import templates to get data
-    $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile 
+    $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile  -vm $params.vmName
     $u=$([string] $TempParams.localAdminUserName)
     $p= ConvertTo-SecureString $([string] $TempParams.localAdminPassword) -asplaintext -force
     $params.Domain = $TempParams.domainName
@@ -36,7 +42,7 @@ write-host "-----------------------------"
                              -SubscriptionId $params.SubscriptionId `
                              -ResourceGroupLocation $params.ResourceGroupLocation `
                              -ResourceGroupName $params.ResourceGroupName `
-                             -Vm "MyArmTestVM" `
+                             -Vm $params.vmName `
                              -creds $domainUserCredential 
 
 write-host "-----------------------------"

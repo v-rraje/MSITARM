@@ -155,7 +155,6 @@
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
-    
     }
   },
   "variables": {
@@ -299,9 +298,13 @@
           "ConfigurationFunction": "DomainJoin.ps1\\DomainJoin",
           "Properties": {
             "Domain": "[parameters('DomainName')]",
-            "Admincreds": {
+            "LocalAccount": {
+              "UserName": "[parameters('localAdminUserName')]",
+              "Password": "PrivateSettingsRef:localPassword"
+            },
+            "DomainAccount": {
               "UserName": "[parameters('domainAdminUserName')]",
-              "Password": "PrivateSettingsRef:AdminPassword"
+              "Password": "PrivateSettingsRef:DomainPassword"
             },
             "AdditionalAdmins": "[parameters('AdditionalAdmins')]",
             "OU": "[parameters('ouPath')]"
@@ -309,7 +312,8 @@
         },
         "protectedSettings": {
           "Items": {
-            "AdminPassword": "[parameters('domainAdminPassword')]"
+            "LocalPassword": "[parameters('localAdminUserName')]",
+            "DomainPassword": "[parameters('domainAdminPassword')]"
           }
         }
       }

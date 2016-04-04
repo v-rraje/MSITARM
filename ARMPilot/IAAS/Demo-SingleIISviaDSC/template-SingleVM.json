@@ -18,20 +18,6 @@
         "description": "Local Password for the Virtual Machine."
       }
     },
-    "domainAdminUserName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Username for domain joining"
-      }
-    },
-    "domainAdminPassword": {
-      "type": "securestring",
-      "minLength": 1,
-      "metadata": {
-        "description": "Password for domain joining"
-      }
-    },
     "vmName": {
       "type": "string",
       "minLength": 3,
@@ -173,11 +159,7 @@
     "firstLogonCommands": "<FirstLogonCommands><SynchronousCommand><CommandLine>netsh advfirewall firewall set rule group=&quot;Windows Management Instrumentation (WMI)&quot; new enable=Yes</CommandLine><Description>Update Firewall Settings</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>logoff.exe</CommandLine><Description>Logoff</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>",
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
-    "vnetId": "[parameters('vnetId')]",
-    "customScriptStorageAccountName": "sdoscriptslibrarydev",
-    "customScriptFileUri": "https://sdoscriptslibrarydev.blob.core.windows.net/scripts/sdonewmachine.ps1",
-    "customScriptFileToRun": "sdonewmachine.ps1",
-    "domainJoinOptions": 3
+    "vnetId": "[parameters('vnetId')]"
   },
   "resources": [
      {
@@ -254,54 +236,29 @@
           }
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('sku')]",
-            "version": "latest"
+              "imageReference": {
+              "publisher": "[variables('imagePublisher')]",
+              "offer": "[variables('imageOffer')]",
+              "sku": "[parameters('sku')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "caching": "ReadWrite",
+              "createOption": "FromImage",
+              "name": "[concat(variables('vmName'),'','-osDisk')]",
+              "vhd": {
+                "uri": "[concat(variables('osDiskVhdName'),'','.vhd')]"
+              }
+            }
           },
-          "osDisk": {
-            "caching": "ReadWrite",
-            "createOption": "FromImage",
-            "name": "[concat(variables('vmName'),'','-osDisk')]",
-            "vhd": {
-              "uri": "[concat(variables('osDiskVhdName'),'','.vhd')]"
-            }
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),'','nic1'))]"
+              }
+            ]
           }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),'','nic1'))]"
-            }
-          ]
         }
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/joindomain')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "JsonADDomainExtension",
-        "typeHandlerVersion": "1.0",
-        "settings": {
-          "Name": "[parameters('domainName')]",
-          "OUPath": "[parameters('ouPath')]",
-          "User": "[parameters('domainAdminUserName')]",
-          "Restart": "true",
-          "Options": "[variables('domainJoinOptions')]"
-        },
-        "protectedsettings": {
-          "Password": "[parameters('domainAdminPassword')]"
-        }
-      }
- 
     }
   ]
 }

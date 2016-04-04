@@ -164,7 +164,7 @@
   "resources": [
      {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'),copyindex(),'nic1')]",
+      "name": "[concat(variables('nicName'),copyindex(1),'nic1')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -194,7 +194,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'),copyindex())]",
+      "name": "[concat(variables('vmName'),copyindex(1))]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -209,14 +209,14 @@
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex(),'nic1')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex(1),'nic1')]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'),copyindex())]",
+          "computerName": "[concat(variables('vmName'),copyindex(1))]",
           "adminUsername": "[parameters('localAdminUserName')]",
           "adminPassword": "[parameters('localAdminPassword')]",
           "windowsConfiguration": {
@@ -253,16 +253,16 @@
             "osDisk": {
               "caching": "ReadWrite",
               "createOption": "FromImage",
-              "name": "[concat(variables('vmName'),copyindex(),'-osDisk')]",
+              "name": "[concat(variables('vmName'),copyindex(1),'-osDisk')]",
               "vhd": {
-                "uri": "[concat(variables('osDiskVhdName'),copyindex(),'.vhd')]"
+                "uri": "[concat(variables('osDiskVhdName'),copyindex(1),'.vhd')]"
               }
             }
           },
           "networkProfile": {
             "networkInterfaces": [
               {
-                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(),'nic1'))]"
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(1),'nic1'))]"
               }
             ]
           }
