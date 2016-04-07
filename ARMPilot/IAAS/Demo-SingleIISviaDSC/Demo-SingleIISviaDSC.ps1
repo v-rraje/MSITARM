@@ -1,9 +1,9 @@
 # Scenario - Build a single web server using DSC to install IIS
 
 $params = @{
-                   "TemplateFile"         ="C:\Azure\Repos\SI-HDC-CPT-ARM\ARMPilot\template-SingleVM.json"; 
-                   "TemplateParameterFile"="C:\Azure\Repos\SI-HDC-CPT-ARM\ARMPilot\templateParams.json"; 
-                   "DscConfigurationPath" ="C:\Azure\Repos\SI-HDC-CPT-ARM\ARMPilot\DSC\DeployWebServer"; 
+                   "TemplateFile"         =".\template-SingleVM.json"; 
+                   "TemplateParameterFile"=".\templateParams.json"; 
+                   "DscConfigurationPath" =".\DSC\DeployWebServer"; 
                    "SubscriptionId"       ="e4a74065-cc6c-4f56-b451-f07a3fde61de"; 
                    "ResourceGroupLocation"="west us"; 
                    "ResourceGroupName"    ="cptApp1";
@@ -11,7 +11,12 @@ $params = @{
                    "VmName"               ="cimcim-55"
                   }
 
-#import-module cloudms
+if (Get-Module -ListAvailable -Name CloudMS) {
+    import-module cloudms
+} else {
+    Write-Host "Module CloudMS does not exist, you must instal it first."
+    break;
+}
 
 # Image 
 #Get domain credentials that need to be used for domain joining the VMs

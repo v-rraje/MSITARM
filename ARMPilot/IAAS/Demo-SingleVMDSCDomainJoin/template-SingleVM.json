@@ -18,11 +18,31 @@
         "description": "Local Password for the Virtual Machine."
       }
     },
+    "domainAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Username for domain joining"
+      }
+    },
+    "domainAdminPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
     "vmName": {
       "type": "string",
       "minLength": 3,
       "metadata": {
         "description": "Name for the Virtual Machine."
+      }
+    },
+    "numberOfInstances": {
+      "type": "int", 
+      "metadata": {
+        "description": "Number of VMs to deploy"
       }
     },
     "vmSize": {
@@ -108,12 +128,6 @@
         "description": "Snooze date"
       }
     },
-    "numberOfInstances": {
-      "type": "int", 
-      "metadata": {
-        "description": "Number of VMs to deploy"
-      }
-    },
     "additionalAdmins": {
       "type": "string",
       "defaultValue": "",
@@ -141,7 +155,6 @@
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
-    
     }
   },
   "variables": {
@@ -159,12 +172,19 @@
     "firstLogonCommands": "<FirstLogonCommands><SynchronousCommand><CommandLine>netsh advfirewall firewall set rule group=&quot;Windows Management Instrumentation (WMI)&quot; new enable=Yes</CommandLine><Description>Update Firewall Settings</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>logoff.exe</CommandLine><Description>Logoff</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>",
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
-    "vnetId": "[parameters('vnetId')]"
+    "vnetId": "[parameters('vnetId')]",
+    "customScriptStorageAccountName": "sdoscriptslibrarydev",
+    "customScriptFileUri": "https://sdoscriptslibrarydev.blob.core.windows.net/scripts/sdonewmachine.ps1",
+    "customScriptFileToRun": "sdonewmachine.ps1",
+    "domainJoinOptions": 3,
+    "vmExtensionName": "DomainJoin.ps1",
+    "modulesUrl": "http://sdoscriptslibrarydev.blob.core.windows.net/scripts/DomainJoin.ps1.zip",
+    "commandToExecute": "[concat('powershell.exe -File', ' ', variables('customScriptFileToRun'))]"
   },
   "resources": [
-     {
+    {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'),copyindex(),'nic1')]",
+      "name": "[concat(variables('nicName'),'','nic1')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -173,10 +193,6 @@
         "orgID": "[parameters('orgID')]",
         "env": "[parameters('env')]",
         "snoozeDate": "[parameters('snoozeDate')]"
-      },
-      "copy": {
-        "name": "nicLoop",
-        "count": "[parameters('numberOfInstances')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -194,7 +210,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'),copyindex())]",
+      "name": "[concat(variables('vmName'),'')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -204,19 +220,15 @@
         "env": "[parameters('env')]",
         "snoozeDate": "[parameters('snoozeDate')]"
       },
-      "copy": {
-        "name": "virtualMachineLoop",
-        "count": "[parameters('numberOfInstances')]"
-      },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex(),'nic1')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),'','nic1')]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'),copyindex())]",
+          "computerName": "[concat(variables('vmName'),'')]",
           "adminUsername": "[parameters('localAdminUserName')]",
           "adminPassword": "[parameters('localAdminPassword')]",
           "windowsConfiguration": {
@@ -244,29 +256,67 @@
           }
         },
         "storageProfile": {
-              "imageReference": {
-              "publisher": "[variables('imagePublisher')]",
-              "offer": "[variables('imageOffer')]",
-              "sku": "[parameters('sku')]",
-              "version": "latest"
-            },
-            "osDisk": {
-              "caching": "ReadWrite",
-              "createOption": "FromImage",
-              "name": "[concat(variables('vmName'),copyindex(),'-osDisk')]",
-              "vhd": {
-                "uri": "[concat(variables('osDiskVhdName'),copyindex(),'.vhd')]"
-              }
-            }
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('sku')]",
+            "version": "latest"
           },
-          "networkProfile": {
-            "networkInterfaces": [
-              {
-                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(),'nic1'))]"
-              }
-            ]
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "name": "[concat(variables('vmName'),'','-osDisk')]",
+            "vhd": {
+              "uri": "[concat(variables('osDiskVhdName'),'','.vhd')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),'','nic1'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.8",
+        "settings": {
+          "ModulesUrl": "[variables('modulesUrl')]",
+          "SasToken": "",
+          "ConfigurationFunction": "DomainJoin.ps1\\DomainJoin",
+          "Properties": {
+            "Domain": "[parameters('DomainName')]",
+            "LocalAccount": {
+              "UserName": "[parameters('localAdminUserName')]",
+              "Password": "PrivateSettingsRef:localPassword"
+            },
+            "DomainAccount": {
+              "UserName": "[parameters('domainAdminUserName')]",
+              "Password": "PrivateSettingsRef:DomainPassword"
+            },
+            "AdditionalAdmins": "[parameters('AdditionalAdmins')]",
+            "OU": "[parameters('ouPath')]"
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "LocalPassword": "[parameters('localAdminUserName')]",
+            "DomainPassword": "[parameters('domainAdminPassword')]"
           }
         }
+      }
     }
   ]
 }
