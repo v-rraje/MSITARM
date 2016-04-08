@@ -82,12 +82,6 @@
     "vnetId": {
       "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc.",
       "value": "/subscriptions/e4a74065-cc6c-4f56-b451-f07a3fde61de/resourceGroups/ERNETWORK/providers/Microsoft.Network/virtualnetworks/MSITPILOT01-CORP-CUS-1"
-    },
-      "ouPath": {
-      "value": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
-      "metadata": {
-        "description": "The Organizational Unit the VM will join"
-      }
     }
   }
 }

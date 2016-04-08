@@ -18,31 +18,11 @@
         "description": "Local Password for the Virtual Machine."
       }
     },
-    "domainAdminUserName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Username for domain joining"
-      }
-    },
-    "domainAdminPassword": {
-      "type": "securestring",
-      "minLength": 1,
-      "metadata": {
-        "description": "Password for domain joining"
-      }
-    },
     "vmName": {
       "type": "string",
       "minLength": 3,
       "metadata": {
         "description": "Name for the Virtual Machine."
-      }
-    },
-    "numberOfInstances": {
-      "type": "int", 
-      "metadata": {
-        "description": "Number of VMs to deploy"
       }
     },
     "vmSize": {
@@ -128,6 +108,12 @@
         "description": "Snooze date"
       }
     },
+    "numberOfInstances": {
+      "type": "int", 
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    },
     "additionalAdmins": {
       "type": "string",
       "defaultValue": "",
@@ -174,15 +160,17 @@
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
     "vnetId": "[parameters('vnetId')]",
-    "domainJoinOptions": 3,
-    "customScriptStorageAccountName": "sdoscriptslibrarydev",
-    "customScriptFileUri": "https://sdoscriptslibrarydev.blob.core.windows.net/scripts/sdonewmachine.ps1",
-    "customScriptFileToRun": "sdonewmachine.ps1"
+    "sizeOfEachDataDiskInGB": 500,
+    "vmStorageAccountContainerName": "vhds",
+    "dataDisk1VhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'_H.vhd')]",
+    "dataDisk2VhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'_O.vhd')]",
+    "dataDisk3VhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'_T.vhd')]",
+    "dataDisk4VhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'_S.vhd')]"
   },
   "resources": [
      {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'),'','nic1')]",
+      "name": "[concat(variables('nicName'),copyindex(1),'nic1')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -191,6 +179,10 @@
         "orgID": "[parameters('orgID')]",
         "env": "[parameters('env')]",
         "snoozeDate": "[parameters('snoozeDate')]"
+      },
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('numberOfInstances')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -208,7 +200,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'),'')]",
+      "name": "[concat(variables('vmName'),copyindex(1))]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -218,15 +210,19 @@
         "env": "[parameters('env')]",
         "snoozeDate": "[parameters('snoozeDate')]"
       },
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),'','nic1')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex(1),'nic1')]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'),'')]",
+          "computerName": "[concat(variables('vmName'),copyindex(1))]",
           "adminUsername": "[parameters('localAdminUserName')]",
           "adminPassword": "[parameters('localAdminPassword')]",
           "windowsConfiguration": {
@@ -260,23 +256,63 @@
             "sku": "[parameters('sku')]",
             "version": "latest"
           },
-          "osDisk": {
-            "caching": "ReadWrite",
-            "createOption": "FromImage",
-            "name": "[concat(variables('vmName'),'','-osDisk')]",
-            "vhd": {
-              "uri": "[concat(variables('osDiskVhdName'),'','.vhd')]"
-            }
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
+          "dataDisks": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),'','nic1'))]"
+              "name": "datadisk1",
+              "diskSizeGB": "[variables('sizeOfEachDataDiskInGB')]",
+              "lun": 0,
+              "vhd": {
+                "Uri": "[variables('dataDisk1VhdName')]"
+              },
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk2",
+              "diskSizeGB": "[variables('sizeOfEachDataDiskInGB')]",
+              "lun": 1,
+              "vhd": {
+                "Uri": "[variables('dataDisk2VhdName')]"
+              },
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk3",
+              "diskSizeGB": "[variables('sizeOfEachDataDiskInGB')]",
+              "lun": 2,
+              "vhd": {
+                "Uri": "[variables('dataDisk3VhdName')]"
+              },
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk4",
+              "diskSizeGB": "[variables('sizeOfEachDataDiskInGB')]",
+              "lun": 3,
+              "vhd": {
+                "Uri": "[variables('dataDisk4VhdName')]"
+              },
+              "createOption": "Empty"
             }
-          ]
+          ],
+            "osDisk": {
+              "caching": "ReadWrite",
+              "createOption": "FromImage",
+              "name": "[concat(variables('vmName'),copyindex(1),'-osDisk')]",
+              "vhd": {
+                "uri": "[concat(variables('osDiskVhdName'),copyindex(1),'.vhd')]"
+              }
+            }
+        
+        },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(1),'nic1'))]"
+              }
+            ]
+          }
         }
-      }
     }
+    
   ]
 }

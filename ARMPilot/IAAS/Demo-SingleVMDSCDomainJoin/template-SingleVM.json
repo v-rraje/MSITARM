@@ -146,12 +146,12 @@
       "type": "string",
       "defaultValue": "10.0.0.0/24",
       "metadata": {
-        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24 or 10.107.89.192/26)"
+        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24)"
       }
     },
     "ouPath": {
       "type": "string",
-      "defaultValue": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
+      "defaultValue": "",
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
@@ -173,13 +173,9 @@
     "vmName": "[parameters('vmName')]",
     "vmSize": "[parameters('vmSize')]",
     "vnetId": "[parameters('vnetId')]",
-    "customScriptStorageAccountName": "sdoscriptslibrarydev",
-    "customScriptFileUri": "https://sdoscriptslibrarydev.blob.core.windows.net/scripts/sdonewmachine.ps1",
-    "customScriptFileToRun": "sdonewmachine.ps1",
     "domainJoinOptions": 3,
-    "vmExtensionName": "DomainJoin.ps1",
-    "modulesUrl": "http://sdoscriptslibrarydev.blob.core.windows.net/scripts/DomainJoin.ps1.zip",
-    "commandToExecute": "[concat('powershell.exe -File', ' ', variables('customScriptFileToRun'))]"
+    "vmExtensionName": "Microsoft.Powershell.DSC",
+    "modulesUrl": "http://sdoscriptslibrarydev.blob.core.windows.net/scripts/DomainJoin.ps1.zip"  
   },
   "resources": [
     {
