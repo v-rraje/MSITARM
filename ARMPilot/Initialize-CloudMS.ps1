@@ -22,8 +22,12 @@ if(!$Exists){
 	$repoName = $exists.name
 }
 	
- $module = find-module -Repository $repoName -Name $moduleName | select version
-
- install-module -name $moduleName -RequiredVersion $module.Version -force
+    $module = find-module -Repository $repoName -Name $moduleName | select version
+    if($module) {
+        install-module -name $moduleName -RequiredVersion $module.Version -force
+    } else {
+        write-host "no module found to install"
+    }
 }
+
 Initialize-CloudMS

@@ -1,13 +1,13 @@
 # Scenario - Build 1 by Name
 
 $params = @{
-                   "TemplateFile"=".\template-SingleVM.json"; 
-                   "TemplateParameterFile"=".\templateSQLParams.json"; 
+                   "TemplateFile"=".\template-SingleVMDisks.json"; 
+                   "TemplateParameterFile"=".\templateParams.json"; 
                    "SubscriptionId"="e4a74065-cc6c-4f56-b451-f07a3fde61de"; 
                    "ResourceGroupLocation"="central us"; 
                    "ResourceGroupName"="cptApp1";
-                   "Domain"="Redmond.corp.microsoft.com";
-                   "vmName"="trworthdsc15"
+                   "Domain"="Redmond.corp.microsoft.com"
+                   "vmName"="trworthvm5"
                   }
 
 if (Get-Module -ListAvailable -Name CloudMS) {
@@ -33,10 +33,9 @@ $domainUserCredential = New-Object System.Management.Automation.PSCredential -Ar
 write-host "-----------------------------"
 Write-host "Invoke-Arm"            
 write-host "-----------------------------"
-
                  
 #Enter your name and specifications for the IIS server.
-$serversBuilt=Invoke-ARMDSC -TemplateFile $params.TemplateFile `
+$serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
                         -TemplateParameterFile $params.TemplateParameterFile `
                         -SubscriptionId $params.SubscriptionId `
                         -ResourceGroupLocation $params.ResourceGroupLocation `
@@ -44,3 +43,24 @@ $serversBuilt=Invoke-ARMDSC -TemplateFile $params.TemplateFile `
                         -Vm $params.vmName `
                         -creds $domainUserCredential 
 
+write-host "-----------------------------"
+Write-host "Install-VMDomainJoin"
+write-host "-----------------------------"
+
+Install-VMDomainJoin -Servers $serversBuilt `
+                        -SubscriptionId $params.SubscriptionId `
+                        -resourceGroupName $params.ResourceGroupName  `
+                        -DomainCredential $domainUserCredential `
+                        -LocalCredential $localUserCredential `
+                        -Domain $params.domain
+
+
+write-host "-----------------------------"
+write-host "Install-AdditionalAdmin"
+write-host "-----------------------------"
+
+Install-AdditionalAdmins -Servers $serversBuilt `
+                         -SubscriptionId $params.SubscriptionId `
+                         -resourceGroupName $params.ResourceGroupName `
+                         -creds $domainUserCredential `
+                         -AdditionalAdminList $TempParams.additionalAdmins

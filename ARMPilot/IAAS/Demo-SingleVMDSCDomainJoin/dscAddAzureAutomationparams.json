@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+   "parameters": {
+    "vmName": {
+      "type": "string",
+      value: "trworthapp-01",
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "modulesUrl": {
+      "type": "string",
+      "value": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
+      "metadata": {
+        "description": "Configuration uri"
+      }
+    },
+    "registrationKey": {
+      "type": "string",
+      "value": "JalVNAzBTtXPFxtrvvUFETxaa2S3SvJF8oDyMfa22LuilK9YBw72bTE4/HZ9nilnSDNphCMr8Ns7nWdbPdxtvw==",
+      "metadata": {
+        "description": "Azure Automation Registration Key"
+      }
+    },
+    "registrationUrl": {
+      "type": "string",
+
+      "value": "https://eus2-agentservice-prod-1.azure-automation.net/accounts/b38c1666-d54e-4ab4-9fd4-0d7b24bffff2",
+      "metadata": {
+        "description": "Azure Automation Registration Url"
+      }
+    },
+    "nodeConfigurationName": {
+      "type": "string",
+      "value": "MSITNoPAK2.Corpnet",
+      "metadata": {
+        "description": "Azure Automation Registration Url"
+      }
+    },
+    "configurationFunction": {
+      "type": "string",
+      "value": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+      "metadata": {
+        "description": "The configuration function to call"
+      }
+    },
+      "timestamp": {
+        "type": "string",
+        "value": "1/1/2015",
+            "metadata": {
+                "description": "The current datetime, as a string, to force the request to go through ARM even if all fields are the same as last ARM deployment of this template; example in parameters file is in MM/dd/yyyy H:mm:ss tt format"
+            }
+        }   
+  }
+}
