@@ -1,7 +1,7 @@
 # Scenario - Build 1 by Name
 
 if (Get-Module -ListAvailable -Name CloudMS) {
-   #import-module cloudms_beta -Force
+   import-module cloudms -Force
 } else {
     Write-Host "Module CloudMS does not exist, you must instal it first."
     break;
