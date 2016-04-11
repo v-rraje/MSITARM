@@ -4,7 +4,7 @@
    "parameters": {
     "vmName": {
       "type": "string",
-      value: "trworthapp-01",
+      value: "trworthapp-02",
       "metadata": {
         "description": "Name for the Virtual Machine."
       }

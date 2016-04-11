@@ -1,8 +1,8 @@
-﻿﻿ {
+﻿{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vmName": {
+  "vmName": {
       "type": "string",
       "defaultValue": "",
       "minLength": 1,
@@ -39,13 +39,22 @@
         "description": "Size of the data disks"
       }
     }
-
   },
   "variables": {
     "vmStorageAccountContainerName": "vhds",
     "disksArray": {
       "1": "[variables('dataDisks')['1']]",
-      "2": "[concat(variables('dataDisks')['1'], variables('dataDisks')['2'])]"
+      "2": "[concat(variables('dataDisks')['1'], variables('dataDisks')['2'])]",
+      "3": "[concat(variables('dataDisks')['1'], variables('dataDisks')['2'], variables('dataDisks')['3'])]",
+      "4": "[variables('diskDeltas')['4delta']]"
+    },
+    "diskDeltas": {
+      "4delta": [
+        "[variables('dataDisks')['1'][0]]",
+        "[variables('dataDisks')['2'][0]]",
+        "[variables('dataDisks')['3'][0]]",
+        "[variables('dataDisks')['4'][0]]"
+      ]
     },
     "dataDisks": {
       "1": [
@@ -72,15 +81,39 @@
           "diskSizeGB": "[parameters('diskSizeGB')]"
         }
       ],
-   
-   
-    },
-    "outputs": {
-      "dataDiskArray": {
-        "type": "array",
-        "value": "[variables('disksArray')['2']]"
-      }
+      "3": [
+        {
+          "name": "datadiskT",
+          "lun": 2,
+          "vhd": {
+            "uri": "[concat('http://', parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'), 'datadiskT.vhd')]"
+          },
+          "createOption": "Empty",
+          "caching": "[parameters('diskCaching')]",
+          "diskSizeGB": "[parameters('diskSizeGB')]"
+        }
+      ],
+      "4": [
+        {
+          "name": "datadiskS",
+          "lun": 3,
+          "vhd": {
+            "uri": "[concat('http://', parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'), 'datadiskS.vhd')]"
+          },
+          "createOption": "Empty",
+          "caching": "[parameters('diskCaching')]",
+          "diskSizeGB": "[parameters('diskSizeGB')]"
+        }
+      ]
     }
   },
- "resources": [ ]
- }
+   "outputs": {
+      "dataDiskArray": {
+        "value": "[variables('disksArray')[2].value]",
+        "type": "array"
+      }
+    },
+  "resources": [
+    { }
+  ]
+}
