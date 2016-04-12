@@ -10,7 +10,7 @@
       "value": "Zer0Zer0",
       "description": "Local Password for the Virtual Machine."
     },
-     "domainAdminUserName": {
+    "domainAdminUserName": {
       "type": "string",
       "minLength": 1,
       "metadata": {
@@ -75,8 +75,8 @@
       "value": "",
       "description": "Name prefix for the Virtual Machine(s)."
     },
-    "vmSize": {
-      "value": "Standard_A2",
+    "AzureSKU": {
+      "value": "A2",
       "description": "Size of the Virtual Machine"
     },
     "vnetId": {

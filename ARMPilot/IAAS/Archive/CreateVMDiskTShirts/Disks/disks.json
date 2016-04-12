@@ -25,6 +25,12 @@
         "description": "Name for the Virtual Machine."
       }
     },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine"
+      }
+    },
     "vnetId": {
       "type": "string",
       "metadata": {
@@ -33,7 +39,7 @@
     },
     "imagePublisher": {
       "type": "string",
-      "allowedValues": ["MicrosoftWindowsServer","MicrosoftSQLServer"],
+      "allowedValues": [ "MicrosoftWindowsServer", "MicrosoftSQLServer" ],
       "metadata": {
         "description": "OS Image Publisher"
       }
@@ -46,7 +52,7 @@
     },
     "sku": {
       "type": "string",
-       "minLength": 1,
+      "minLength": 1,
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
@@ -102,7 +108,12 @@
         "description": "Snooze date"
       }
     },
-
+    "numberOfInstances": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    },
     "additionalAdmins": {
       "type": "string",
       "defaultValue": "",
@@ -130,93 +141,86 @@
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
-    
+
     },
-    "tshirtSize": {
+    "numDataDisks": {
       "type": "string",
-      "defaultValue": "Large",
       "allowedValues": [
-        "Small",
-        "Medium",
-        "Large"
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "32",
+        "64"
       ],
       "metadata": {
-        "Description": "T-shirt size of the VM"
+        "description": "This parameter allows the user to select the number of disks they want"
       }
     }
   },
   "variables": {
-    "apiVersion": "2015-06-15",
-    "imageOffer": "[parameters('imageOffer')]",
-    "imagePublisher": "[parameters('imagePublisher')]",
-    "sku": "[parameters('sku')]",
-    "nicName": "[parameters('vmName')]",
-    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk')]",
-    "storageAccountType": "[parameters('storageAccountType')]",
-    "subnetName": "[parameters('subnetName')]",
-    "subnetPrefix": "[parameters('subnetPrefix')]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
-    "autologonContent": "[concat('<AutoLogon><Password><Value>',parameters('localAdminPassword'),'</Value></Password><Domain>.</Domain><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>',parameters('localAdminUserName'),'</Username></AutoLogon>')]",
-    "firstLogonCommands": "<FirstLogonCommands><SynchronousCommand><CommandLine>netsh advfirewall firewall set rule group=&quot;Windows Management Instrumentation (WMI)&quot; new enable=Yes</CommandLine><Description>Update Firewall Settings</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>logoff.exe</CommandLine><Description>Logoff</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>",
-    "vmName": "[parameters('vmName')]",
-    "vnetId": "[parameters('vnetId')]",
+    "artifactsLocation": "http://cptteamb.blob.core.windows.net/pilottemplates/",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'dynamicdisk')]",
+    "sizeOfDataDisksInGB": 100,
+    "diskCaching": "ReadWrite",
+    "location": "[resourceGroup().location]",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "OSDiskName": "osdiskforwindowssimple",
+    "nicName": "dynamicDisksVMNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "dynamicDisksPublicIP",
+    "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-     "modulesUrl": "http://cptteamb.blob.core.windows.net/pilottemplates/",
-    "tshirtSizeLarge": {
-      "vmSize": "Standard_A2",
-      "diskCount": 4,
-      "diskSize": 200,
-      "vmTemplate": "[concat(variables('modulesUrl'), 'Template-SingleVM.json')]",
-      "vmDiskTemplate": "[concat(variables('modulesUrl'), 'LargeSQL.json')]",
-      "vmCount": 1
-    },
-    "tshirtSizeMedium": {
-      "vmSize": "Standard_A2",
-      "diskCount": 2,
-      "diskSize": 200,
-      "vmTemplate": "[concat(variables('modulesUrl'), 'Template-SingleVM.json')]",
-      "vmDiskTemplate": "[concat(variables('modulesUrl'), 'MediumSQL.json')]",
-      "vmCount": 1
-    },
-    "tshirtSizeSmall": {
-      "vmSize": "Standard_A2",
-      "diskCount": 1,
-      "diskCaching": "none",
-      "diskSizeGB": 200,
-      "vmTemplate": "[concat(variables('modulesUrl'), 'Template-SingleVM.json')]",
-      "vmDiskTemplate": "[concat(variables('modulesUrl'), 'SmallSQL.json')]",
-      "vmCount": 1
-    },
-    "tshirtSizeStandard": {
-      "vmSize": "Standard_A2",
-      "diskCount": 1,
-      "diskCaching": "none",
-      "diskSizeGB": 200,
-      "vmTemplate": "[concat(variables('modulesUrl'), 'Template-SingleVM.json')]",
-      "vmDiskTemplate": "[concat(variables('modulesUrl'), 'SmallSQL.json')]",
-      "vmCount": 1
-    },
-    "tshirtSize": "[variables(concat('tshirtSize', parameters('tshirtSize')))]"
-    },
+    "vmName": "dynamicDisksVM",
+    "vmSize": "Standard_G5",
+    "virtualNetworkName": "dynamicDisksVNET",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "apiVersion": "2015-06-15"
+  },
   "resources": [
-     { 
-       "apiVersion": "2015-01-01", 
-       "name": "DiskTemplate", 
-       "type": "Microsoft.Resources/deployments", 
-       "properties": { 
-        "mode": "incremental", 
-         "templateLink": {
-            "uri": "http://cptteamb.blob.core.windows.net/pilottemplates/LargeSQL.json",
-            "contentVersion": "1.0.0.0"
-             }, 
-             "parameters": {
-              "vmName": { "value": "[parameters('vmName')]" },
-              "diskCaching": { "value": "[variables('tshirtSizediskCaching')]" },
-               "diskSizeGB": { "value": "[variables('diskSizeGB')]" },
-               "userImageStorageAccountName":  { "value": "[parameters('userImageStorageAccountName')]" }
-             } 
-           } 
+    {
+      "apiVersion": "2015-01-01",
+      "name": "diskSelection",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('artifactsLocation'), 'disksSelector', '.json')]",
+          "contentVersion": "1.0.0.0"
         },
+        "parameters": {
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "diskStorageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "diskCaching": {
+            "value": "[variables('diskCaching')]"
+          },
+          "diskSizeGB": {
+            "value": "[variables('sizeOfDataDisksInGB')]"
+          }
+        }
+      }
+    },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),'','nic1')]",
@@ -244,11 +248,11 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'),'')]",
       "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
-      "tags": {
+	   "tags": {
         "displayName": "VirtualMachine",
         "appID": "[parameters('appID')]",
         "orgID": "[parameters('orgID')]",
@@ -257,17 +261,17 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),'','nic1')]",
-        "[concat('Microsoft.Resources/deployments/', 'DiskTemplate')]"
+        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('tshirtSize').vmSize]"
+          "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'),'')]",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('localAdminUserName')]",
           "adminPassword": "[parameters('localAdminPassword')]",
-          "windowsConfiguration": {
+		  "windowsConfiguration": {
             "additionalUnattendContent": [
               {
                 "passName": "oobesystem",
@@ -298,15 +302,15 @@
             "sku": "[parameters('sku')]",
             "version": "latest"
           },
-          "osDisks": {
-            "caching": "ReadWrite",
-            "createOption": "FromImage",
+          "osDisk": {
             "name": "[concat(variables('vmName'),'','-osDisk')]",
             "vhd": {
               "uri": "[concat(variables('osDiskVhdName'),'','.vhd')]"
-            }
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
           },
-          "dataDisks": "[reference('DiskTemplate').outputs.dataDiskArray.value]"
+          "dataDisks": "[reference('diskSelection').outputs.dataDiskArray.value]"
         },
         "networkProfile": {
           "networkInterfaces": [

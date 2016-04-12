@@ -4,7 +4,7 @@
    "parameters": {
     "vmName": {
       "type": "string",
-      value: "trworthapp-01",
+      value: "",
       "metadata": {
         "description": "Name for the Virtual Machine."
       }
@@ -45,7 +45,7 @@
         "description": "The configuration function to call"
       }
     },
-      "timestamp": {
+    "timestamp": {
         "type": "string",
         "value": "1/1/2015",
             "metadata": {

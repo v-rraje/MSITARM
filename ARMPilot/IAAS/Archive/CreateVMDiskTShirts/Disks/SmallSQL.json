@@ -1,8 +1,8 @@
-﻿﻿ {
+﻿{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vmName": {
+  "vmName": {
       "type": "string",
       "defaultValue": "",
       "minLength": 1,
@@ -39,7 +39,6 @@
         "description": "Size of the data disks"
       }
     }
-
   },
   "variables": {
     "vmStorageAccountContainerName": "vhds",
@@ -108,11 +107,13 @@
       ]
     }
   },
-    "outputs": {
+   "outputs": {
       "dataDiskArray": {
-        "value": "[variables('disksArray')[4]]",
+        "value": "[variables('disksArray')[1].value]",
         "type": "array"
       }
     },
- "resources": [ ]
- }
+  "resources": [
+    { }
+  ]
+}
