@@ -1,14 +1,4 @@
-﻿# Scenario - Build 1 by Name
-
-if (Get-Module -ListAvailable -Name CloudMS) {
-   import-module cloudms_beta  -Force
-} else {
-    Write-Host "Module CloudMS does not exist, you must instal it first."
-    break;
-}
-
-$vmName= Read-Host -Prompt "VM Name?"
-$vmType= Read-Host -Prompt "Type IIS/SQL/App?"
+# Scenario - Build 1 by Name
 
 $params = @{
                    "TemplateFile"=".\template.json"; 
@@ -17,9 +7,10 @@ $params = @{
                    "ResourceGroupLocation"="central us"; 
                    "ResourceGroupName"="cptApp1";
                    "Domain"="Redmond.corp.microsoft.com";
-                   "vmName"=$vmName
+                   "vmName"="trworthDisksVM1"
                   }
 
+#import-module cloudms
 
 # Image 
 #Get domain credentials that need to be used for domain joining the VMs
@@ -28,24 +19,18 @@ $password =Read-Host -Prompt "Password for $username" -AsSecureString
 $domainUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $username, $password
 
  $TempParams = Import-Templates -templatefile $params.templatefile -TemplateParameterFile $Params.TemplateParameterFile -vm $params.vmName
- 
  $u=$([string] $TempParams.localAdminUserName)
  $p= ConvertTo-SecureString $([string] $TempParams.localAdminPassword) -asplaintext -force
  $params.Domain = $TempParams.domainName
 
  $LocalUserCredential = New-Object System.Management.Automation.PSCredential -ArgumentList $u,$p
 
-if($vmType -eq 'IIS') {$params.TemplateParameterFile=".\templateIISParams.json";}
-if($vmType -eq 'SQL') {$params.TemplateParameterFile=".\templateSQLParams.json";}
-
-
 write-host "-----------------------------"
 Write-host "Invoke-Arm"            
 write-host "-----------------------------"
                  
-                 
 #Enter your name and specifications for the IIS server.
-$serversBuilt=Invoke-ARMDSC -TemplateFile $params.TemplateFile `
+$serversBuilt=Invoke-ARM -TemplateFile $params.TemplateFile `
                         -TemplateParameterFile $params.TemplateParameterFile `
                         -SubscriptionId $params.SubscriptionId `
                         -ResourceGroupLocation $params.ResourceGroupLocation `
@@ -53,4 +38,24 @@ $serversBuilt=Invoke-ARMDSC -TemplateFile $params.TemplateFile `
                         -Vm $params.vmName `
                         -creds $domainUserCredential 
 
+write-host "-----------------------------"
+Write-host "Install-VMDomainJoin"
+write-host "-----------------------------"
 
+Install-VMDomainJoin -Servers $serversBuilt `
+                        -SubscriptionId $params.SubscriptionId `
+                        -resourceGroupName $params.ResourceGroupName  `
+                        -DomainCredential $domainUserCredential `
+                        -LocalCredential $localUserCredential `
+                        -Domain $params.domain
+
+
+write-host "-----------------------------"
+write-host "Install-AdditionalAdmin"
+write-host "-----------------------------"
+
+Install-AdditionalAdmins -Servers $serversBuilt `
+                         -SubscriptionId $params.SubscriptionId `
+                         -resourceGroupName $params.ResourceGroupName `
+                         -creds $domainUserCredential `
+                         -AdditionalAdminList $TempParams.additionalAdmins
