@@ -39,14 +39,21 @@
         "description": "Name for the Virtual Machine."
       }
     },
-    "numberOfInstances": {
-      "type": "int", 
-      "allowedValues": [1],
+    "AzureSKU": {
+      "type": "string",
+      "defaultValue": "A2",
+      "allowedValues": [
+        "A2",
+        "A3",
+        "D4",
+        "Standard_A2",
+        "Standard_A4"
+      ],
       "metadata": {
-        "description": "Number of VMs to deploy"
+        "Description": "Azure VM size of the VM"
       }
     },
-     "vnetId": {
+    "vnetId": {
       "type": "string",
       "metadata": {
         "description": "The Virtual Network that you want your VM to connect to, so that it can access a specific network, such as corp net etc."
@@ -67,34 +74,19 @@
     },
     "sku": {
       "type": "string",
-      "minLength": 1,
+       "minLength": 1,
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
     },
-    "AzureSKU": {
+    "storageAccountType": {
       "type": "string",
-      "defaultValue": "A2",
-      "allowedValues": [
-        "A2",
-        "A3",
-        "D4",
-        "Standard_A2",
-        "Standard_A4"
-      ],
       "metadata": {
-        "Description": "Azure VM size of the VM"
+        "description": "The Storage Account type"
       }
     },
     "userImageStorageAccountName": {
       "type": "string",
-      "metadata": {
-        "description": "The Storage Account where the VM image(s) will be created"
-      }
-    },
-    "StorageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -138,6 +130,12 @@
         "description": "Snooze date"
       }
     },
+    "numberOfInstances": {
+      "type": "int", 
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    },
     "additionalAdmins": {
       "type": "string",
       "defaultValue": "",
@@ -165,6 +163,7 @@
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
+    
     }
   },
   "variables": {
@@ -174,6 +173,7 @@
     "sku": "[parameters('sku')]",
     "nicName": "[parameters('vmName')]",
     "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk')]",
+    "storageAccountType": "[parameters('storageAccountType')]",
     "subnetName": "[parameters('subnetName')]",
     "subnetPrefix": "[parameters('subnetPrefix')]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
@@ -181,9 +181,6 @@
     "firstLogonCommands": "<FirstLogonCommands><SynchronousCommand><CommandLine>netsh advfirewall firewall set rule group=&quot;Windows Management Instrumentation (WMI)&quot; new enable=Yes</CommandLine><Description>Update Firewall Settings</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>logoff.exe</CommandLine><Description>Logoff</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>",
     "vmName": "[parameters('vmName')]",
     "vnetId": "[parameters('vnetId')]",
-    "domainJoinOptions": 3,
-    "vmExtensionName": "Microsoft.Powershell.DSC",
-    "modulesUrl": "http://sdoscriptslibrarydev.blob.core.windows.net/scripts/DomainJoin.ps1.zip",
     "DiskArtifacts": "http://cptteamb.blob.core.windows.net/",
     "AzureSKUD4": {
      "vmSize": "Standard_D4",
@@ -281,28 +278,32 @@
     "AzureSKU": "[variables(concat('AzureSKU', parameters('AzureSKU')))]"
   },
   "resources": [
-      { 
+        { 
        "apiVersion": "2015-01-01", 
        "name": "DataDisks",
-       "type": "Microsoft.Resources/deployments", 
-       "properties": { 
-        "mode": "incremental", 
-         "templateLink": {
-            "uri": "[variables('AzureSKU').vmDiskTemplate]",
-            "contentVersion": "1.0.0.0"
-             }, 
-             "parameters": {
-              "vmName": { "value": "[parameters('vmName')]" },
-               "diskCount": { "value": "[variables('AzureSKU').diskCount]" },
-               "diskCaching": { "value": "[variables('AzureSKU').diskCaching]" },
-               "diskSizeGB": { "value": "[variables('AzureSKU').diskSizeGB]" },
-               "userImageStorageAccountName":  { "value": "[parameters('userImageStorageAccountName')]" }
-             } 
-           } 
+       "type": "Microsoft.Resources/deployments",
+          "properties": {
+            "mode": "incremental",
+            "templateLink": {
+              "uri": "[variables('AzureSKU').vmDiskTemplate]",
+              "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+              "vmName": "[concat(variables('vmName'),copyindex(1))]",
+              "diskCount": { "value": "[variables('AzureSKU').diskCount]" },
+              "diskCaching": { "value": "[variables('AzureSKU').diskCaching]" },
+              "diskSizeGB": { "value": "[variables('AzureSKU').diskSizeGB]" },
+              "userImageStorageAccountName": { "value": "[parameters('userImageStorageAccountName')]" }
+            }
+          },
+      "copy": {
+        "name": "DiskLoop",
+        "count": "[parameters('numberOfInstances')]"
+      } 
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'),'','nic1')]",
+      "name": "[concat(variables('nicName'),copyindex(1),'nic1')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -311,6 +312,10 @@
         "orgID": "[parameters('orgID')]",
         "env": "[parameters('env')]",
         "snoozeDate": "[parameters('snoozeDate')]"
+      },
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('numberOfInstances')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -328,7 +333,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'),'')]",
+      "name": "[concat(variables('vmName'),copyindex(1))]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -338,15 +343,19 @@
         "env": "[parameters('env')]",
         "snoozeDate": "[parameters('snoozeDate')]"
       },
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),'','nic1')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex(1),'nic1')]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('AzureSKU').vmSize]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'),'')]",
+          "computerName": "[concat(variables('vmName'),copyindex(1))]",
           "adminUsername": "[parameters('localAdminUserName')]",
           "adminPassword": "[parameters('localAdminPassword')]",
           "windowsConfiguration": {
@@ -383,57 +392,19 @@
           "osDisk": {
             "caching": "ReadWrite",
             "createOption": "FromImage",
-            "name": "[concat(variables('vmName'),'','-osDisk')]",
+            "name": "[concat(variables('vmName'),copyindex(1),'-osDisk')]",
             "vhd": {
-              "uri": "[concat(variables('osDiskVhdName'),'','.vhd')]"
+              "uri": "[concat(variables('osDiskVhdName'),copyindex(1),'.vhd')]"
             }
           },
-         "dataDisks": "[reference('DataDisks').outputs.dataDiskArray.value]"
+        "dataDisks": "[reference('DataDisks').outputs.dataDiskArray.value]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),'','nic1'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(1),'nic1'))]"
             }
           ]
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.8",
-        "settings": {
-          "ModulesUrl": "[variables('modulesUrl')]",
-          "SasToken": "",
-          "ConfigurationFunction": "DomainJoin.ps1\\DomainJoin",
-          "Properties": {
-            "Domain": "[parameters('DomainName')]",
-            "LocalAccount": {
-              "UserName": "[parameters('localAdminUserName')]",
-              "Password": "PrivateSettingsRef:localPassword"
-            },
-            "DomainAccount": {
-              "UserName": "[parameters('domainAdminUserName')]",
-              "Password": "PrivateSettingsRef:DomainPassword"
-            },
-            "AdditionalAdmins": "[parameters('AdditionalAdmins')]",
-            "OU": "[parameters('ouPath')]"
-          }
-        },
-        "protectedSettings": {
-          "Items": {
-            "LocalPassword": "[parameters('localAdminUserName')]",
-            "DomainPassword": "[parameters('domainAdminPassword')]"
-          }
         }
       }
     }

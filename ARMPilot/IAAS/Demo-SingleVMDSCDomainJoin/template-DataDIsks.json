@@ -1,0 +1,164 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+       "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the existing VM to apply the DSC configuration to"
+            }
+        },
+       "modulesUrl": {
+            "type": "string",
+            "defaultValue": "http://cptteamb.blob.core.windows.net/cloudmsscript/FormatDataDisk.ps1.zip",
+            "metadata": {
+                "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
+            }
+        },
+       "configurationFunction": {
+            "type": "string",
+            "defaultValue": "FormatDataDisks.ps1\\FormatDataDisks",
+            "metadata": {
+                "description": "DSC configuration function to Format Data Disks"
+            }
+        },
+       "AzureSKU": {
+      "type": "string",
+      "defaultValue": "A2",
+      "allowedValues": [
+        "A2",
+        "A3",
+        "D4",
+        "Standard_A2",
+        "Standard_A4"
+      ],
+        "metadata": {
+          "description": "Azure VM Size"
+        }
+      }   
+    },
+  "variables": {
+    "DiskArtifacts": "http://cptteamb.blob.core.windows.net/",
+    "AzureSKUD4": {
+     "vmSize": "Standard_D4",
+      "diskCount": "4",
+      "dataDisks": {
+        "1": {
+          "DiskName": "H",
+          "DiskSize": "500"
+        },
+        "2": {
+          "DiskName": "O",
+          "DiskSize": "500"
+        },
+        "3": {
+          "DiskName": "T",
+          "DiskSize": "500"
+        },
+        "4": {
+          "DiskName": "S",
+          "DiskSize": "500"
+        }
+      },
+      "diskSizeGB": 500,
+      "diskCaching": "None",
+      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+    },
+    "AzureSKUA3": {
+      "vmSize": "Standard_A3",
+      "diskCount": "3",
+      "dataDisks": {
+        "1": {
+          "DiskName": "H",
+          "DiskSize": "400"
+        },
+        "2": {
+          "DiskName": "O",
+          "DiskSize": "400"
+        },
+        "3": {
+          "DiskName": "T",
+          "DiskSize": "400"
+        }
+      },
+      "diskCaching": "None",
+      "diskSizeGB": 400,
+      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+    },
+    "AzureSKUA2": {
+      "vmSize": "Standard_A2",
+      "diskCount": "2",
+      "dataDisks": {
+        "1": {
+          "DiskName": "H",
+          "DiskSize": "200"
+        },
+        "2": {
+          "DiskName": "O",
+          "DiskSize": "200"
+        }
+      },
+      "diskCaching": "None",
+      "diskSizeGB": 200,
+      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+    },
+    "AzureSKUStandard_A2": {
+      "vmSize": "Standard_A2",
+      "diskCount": "1",
+      "dataDisks": {
+        "1": {
+          "DiskName": "R",
+          "DiskSize": "500"
+        }
+      },
+      "diskCaching": "none",
+      "diskSizeGB": 500,
+      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+    },
+    "AzureSKUStandard_A4": {
+      "vmSize": "Standard_A4",
+      "diskCount": "2",
+      "dataDisks": {
+        "1": {
+          "DiskName": "R",
+          "DiskSize": "500"
+        },
+       "2": {
+          "DiskName": "L",
+          "DiskSize": "500"
+        }
+      },
+      "diskCaching": "none",
+      "diskSizeGB": 500,
+      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+    },
+    "AzureSKU": "[variables(concat('AzureSKU', parameters('AzureSKU')))]"
+  },
+    "resources": [
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('vmName'),'/Microsoft.Powershell.DSC')]",
+        "apiVersion": "2015-06-15",
+        "location": "[resourceGroup().location]",
+        "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.15",
+            "autoUpgradeMinorVersion": true,
+            "protectedSettings": {  },
+            "settings": {
+                "ModulesUrl": "[parameters('modulesUrl')]",
+                "SasToken": "",
+                "ConfigurationFunction": "[parameters('configurationFunction')]",
+              "Properties": [
+                {
+                        "Name": "Disks",
+                        "Value": "[variables('AzureSKU').DataDisks]",
+                        "TypeName": "System.Array"
+                }
+              ]
+            }
+        }
+    }]
+}
+
