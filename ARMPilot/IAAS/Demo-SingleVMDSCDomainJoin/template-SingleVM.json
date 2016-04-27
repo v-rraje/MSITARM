@@ -183,7 +183,7 @@
     "vnetId": "[parameters('vnetId')]",
     "domainJoinOptions": 3,
     "vmExtensionName": "Microsoft.Powershell.DSC",
-    "modulesUrl": "http://sdoscriptslibrarydev.blob.core.windows.net/scripts/DomainJoin.ps1.zip",
+    "modulesUrl": "http://cptteamb.blob.core.windows.net/scripts/DomainJoin.ps1.zip",
     "DiskArtifacts": "http://cptteamb.blob.core.windows.net/",
     "AzureSKUD4": {
      "vmSize": "Standard_D4",
@@ -206,7 +206,7 @@
           "DiskSize": "500"
         }
       },
-      "diskSizeGB": 500,
+      "diskSizeGB": "500",
       "diskCaching": "None",
       "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
     },
@@ -228,7 +228,7 @@
         }
       },
       "diskCaching": "None",
-      "diskSizeGB": 400,
+      "diskSizeGB": "400",
       "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
     },
     "AzureSKUA2": {
@@ -245,7 +245,7 @@
         }
       },
       "diskCaching": "None",
-      "diskSizeGB": 200,
+      "diskSizeGB": "200",
       "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
     },
     "AzureSKUStandard_A2": {
@@ -258,7 +258,7 @@
         }
       },
       "diskCaching": "none",
-      "diskSizeGB": 500,
+      "diskSizeGB": "500",
       "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
     },
     "AzureSKUStandard_A4": {
@@ -275,7 +275,7 @@
         }
       },
       "diskCaching": "none",
-      "diskSizeGB": 500,
+      "diskSizeGB": "500",
       "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
     },
     "AzureSKU": "[variables(concat('AzureSKU', parameters('AzureSKU')))]"
