@@ -1,77 +1,52 @@
+Deploy from Azure Portal (UI Experience) 
 
-CloudMS Module
+\IAAS\Demo-SingleVMDSCDomainJoin\azuredeploy.json
+Description: SingleVM that leverages DSC for domain join
+Steps:
+	1.  Create your storage acount that you want to deploy to.  
+		New-AzureRmStorageAccount -ResourceGroupName "yourRG" -AccountName "yourStorageAccountName" -Location "centralus" -Type "Standard_GRS" -Tags @{Name = "AppID"; Value = "enteryourValue"}, @{Name="OrgID";Value="enteryourValue"},@{Name="Env";Value="enteryourValue"}
+		Create a blob container called "vhds".  You can do this through the Azure Portal. 
+	2.  Logon to http://portal.azure.com
+	3.  New and search for "Template Deployment"
+	4.  Copy and paste the contents of deploy.json into "Edit Template"
+	5.  Update all Parameters
+	6.  Follow the rest of the UI
 
-Module built on Powershell 3.0
-Module Installer built on Powershell 5.0
+
+Deploy from Powershell (Dev Experience) 
+
+This is a two step process, first you need to install the module and then you need to run the deployment script.
 
 Module Installation Steps
 
 	1. Open a Powershell window as Administrator
-	2. Execute Initialize-CloudMS.ps1 (example . .\Initialize-CloudMS.ps1)
+	2. Register-PSRepository -Name 'CloudMSPSRepository' -SourceLocation \\co1-cu-sjobs01\CloudMSPSRepository -PublishLocation http://co1-cu-sjobs01/ -InstallationPolicy Trusted -ScriptSourceLocation \\co1-cu-sjobs01\CloudMSPSRepository
+	3. Install-PackageProvider -Name NuGet -Force 
+	3. Install-Module CloudMS -force
+	4. Import-Module CloudMS -force
 
+Domain Joined VM provisioning Steps 
 
-Workflow Test Scenarios
-
+\IAAS\Demo-SingleVMDSCDomainJoin\deploy.ps1
+Description: SingleVM that leverages DSC for domain join, configuration, and set-up of DSC pull configurations for server hardening
 Steps:
-	1. Open a Powershell window as Administrator
-	2. Change directory to templates
-	3. Execute Demo-SingleVM
-
-		.\Demo-SingleVM.ps1 
-
-Open Powershell as Admini
-
-1. Create 1 VM using the name provided (Automation example)
-	using template-SingleVM.json and templateParams.json, 
-
-		see Demo-SingleVM.ps1
-
-uses: template.json 
-	 templateParams.json
-
-2. Create 1 or more VM's using the name part provided
-	using a NamePart and template-MultipleVM.json and templateParams.json
-
-		see Demo-MultipleVM.ps1
-
-uses: template-MultipleVM.json 
-	 templateParams.json
-
-	
-3. Create 1 or More IIS vms using the name part provided
-	using a NamePart and template-MultipleVM.json and templateIISParams.json
-
-		see Demo-MutipleIIS.ps1
-
-uses: templateIIS.json 
-	 templateIISParams.json
-
-
-4. Create 1 or more SQL VMs using the name part provided
-	using a NamePart and template-MultipleVM.json and templateSQLParams.json
-
-		see Demo-MutipleSQL.ps1
-
-uses: templateSQL.json 
-	 templateSQLParams.json
-
-
-
-Main Module Functions get-help for info
-
-Invoke-Arm -parameter validation
-
-Invoke-ArmFiles -no parameter validation
-
-Install-AdditionalAdmins -Adds Additional Admins
-
-Install-VMDomainJoin -DomainJoins VMS
-
-Import-Templates -Imports templates and param into Hashtable.
-
-Get-AzureRMVMInResourceGroup - gets VMS in resource group.
-						Optional servers filter 
-
-Get-VMBuildStatus gets VM status (can wait) 
-Get-VMWinRMStatus checks if WINRM working (can wait)
+	1.  Create your storage acount that you want to deploy to.  
+		New-AzureRmStorageAccount -ResourceGroupName "yourRG" -AccountName "yourStorageAccountName" -Location "centralus" -Type "Standard_GRS" -Tags @{Name = "AppID"; Value = "enteryourValue"}, @{Name="OrgID";Value="enteryourValue"},@{Name="Env";Value="enteryourValue"}
+		Create a blob container called "vhds".  You can do this through the Azure Portal. 
+	2.  Update Parameters
+			Params-Windows.json or params-SQL.json
+			•	"userImageStorageAccountName"
+			•	"domainName"
+			•	"vnetId"
+			•	"ouPath"
+			•	"appID"
+			•	"orgID"
+			•	"env"
+			Deploy.ps1
+			•	SubscriptionId 
+			•	ResourceGroupName 
+	2. Open a Powershell window as Administrator
+	3. Change directory to location of deploy.ps1
+	4. .\deploy.ps1 
+	5.  start-work
 
