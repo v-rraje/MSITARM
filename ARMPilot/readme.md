@@ -8,7 +8,7 @@ Steps:
 		Create a blob container called "vhds".  You can do this through the Azure Portal. 
 	2.  Logon to http://portal.azure.com
 	3.  New and search for "Template Deployment"
-	4.  Copy and paste the contents of deploy.json into "Edit Template"
+	4.  Copy and paste the contents of azuredeploy.json into "Edit Template"
 	5.  Update all Parameters
 	6.  Follow the rest of the UI
 
