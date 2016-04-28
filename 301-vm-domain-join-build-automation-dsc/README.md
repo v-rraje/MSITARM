@@ -15,7 +15,7 @@ Steps:
 
 Deploy from Github (under development)
 
-Go to: https://github.com/toddrob/cloudms
+Go to: https://github.com/toddrob/cloudms/tree/master/301-vm-domain-join-build-automation-dsc
 
 # Solution name
 
