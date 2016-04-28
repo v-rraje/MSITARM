@@ -1,0 +1,361 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "localAdminUserName": {
+            "type": "string",
+            "defaultValue": "",
+            "minLength": 1,
+            "metadata": {
+                "description": "Local Username for the Virtual Machine."
+            }
+        },
+        "localAdminPassword": {
+            "type": "securestring",
+            "defaultValue": "",
+            "minLength": 1,
+            "metadata": {
+                "description": "Local Password for the Virtual Machine."
+            }
+        },
+        "domainAdminUserName": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Username for domain joining"
+            }
+        },
+        "domainAdminPassword": {
+            "type": "securestring",
+            "minLength": 1,
+            "metadata": {
+                "description": "Password for domain joining"
+            }
+        },
+        "vmName": {
+            "type": "string",
+            "minLength": 3,
+            "metadata": {
+                "description": "Name for the Virtual Machine."
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A2",
+            "metadata": {
+                "description": "Size for the Virtual Machine."
+            }
+        },
+        "numberOfInstances": {
+            "type": "int",
+            "defaultValue": 1,
+            "allowedValues": [
+                1
+            ],
+            "metadata": {
+                "description": "Number of VMs to deploy"
+            }
+        },
+        "imagePublisher": {
+            "type": "string",
+            "allowedValues": [
+                "MicrosoftWindowsServer",
+                "MicrosoftSQLServer"
+            ],
+            "metadata": {
+                "description": "OS Image Publisher"
+            }
+        },
+        "imageOffer": {
+            "type": "string",
+            "metadata": {
+                "description": "OS Image Offer"
+            }
+        },
+        "sku": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+            }
+        },
+        "ServerRole": {
+            "type": "string",
+            "defaultValue": "App",
+            "allowedValues": [
+                "App",
+                "IIS",
+                "SQL"
+            ]
+        },
+        "DiskCount": {
+            "type": "string",
+            "defaultValue": "1",
+            "allowedValues": [
+                "1",
+                "2",
+                "3",
+                "4"
+            ],
+            "metadata": {
+                "Description": "Azure VM size of the VM"
+            }
+        },
+        "DiskSize": {
+            "type": "string",
+            "defaultValue": "200",
+            "allowedValues": [
+                "200",
+                "400",
+                "500",
+                "1000",
+                "2000",
+                "4000"
+            ],
+            "metadata": {
+                "Description": "Azure VM size of the VM"
+            }
+        },
+        "userImageStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "The Storage Account where the VM image(s) will be created"
+            }
+        },
+        "StorageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "The Storage Account where the VM image(s) will be created"
+            }
+        },
+        "domainName": {
+            "type": "string",
+            "defaultValue": "redmond.corp.microsoft.com",
+            "metadata": {
+                "description": "The FQDN of the AD domain"
+            }
+        },
+        "appID": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "appID tag for the Virtual Machine."
+            }
+        },
+        "orgID": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "orgID tag for the Virtual Machine."
+            }
+        },
+        "env": {
+            "type": "string",
+            "minLength": 1,
+            "allowedValues": [
+                "dev",
+                "test",
+                "prod"
+            ],
+            "metadata": {
+                "description": "environment tag for the Virtual Machine."
+            }
+        },
+        "snoozeDate": {
+            "type": "string",
+            "metadata": {
+                "description": "Snooze date"
+            }
+        },
+        "additionalAdmins": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Additional admins that can login to the VMs"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "Subnet-1",
+            "metadata": {
+                "description": "Name for the subnet"
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24)"
+            }
+        },
+        "ouPath": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The Organizational Unit the VM will join"
+            }
+        }
+    },
+    "variables": {
+        "apiVersion": "2015-01-01",
+        "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
+        "BaseURL": "http://cptteamb.blob.core.windows.net/",
+        "moduleURL": "[concat(variables('BaseURL'),'cloudmsscript/FormatDataDisk.ps1.zip')]",
+        "CreateVMUrl": "[concat(variables('BaseURL'), 'cloudmsvm/template-SingleVM.json')]",
+        "FormatDisksUrl": "[concat(variables('BaseURL'), 'cloudmsvm/template-DataDisks.json')]",
+        "BuildMachineRoleURL": "[concat(variables('BaseURL'),'cloudmsvm/template-Build',parameters('ServerRole'), '.json')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-01-01",
+            "name": "CreateVM",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('CreateVMUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "localAdminUserName": {
+                        "value": "[parameters('localAdminUserName')]"
+                    },
+                    "localAdminPassword": {
+                        "value": "[parameters('localAdminPassword')]"
+                    },
+                    "domainAdminUserName": {
+                        "value": "[parameters('domainAdminUserName')]"
+                    },
+                    "domainAdminPassword": {
+                        "value": "[parameters('domainAdminPassword')]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('vmName')]"
+                    },
+                    "ServerRole": {
+                        "value": "[parameters('ServerRole')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "DiskCount": {
+                        "value": "[parameters('DiskCount')]"
+                    },
+                    "DiskSize": {
+                        "value": "[parameters('DiskSize')]"
+                    },
+                    "numberOfInstances": {
+                        "value": "[parameters('numberOfInstances')]"
+                    },
+                    "imagePublisher": {
+                        "value": "[parameters('imagePublisher')]"
+                    },
+                    "imageOffer": {
+                        "value": "[parameters('imageOffer')]"
+                    },
+                    "sku": {
+                        "value": "[parameters('sku')]"
+                    },
+                    "userImageStorageAccountName": {
+                        "value": "[parameters('userImageStorageAccountName')]"
+                    },
+                  "StorageAccountType": {
+                    "value": "[parameters('StorageAccountType')]"
+                  },
+                    "domainName": {
+                        "value": "[parameters('domainName')]"
+                    },
+                    "appID": {
+                        "value": "[parameters('appID')]"
+                    },
+                    "orgID": {
+                        "value": "[parameters('orgID')]"
+                    },
+                    "env": {
+                        "value": "[parameters('env')]"
+                    },
+                    "snoozeDate": {
+                        "value": "[parameters('snoozeDate')]"
+                    },
+                    "additionalAdmins": {
+                        "value": "[parameters('additionalAdmins')]"
+                    },
+                    "subnetName": {
+                        "value": "[parameters('subnetName')]"
+                    },
+                    "subnetPrefix": {
+                        "value": "[parameters('subnetPrefix')]"
+                    },
+                    "ouPath": {
+                        "value": "[parameters('ouPath')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-01-01",
+            "name": "FormatDataDisks",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('FormatDisksUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[parameters('vmName')]"
+                    },
+                    "ServerRole": {
+                        "value": "[parameters('ServerRole')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "DiskCount": {
+                        "value": "[parameters('DiskCount')]"
+                    },
+                    "DiskSize": {
+                        "value": "[parameters('DiskSize')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/', 'CreateVM')]"
+            ]
+        },
+        {
+            "apiVersion": "2015-01-01",
+            "name": "BuildMachineRole",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('BuildMachineRoleURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[parameters('vmName')]"
+                    },
+                    "ServerRole": {
+                        "value": "[parameters('ServerRole')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "DiskCount": {
+                        "value": "[parameters('DiskCount')]"
+                    },
+                    "DiskSize": {
+                        "value": "[parameters('DiskSize')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/', 'FormatDataDisks')]"
+            ]
+        }
+    ]
+}
