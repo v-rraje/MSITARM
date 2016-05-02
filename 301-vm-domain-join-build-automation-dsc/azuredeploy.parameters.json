@@ -21,7 +21,7 @@
       "value": ""
     },
     "appID": {
-      "value": "ICTO-11627"
+      "value": ""
     },
     "domainName": {
       "value": "redmond.corp.microsoft.com"
@@ -30,7 +30,7 @@
       "value": "dev"
     },
     "orgID": {
-      "value": "500084"
+      "value": ""
     },
     "imagePublisher": {
       "value": "MicrosoftWindowsServer"
@@ -48,7 +48,7 @@
       "value": "Standard_LRS"
     },
     "userImageStorageAccountName": {
-      "value": "trwortharmsandbox"
+      "value": ""
     },
     "numberOfInstances": {
       "value": 1
