@@ -35,7 +35,7 @@
     "vmName": {
       "type": "string",
       "minLength": 3,
-      "maxLength": 15,
+      "maxLength": 13,
       "metadata": {
         "description": "Name for the Virtual Machine."
       }
@@ -48,7 +48,6 @@
     },
     "numberOfInstances": {
       "type": "int", 
-      "allowedValues": [1],
       "metadata": {
         "description": "Number of VMs to deploy"
       }
@@ -207,6 +206,7 @@
     "domainJoinOptions": 3,
     "vmExtensionName": "Microsoft.Powershell.DSC",
     "DiskArtifacts": "http://cptteamb.blob.core.windows.net/",
+    "FormatDisksUrl": "[concat(variables('DiskArtifacts'), 'cloudmsvm/template-DataDisks.json')]",
     "modulesUrl": "[concat(variables('DiskArtifacts'),'cloudmsscript/DomainJoin.ps1.zip')]",
     "4SQLDisk": {
       "vmSize": "[parameters('vmSize')]",
@@ -463,18 +463,22 @@
     "DiskSKU": "[variables(concat( parameters('DiskCount'),parameters('ServerRole'),'Disk'))]"
   },
   "resources": [
-    { 
+       { 
        "apiVersion": "2015-01-01", 
-       "name": "DataDisks",
-       "type": "Microsoft.Resources/deployments", 
-       "properties": { 
+       "name": "[concat('DiskArray',copyindex(1))]",
+        "type": "Microsoft.Resources/deployments", 
+        "copy": {
+            "name": "DataDiskLoop",
+            "count": "[parameters('numberOfInstances')]"
+          },
+        "properties": { 
         "mode": "Incremental", 
          "templateLink": {
             "uri": "[variables('DiskSKU').vmDiskTemplate]",
             "contentVersion": "1.0.0.0"
              }, 
              "parameters": {
-              "vmName": { "value": "[parameters('vmName')]" },
+               "vmName": { "value": "[concat(parameters('vmName'),copyindex(1))]" },
                "diskCount": { "value": "[variables('DiskSKU').diskCount]" },
                "diskCaching": { "value": "[variables('DiskSKU').diskCaching]" },
                "diskSizeGB": { "value": "[variables('DiskSKU').diskSizeGB]" },
@@ -484,7 +488,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'),'','nic1')]",
+      "name": "[concat(variables('nicName'),copyindex(1),'nic1')]",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -493,6 +497,10 @@
         "orgID": "[parameters('orgID')]",
         "env": "[parameters('env')]",
         "snoozeDate": "[parameters('snoozeDate')]"
+      },
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('numberOfInstances')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -510,7 +518,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'),'')]",
+      "name": "[concat(variables('vmName'),copyindex(1))]",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -520,15 +528,19 @@
         "env": "[parameters('env')]",
         "snoozeDate": "[parameters('snoozeDate')]"
       },
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),'','nic1')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'),copyindex(1),'nic1')]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('DiskSKU').vmSize]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'),'')]",
+          "computerName": "[concat(variables('vmName'),copyindex(1))]",
           "adminUsername": "[parameters('localAdminUserName')]",
           "adminPassword": "[parameters('localAdminPassword')]",
           "windowsConfiguration": {
@@ -565,17 +577,17 @@
           "osDisk": {
             "caching": "ReadWrite",
             "createOption": "FromImage",
-            "name": "[concat(variables('vmName'),'','-osDisk')]",
+            "name": "[concat(variables('vmName'),copyindex(1),'-osDisk')]",
             "vhd": {
-              "uri": "[concat(variables('osDiskVhdName'),'','.vhd')]"
+              "uri": "[concat(variables('osDiskVhdName'),copyindex(1),'.vhd')]"
             }
           },
-         "dataDisks": "[reference('DataDisks').outputs.dataDiskArray.value]"
+          "dataDisks": "[reference(concat('DiskArray',copyindex(1))).outputs.dataDiskArray.value]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),'','nic1'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(1),'nic1'))]"
             }
           ]
         }
@@ -583,11 +595,15 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
+      "name": "[concat(parameters('vmName'),copyindex(1),'/', variables('vmExtensionName'))]",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "DSCExtensionLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),copyindex(1))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -618,6 +634,42 @@
           }
         }
       }
-    }
+    },
+    {
+          "apiVersion": "2015-01-01",
+          "name": "[concat('FormatDataDisks',parameters('vmName'),copyindex(1))]",
+          "type": "Microsoft.Resources/deployments",
+          "copy": {
+            "name": "FormatDataDisksLoop",
+            "count": "[parameters('numberOfInstances')]"
+          },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('FormatDisksUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[concat(parameters('vmName'),copyindex(1))]"
+                    },
+                    "ServerRole": {
+                        "value": "[parameters('ServerRole')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "DiskCount": {
+                        "value": "[parameters('DiskCount')]"
+                    },
+                    "DiskSize": {
+                        "value": "[parameters('DiskSize')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),copyindex(1))]"
+            ]
+        },
   ]
 }

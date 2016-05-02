@@ -2,20 +2,23 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
   "parameters": {
+      "vmName": {
+      "value": ""
+    },
     "localAdminUserName": {
-      "value": "cptarm"
+      "value": "ITVSO"
     },
     "localAdminPassword": {
       "value": "P@ssword!"
     },
-    "domainAdminUserName": {
-      "value": "redmond\youralias"
+    "domainJoinUserName": {
+      "value": ""
     },
-    "domainAdminPassword": {
-      "value": "P@ssword!"
+    "domainJoinPassword": {
+      "value": ""
     },
-    "additionalAdmins": {
-      "value": "redmond\\cptteamb"
+    "localAdmins": {
+      "value": ""
     },
     "appID": {
       "value": "ICTO-11627"
@@ -45,14 +48,12 @@
       "value": "Standard_LRS"
     },
     "userImageStorageAccountName": {
-      "value": "tdr237"
+      "value": "trwortharmsandbox"
     },
     "numberOfInstances": {
       "value": 1
     },
-    "vmName": {
-      "value": "tdrBTvm01"
-    },
+
     "vmSize": {
       "value": "Standard_A2"
     },
