@@ -56,6 +56,7 @@
     },
     "userImageStorageAccountName": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -116,21 +117,21 @@
     },
     "localAdmins": {
       "type": "string",
-      "defaultValue": "redmond\\cptteamb,redmond\\trworth",
+      "defaultValue": "redmond\\cptteamb,redmond\\[username]",
       "metadata": {
         "description": "Local admins that can login to the VMs. CSV list. must be users in partners. domain\\user."
       }
     },
     "virtualNetwork": {
       "type": "string",
-      "defaultValue": "ARMERVNETUSC",
+      "defaultValue": "MSITPILOT01-CORP-CUS-1",
       "metadata": {
         "description": "Name for the VirtualNetwork"
       }
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "ARMERVNETUSCPOC",
+      "defaultValue": "ERNetwork",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }

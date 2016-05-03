@@ -195,14 +195,14 @@
     },
     "virtualNetwork": {
       "type": "string",
-      "defaultValue": "ARMERVNETUSC",
+      "defaultValue": "MSITPILOT01-CORP-CUS-1",
       "metadata": {
         "description": "Name for the VirtualNetwork"
       }
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "ARMERVNETUSCPOC",
+      "defaultValue": "ERNetwork",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }
