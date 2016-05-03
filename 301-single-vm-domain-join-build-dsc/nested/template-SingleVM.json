@@ -219,7 +219,7 @@
     "vmName": "[parameters('vmName')]",
     "domainJoinOptions": 3,
     "vmExtensionName": "Microsoft.Powershell.DSC",
-    "DiskArtifacts": "http://cptteamb.blob.core.windows.net/",
+    "DiskArtifacts": "http://cloudmsarmprod.blob.core.windows.net/",
     "modulesUrl": "[concat(variables('DiskArtifacts'),'cloudmsscript/DomainJoin.ps1.zip')]",
     "4SQLDisk": {
       "vmSize": "[parameters('vmSize')]",

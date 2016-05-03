@@ -1,6 +1,6 @@
 Deploy from Azure Portal (UI Experience) 
 
-\301-vm-domain-join-build-automation-dsc\azuredeploy.json
+\301-environment-build-automation-dsc\azuredeploy.json
 Description: SingleVM that leverages DSC for domain join
 Steps:
 	1.  Create your storage acount that you want to deploy to.  
