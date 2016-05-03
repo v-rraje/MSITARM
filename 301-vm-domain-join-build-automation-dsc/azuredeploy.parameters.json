@@ -2,14 +2,14 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
   "parameters": {
-      "vmName": {
+    "vmName": {
       "value": ""
     },
     "localAdminUserName": {
-      "value": "ITVSO"
+      "value": ""
     },
     "localAdminPassword": {
-      "value": "P@ssword!"
+      "value": ""
     },
     "domainJoinUserName": {
       "value": ""
@@ -23,13 +23,13 @@
     "appID": {
       "value": ""
     },
+    "orgID": {
+      "value": ""
+    },
     "domainName": {
-      "value": "redmond.corp.microsoft.com"
+      "value": ""
     },
     "env": {
-      "value": "dev"
-    },
-    "orgID": {
       "value": ""
     },
     "imagePublisher": {
@@ -42,7 +42,7 @@
       "value": "2012-R2-Datacenter"
     },
     "snoozeDate": {
-      "value": "2016/01/08"
+      "value": ""
     },
     "storageAccountType": {
       "value": "Standard_LRS"
@@ -53,7 +53,18 @@
     "numberOfInstances": {
       "value": 1
     },
-
+    "virtualNetwork": {
+      "value": ""
+    },
+    "vnetResourceGroup": {
+      "value": ""
+    },
+    "subnetName": {
+      "value": "Subnet-1"
+    },
+    "subnetPrefix": {
+      "value": "10.0.0.0/24"
+    },
     "vmSize": {
       "value": "Standard_A2"
     },
@@ -67,7 +78,7 @@
       "value": "1"
     },
     "ouPath": {
-      "value": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com"
+      "value": ""
     }
   }
 }

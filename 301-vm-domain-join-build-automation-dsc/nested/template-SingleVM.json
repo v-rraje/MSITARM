@@ -2,6 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "vmName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
     "localAdminUserName": {
       "type": "string",
       "defaultValue": "ITVSO",
@@ -32,12 +40,12 @@
         "description": "Password for domain joining"
       }
     },
-    "vmName": {
+    "localAdmins": {
       "type": "string",
       "minLength": 3,
-      "maxLength": 15,
+      "defaultValue": "",
       "metadata": {
-        "description": "Name for the Virtual Machine."
+        "description": "Additional admins that can login to the VMs"
       }
     },
     "vmSize": {
@@ -47,15 +55,15 @@
       }
     },
     "numberOfInstances": {
-      "type": "int", 
-      "allowedValues": [1],
+      "type": "int",
+      "allowedValues": [ 1 ],
       "metadata": {
         "description": "Number of VMs to deploy"
       }
     },
     "imagePublisher": {
       "type": "string",
-      "allowedValues": ["MicrosoftWindowsServer","MicrosoftSQLServer"],
+      "allowedValues": [ "MicrosoftWindowsServer", "MicrosoftSQLServer" ],
       "metadata": {
         "description": "OS Image Publisher"
       }
@@ -76,7 +84,7 @@
     "ServerRole": {
       "type": "string",
       "defaultValue": "App",
-      "allowedValues": ["App","IIS","SQL"]
+      "allowedValues": [ "App", "IIS", "SQL" ]
     },
     "DiskCount": {
       "type": "string",
@@ -158,23 +166,30 @@
         "description": "Snooze date"
       }
     },
-    "localAdmins": {
+    "virtualNetwork": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Additional admins that can login to the VMs"
+        "description": "Name for the VirtualNetwork"
+      }
+    },
+    "vnetResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the Resource Group that contains VirtualNetwork"
       }
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "Subnet-1",
+      "defaultValue": "",
       "metadata": {
         "description": "Name for the subnet"
       }
     },
     "subnetPrefix": {
       "type": "string",
-      "defaultValue": "10.0.0.0/24",
+      "defaultValue": "",
       "metadata": {
         "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24)"
       }
@@ -189,10 +204,8 @@
   },
   "variables": {
     "apiVersion": "2015-06-15",
-    "virtualNetwork": "ARMERVNETUSC",
-    "vnetResourceGroup": "ARMERVNETUSCPOC",
     "vnetSubscriptionid": "[subscription().subscriptionId]",
-    "vnetID":  "[concat('/subscriptions/',variables('vnetSubscriptionid'),'/resourceGroups/',variables('vnetResourceGroup'),'/providers/Microsoft.Network/virtualnetworks/',variables('virtualNetwork'))]",
+    "vnetID":  "[concat('/subscriptions/',variables('vnetSubscriptionid'),'/resourceGroups/',parameters('vnetResourceGroup'),'/providers/Microsoft.Network/virtualnetworks/',parameters('virtualNetwork'))]",
     "imageOffer": "[parameters('imageOffer')]",
     "imagePublisher": "[parameters('imagePublisher')]",
     "sku": "[parameters('sku')]",
