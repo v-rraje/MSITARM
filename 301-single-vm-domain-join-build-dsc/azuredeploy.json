@@ -56,7 +56,7 @@
     },
     "imagePublisher": {
       "type": "string",
-      "defaultValue": "MicrosoftWindowsServer",
+      "defaultValue": "",
       "allowedValues": [
         "MicrosoftWindowsServer",
         "MicrosoftSQLServer"
@@ -67,7 +67,7 @@
     },
     "imageOffer": {
       "type": "string",
-      "defaultValue": "WindowsServer",
+      "defaultValue": "",
       "allowedValues": [
         "WindowsServer",
         "SQL2012SP2-WS2012R2"
@@ -79,7 +79,7 @@
     "sku": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "",
       "allowedValues": [
         "2012-R2-Datacenter",
         "Enterprise"

@@ -1,46 +1,46 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-  "parameters": {
-    "vmName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the existing VM to apply the DSC configuration to"
-      }
-    },
-    "modulesUrl": {
-      "type": "string",
-      "defaultValue": "http://cptteamb.blob.core.windows.net/cloudmsscript/Deploy-WebServer.ps1.zip",
-      "metadata": {
-        "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
-      }
-    },
-    "configurationFunction": {
-      "type": "string",
-      "defaultValue": "Deploy-WebServer.ps1\\DeployWebServer",
-      "metadata": {
-        "description": "DSC configuration function to call. Should contain filename and function in format fileName.ps1\\configurationfunction"
-      }
-    },
-    "vmSize": {
+    "parameters": {
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the existing VM to apply the DSC configuration to"
+            }
+        },
+        "modulesUrl": {
+            "type": "string",
+            "defaultValue": "http://cptteamb.blob.core.windows.net/cloudmsscript/Deploy-SQLServer.ps1.zip",
+            "metadata": {
+                "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
+            }
+        },
+        "configurationFunction": {
+        "type": "string",
+        "defaultValue": "Deploy-SQLServer.ps1\\DeploySQLServer",
+        "metadata": {
+          "description": "DSC configuration function to call. Should contain filename and function in format fileName.ps1\\configurationfunction"
+        }
+      },
+      "ServerRole": {
+        "type": "string",
+        "defaultValue": "App",
+        "metadata": {
+          "description": "IIS/SQL/APP"
+        }
+      },
+      "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A2",
       "metadata": {
         "description": "Standard_A2"
       }
     },
-    "ServerRole": {
-      "type": "string",
-      "defaultValue": "App",
-      "metadata": {
-        "description": "IIS/SQL/APP"
-      }
-    },
     "DiskCount": {
       "type": "string",
       "defaultValue": "1",
       "metadata": {
-        "description": "1-5"
+        "description": "1-4"
       }
     },
     "DiskSize": {
@@ -58,7 +58,7 @@
         "Description": "Azure VM size of the VM"
       }
     }
-  },
+    },
     "variables": {
 
     },

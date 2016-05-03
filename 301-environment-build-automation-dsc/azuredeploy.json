@@ -1,0 +1,365 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "localAdminUserName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Username for the Virtual Machine."
+      }
+    },
+    "localAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Password for the Virtual Machine."
+      }
+    },
+    "domainJoinUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Username for domain joining"
+      }
+    },
+    "domainJoinPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 12,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "numberOfIIS": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    },
+    "numberOfSQL": {
+      "type": "int", 
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    },
+    "userImageStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Storage Account where the VM image(s) will be created"
+      }
+    },
+    "StorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "The Storage Account where the VM image(s) will be created"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "redmond.corp.microsoft.com",
+      "allowedValues": [
+        "redmond.corp.microsoft.com",
+        "partners.extranet.microsoft.com"
+      ],
+      "metadata": {
+        "description": "The FQDN of the AD domain"
+      }
+    },
+    "appID": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "appID tag for the Virtual Machine."
+      }
+    },
+    "orgID": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "orgID tag for the Virtual Machine."
+      }
+    },
+    "env": {
+      "type": "string",
+      "minLength": 1,
+      "allowedValues": [
+        "dev",
+        "test",
+        "prod"
+      ],
+      "metadata": {
+        "description": "environment tag for the Virtual Machine."
+      }
+    },
+    "snoozeDate": {
+      "type": "string",
+      "metadata": {
+        "description": "Snooze date"
+      }
+    },
+    "localAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Local admins that can login to the VMs. CSV list. must be users in partners. domain\\user."
+      }
+    },
+    "virtualNetwork": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the VirtualNetwork"
+      }
+    },
+    "vnetResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the Resource Group that contains VirtualNetwork"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "Subnet-1",
+      "metadata": {
+        "description": "Name for the subnet"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24)"
+      }
+    },
+    "ouPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    }
+  },
+  "variables": {
+    "BaseURL": "http://cloudmsarmprod.blob.core.windows.net/",
+    "CreateVMUrl": "[concat(variables('BaseURL'), 'cloudmsmultivm/azuredeploy.json')]",
+    "IIS": {
+      "imagePublisher": "MicrosoftWindowsServer",
+      "imageOffer": "WindowsServer",
+      "sku": "2012-R2-Datacenter",
+      "Role": "IIS",
+      "vmSize": "Standard_A2",
+      "diskCount": "1",
+      "diskSize": "200"
+    },
+    "SQL": {
+      "imagePublisher": "MicrosoftSQLServer",
+      "imageOffer": "SQL2012SP2-WS2012R2",
+      "sku": "Enterprise",
+      "Role": "SQL",
+      "vmSize": "Standard_D2",
+      "diskCount": "4",
+      "diskSize": "200"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "CreateIISsvr",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('CreateVMUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "localAdminUserName": {
+            "value": "[parameters('localAdminUserName')]"
+          },
+          "localAdminPassword": {
+            "value": "[parameters('localAdminPassword')]"
+          },
+          "domainJoinUserName": {
+            "value": "[parameters('domainJoinUserName')]"
+          },
+          "domainJoinPassword": {
+            "value": "[parameters('domainJoinPassword')]"
+          },
+          "vmName": {
+            "value": "[concat(parameters('vmName'),variables('IIS').Role,'-')]"
+          },
+          "ServerRole": {
+            "value": "[variables('IIS').Role]"
+          },
+          "vmSize": {
+            "value": "[variables('IIS').vmSize]"
+          },
+          "DiskCount": {
+            "value": "[variables('IIS').DiskCount]"
+          },
+          "DiskSize": {
+            "value": "[variables('IIS').DiskSize]"
+          },
+          "numberOfInstances": {
+            "value": "[parameters('numberOfIIS')]"
+          },
+          "imagePublisher": {
+            "value": "[variables('IIS').imagePublisher]"
+          },
+          "imageOffer": {
+            "value": "[variables('IIS').imageOffer]"
+          },
+          "sku": {
+            "value": "[variables('IIS').sku]"
+          },
+          "userImageStorageAccountName": {
+            "value": "[parameters('userImageStorageAccountName')]"
+          },
+          "StorageAccountType": {
+            "value": "[parameters('StorageAccountType')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "appID": {
+            "value": "[parameters('appID')]"
+          },
+          "orgID": {
+            "value": "[parameters('orgID')]"
+          },
+          "env": {
+            "value": "[parameters('env')]"
+          },
+          "snoozeDate": {
+            "value": "[parameters('snoozeDate')]"
+          },
+          "localAdmins": {
+            "value": "[parameters('localAdmins')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "virtualNetwork": {
+            "value": "[parameters('virtualNetwork')]"
+          },
+          "vnetResourceGroup": {
+            "value": "[parameters('vnetResourceGroup')]"
+          },
+          "subnetPrefix": {
+            "value": "[parameters('subnetPrefix')]"
+          },
+          "ouPath": {
+            "value": "[parameters('ouPath')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "CreateSQLsvr",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('CreateVMUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "localAdminUserName": {
+            "value": "[parameters('localAdminUserName')]"
+          },
+          "localAdminPassword": {
+            "value": "[parameters('localAdminPassword')]"
+          },
+          "domainJoinUserName": {
+            "value": "[parameters('domainJoinUserName')]"
+          },
+          "domainJoinPassword": {
+            "value": "[parameters('domainJoinPassword')]"
+          },
+          "vmName": {
+            "value": "[concat(parameters('vmName'),variables('SQL').Role,'-')]"
+          },
+          "ServerRole": {
+            "value": "[variables('SQL').Role]"
+          },
+          "vmSize": {
+            "value": "[variables('SQL').vmSize]"
+          },
+          "DiskCount": {
+            "value": "[variables('SQL').DiskCount]"
+          },
+          "DiskSize": {
+            "value": "[variables('SQL').DiskSize]"
+          },
+          "numberOfInstances": {
+            "value": "[parameters('numberOfSQL')]"
+          },
+          "imagePublisher": {
+            "value": "[variables('SQL').imagePublisher]"
+          },
+          "imageOffer": {
+            "value": "[variables('SQL').imageOffer]"
+          },
+          "sku": {
+            "value": "[variables('SQL').sku]"
+          },
+          "userImageStorageAccountName": {
+            "value": "[parameters('userImageStorageAccountName')]"
+          },
+          "StorageAccountType": {
+            "value": "[parameters('StorageAccountType')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "appID": {
+            "value": "[parameters('appID')]"
+          },
+          "orgID": {
+            "value": "[parameters('orgID')]"
+          },
+          "env": {
+            "value": "[parameters('env')]"
+          },
+          "snoozeDate": {
+            "value": "[parameters('snoozeDate')]"
+          },
+          "localAdmins": {
+            "value": "[parameters('localAdmins')]"
+          },
+          "virtualNetwork": {
+            "value": "[parameters('virtualNetwork')]"
+          },
+          "vnetResourceGroup": {
+            "value": "[parameters('vnetResourceGroup')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "subnetPrefix": {
+            "value": "[parameters('subnetPrefix')]"
+          },
+          "ouPath": {
+            "value": "[parameters('ouPath')]"
+          }
+        }
+      }
+    }
+  ]
+}
