@@ -2,20 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-       "vmName": {
+     "vmName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the existing VM to apply the DSC configuration to"
             }
         },
-       "modulesUrl": {
+     "modulesUrl": {
             "type": "string",
-            "defaultValue": "http://cptteamb.blob.core.windows.net/cloudmsscript/FormatDataDisk.ps1.zip",
+            "defaultValue": "http://cloudmsarmprod.blob.core.windows.net/cloudmsscript/FormatDataDisk.ps1.zip",
             "metadata": {
                 "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
             }
         },
-       "configurationFunction": {
+     "configurationFunction": {
             "type": "string",
             "defaultValue": "FormatDataDisk.ps1\\FormatDataDisks",
             "metadata": {
@@ -52,8 +52,7 @@
       }
     },
   "variables": {
-     "modulesUrl": "http://sdoscriptslibrarydev.blob.core.windows.net/scripts/DomainJoin.ps1.zip",
-    "DiskArtifacts": "http://cptteamb.blob.core.windows.net/",
+    "DiskArtifacts": "http://cloudmsarmprod.blob.core.windows.net/",
     "4SQLDisk": {
       "vmSize": "[parameters('vmSize')]",
       "diskCount": "4",

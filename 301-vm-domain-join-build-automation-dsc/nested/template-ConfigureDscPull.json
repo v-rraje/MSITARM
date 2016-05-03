@@ -23,19 +23,22 @@
             }
         },
         "registrationKey": {
-            "type": "securestring",
+          "type": "securestring",
+          "defaultValue": "JalVNAzBTtXPFxtrvvUFETxaa2S3SvJF8oDyMfa22LuilK9YBw72bTE4/HZ9nilnSDNphCMr8Ns7nWdbPdxtvw==",
             "metadata": {
                 "description": "Registration key to use to onboard to the Azure Automation DSC pull/reporting server"
             }
         },
         "registrationUrl": {
-            "type": "string",
+          "type": "string",
+          "defaultValue": "https://eus2-agentservice-prod-1.azure-automation.net/accounts/b38c1666-d54e-4ab4-9fd4-0d7b24bffff2",
             "metadata": {
                 "description": "Registration url of the Azure Automation DSC pull/reporting server"
             }
         },
         "nodeConfigurationName": {
-            "type": "string",
+          "type": "string",
+          "defaultValue": "MSITNoPAK2.Corpnet",
             "metadata": {
                 "description": "The name of the node configuration, on the Azure Automation DSC pull server, that this node will be configured as"
             }
@@ -92,7 +95,8 @@
             }
         },
         "timestamp": {
-            "type": "string",
+          "type": "string",
+          "defaultValue": "1/1/15",
             "metadata": {
                 "description": "The current datetime, as a string, to force the request to go through ARM even if all fields are the same as last ARM deployment of this template; example in parameters file is in MM/dd/yyyy H:mm:ss tt format"
             }

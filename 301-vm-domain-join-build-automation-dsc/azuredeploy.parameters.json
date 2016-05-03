@@ -2,32 +2,35 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
   "parameters": {
+    "vmName": {
+      "value": ""
+    },
     "localAdminUserName": {
-      "value": "cptarm"
+      "value": ""
     },
     "localAdminPassword": {
-      "value": "P@ssword!"
+      "value": ""
     },
-    "domainAdminUserName": {
-      "value": "redmond\youralias"
+    "domainJoinUserName": {
+      "value": ""
     },
-    "domainAdminPassword": {
-      "value": "P@ssword!"
+    "domainJoinPassword": {
+      "value": ""
     },
-    "additionalAdmins": {
-      "value": "redmond\\cptteamb"
+    "localAdmins": {
+      "value": ""
     },
     "appID": {
-      "value": "ICTO-11627"
-    },
-    "domainName": {
-      "value": "redmond.corp.microsoft.com"
-    },
-    "env": {
-      "value": "dev"
+      "value": ""
     },
     "orgID": {
-      "value": "500084"
+      "value": ""
+    },
+    "domainName": {
+      "value": ""
+    },
+    "env": {
+      "value": ""
     },
     "imagePublisher": {
       "value": "MicrosoftWindowsServer"
@@ -39,19 +42,28 @@
       "value": "2012-R2-Datacenter"
     },
     "snoozeDate": {
-      "value": "2016/01/08"
+      "value": ""
     },
     "storageAccountType": {
       "value": "Standard_LRS"
     },
     "userImageStorageAccountName": {
-      "value": "tdr237"
+      "value": ""
     },
     "numberOfInstances": {
       "value": 1
     },
-    "vmName": {
-      "value": "tdrBTvm01"
+    "virtualNetwork": {
+      "value": ""
+    },
+    "vnetResourceGroup": {
+      "value": ""
+    },
+    "subnetName": {
+      "value": "Subnet-1"
+    },
+    "subnetPrefix": {
+      "value": "10.0.0.0/24"
     },
     "vmSize": {
       "value": "Standard_A2"
@@ -66,7 +78,7 @@
       "value": "1"
     },
     "ouPath": {
-      "value": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com"
+      "value": ""
     }
   }
 }
