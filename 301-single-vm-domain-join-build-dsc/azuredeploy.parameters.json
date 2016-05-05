@@ -3,82 +3,82 @@
     "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
-      "value": "cloudmsXX97"
+      "value": ""
     },
     "localAdminUserName": {
-      "value": "itvso"
+      "value": ""
     },
     "localAdminPassword": {
-      "value": "!P@ssword"
+      "value": ""
     },
     "domainJoinUserName": {
-      "value": "redmond\\trworth"
+      "value": ""
     },
     "domainJoinPassword": {
-      "value": "!@goodway2retire"
+      "value": ""
     },
     "localAdmins": {
-      "value": "redmond\\trworth"
+      "value": ""
     },
     "appID": {
-      "value": "ICTO-1167"
+      "value": ""
     },
     "orgID": {
-      "value": "500084"
+      "value": ""
     },
     "domainName": {
-      "value": "redmond.corp.microsoft.com"
+      "value": ""
     },
     "env": {
-      "value": "dev"
+      "value": ""
     },
     "imagePublisher": {
-      "value": "MicrosoftSQLServer"
+      "value": ""
     },
     "imageOffer": {
-      "value": "SQL2012SP2-WS2012R2"
+      "value": ""
     },
     "sku": {
-      "value": "Enterprise"
+      "value": ""
     },
     "snoozeDate": {
-      "value": "1/1/16"
+      "value": ""
     },
     "storageAccountType": {
-      "value": "standard_LRS"
+      "value": ""
     },
     "userImageStorageAccountName": {
-      "value": "trworthsandbox"
+      "value": ""
     },
     "numberOfInstances": {
       "value": 1
     },
     "virtualNetwork": {
-      "value": "ARMERVNETUSC"
+      "value": ""
     },
     "vnetResourceGroup": {
-      "value": "ARMERVNETUSCPOC"
+      "value": ""
     },
     "subnetName": {
-      "value": "Subnet-1"
+      "value": ""
     },
     "subnetPrefix": {
-      "value": "10.0.0.0/24"
+      "value": ""
     },
     "vmSize": {
-      "value": "Standard_A2"
+      "value": ""
     },
     "ServerRole": {
-      "value": "SQL"
+      "value": "App"
     },
     "DiskSize": {
       "value": "200"
     },
     "DiskCount": {
-      "value": "4"
+      "value": "1"
     },
     "ouPath": {
-      "value": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com"
+      "value": ""
     }
   }
 }
