@@ -20,7 +20,7 @@
     },
     "localAdminPassword": {
       "type": "securestring",
-      "defaultValue": "P@ssword!",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "Local Password for the Virtual Machine."
@@ -56,7 +56,7 @@
     },
     "imagePublisher": {
       "type": "string",
-      "defaultValue": "MicrosoftWindowsServer",
+      "defaultValue": "MicrosoftSQLServer",
       "allowedValues": [
         "MicrosoftWindowsServer",
         "MicrosoftSQLServer"
@@ -67,7 +67,7 @@
     },
     "imageOffer": {
       "type": "string",
-      "defaultValue": "WindowsServer",
+      "defaultValue": "SQL2012SP2-WS2012R2",
       "allowedValues": [
         "WindowsServer",
         "SQL2012SP2-WS2012R2"
@@ -79,7 +79,7 @@
     "sku": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "Enterprise",
       "allowedValues": [
         "2012-R2-Datacenter",
         "Enterprise"
@@ -90,7 +90,7 @@
     },
     "ServerRole": {
       "type": "string",
-      "defaultValue": "App",
+      "defaultValue": "SQL",
       "allowedValues": [
         "App",
         "IIS",

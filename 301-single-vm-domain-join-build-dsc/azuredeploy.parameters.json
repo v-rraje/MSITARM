@@ -3,61 +3,61 @@
     "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
-      "value": ""
+      "value": "cloudmsXX97"
     },
     "localAdminUserName": {
-      "value": ""
+      "value": "itvso"
     },
     "localAdminPassword": {
-      "value": ""
+      "value": "!P@ssword"
     },
     "domainJoinUserName": {
-      "value": ""
+      "value": "redmond\\trworth"
     },
     "domainJoinPassword": {
-      "value": ""
+      "value": "!@goodway2retire"
     },
     "localAdmins": {
-      "value": ""
+      "value": "redmond\\trworth"
     },
     "appID": {
-      "value": ""
+      "value": "ICTO-1167"
     },
     "orgID": {
-      "value": ""
+      "value": "500084"
     },
     "domainName": {
-      "value": ""
+      "value": "redmond.corp.microsoft.com"
     },
     "env": {
-      "value": ""
+      "value": "dev"
     },
     "imagePublisher": {
-      "value": ""
+      "value": "MicrosoftSQLServer"
     },
     "imageOffer": {
-      "value": ""
+      "value": "SQL2012SP2-WS2012R2"
     },
     "sku": {
-      "value": ""
+      "value": "Enterprise"
     },
     "snoozeDate": {
-      "value": ""
+      "value": "1/1/16"
     },
     "storageAccountType": {
-      "value": ""
+      "value": "standard_LRS"
     },
     "userImageStorageAccountName": {
-      "value": ""
+      "value": "trworthsandbox"
     },
     "numberOfInstances": {
       "value": 1
     },
     "virtualNetwork": {
-      "value": "1"
+      "value": "ARMERVNETUSC"
     },
     "vnetResourceGroup": {
-      "value": ""
+      "value": "ARMERVNETUSCPOC"
     },
     "subnetName": {
       "value": "Subnet-1"
@@ -69,16 +69,16 @@
       "value": "Standard_A2"
     },
     "ServerRole": {
-      "value": "App"
+      "value": "SQL"
     },
     "DiskSize": {
       "value": "200"
     },
     "DiskCount": {
-      "value": "1"
+      "value": "4"
     },
     "ouPath": {
-      "value": ""
+      "value": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com"
     }
   }
 }
