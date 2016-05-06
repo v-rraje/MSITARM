@@ -10,7 +10,7 @@
     },
     "modulesUrl": {
       "type": "string",
-      "defaultValue": "http://cptteamb.blob.core.windows.net/cloudmsscript/Deploy-AppServer.ps1.zip",
+      "defaultValue": "http://cloudmsarmprod.blob.core.windows.net/cloudmsscript/Deploy-AppServer.ps1.zip",
       "metadata": {
         "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
       }

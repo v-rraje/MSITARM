@@ -54,19 +54,19 @@
       "value": 1
     },
     "virtualNetwork": {
-      "value": "1"
+      "value": ""
     },
     "vnetResourceGroup": {
       "value": ""
     },
     "subnetName": {
-      "value": "Subnet-1"
+      "value": ""
     },
     "subnetPrefix": {
-      "value": "10.0.0.0/24"
+      "value": ""
     },
     "vmSize": {
-      "value": "Standard_A2"
+      "value": ""
     },
     "ServerRole": {
       "value": "App"

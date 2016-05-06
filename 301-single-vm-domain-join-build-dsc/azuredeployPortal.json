@@ -20,7 +20,7 @@
     },
     "localAdminPassword": {
       "type": "securestring",
-      "defaultValue": "P@ssword!",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "Local Password for the Virtual Machine."
@@ -107,7 +107,7 @@
         "4"
       ],
       "metadata": {
-        "Description": "Azure VM size of the VM"
+        "Description": "Count of DataDisks to add"
       }
     },
     "DiskSize": {
@@ -122,7 +122,7 @@
         "4000"
       ],
       "metadata": {
-        "Description": "Azure VM size of the VM"
+        "Description": "Azure VM DiskSize of the VM"
       }
     },
     "userImageStorageAccountName": {
