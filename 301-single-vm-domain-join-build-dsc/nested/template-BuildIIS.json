@@ -36,29 +36,42 @@
         "description": "IIS/SQL/APP"
       }
     },
-    "DiskCount": {
-      "type": "string",
-      "defaultValue": "1",
-      "metadata": {
-        "description": "1-5"
+     "DiskCount": {
+        "type": "string",
+        "allowedValues": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16"
+        ],
+        "defaultValue": "2",
+        "metadata": {
+          "description": "Number of Disks for vm."
+        }
+      },
+     "DiskSize": {
+        "type": "int",
+        "defaultValue": 200,
+        "minValue": 10,
+        "maxValue": 1024,
+        "metadata": {
+          "Description": "Azure VM size of the VM"
+        }
       }
     },
-    "DiskSize": {
-      "type": "string",
-      "defaultValue": "200",
-      "allowedValues": [
-        "200",
-        "400",
-        "500",
-        "1000",
-        "2000",
-        "4000"
-      ],
-      "metadata": {
-        "Description": "Azure VM size of the VM"
-      }
-    }
-  },
     "variables": {
 
     },
