@@ -10,14 +10,14 @@
     },
     "modulesUrl": {
       "type": "string",
-      "defaultValue": "http://cloudmsarmprod.blob.core.windows.net/cloudmsscript/Deploy-AppServer.ps1.zip",
+      "defaultValue": "http://cloudmsarmprod.blob.core.windows.net/cloudmsscript/Deploy-WinServer.ps1.zip",
       "metadata": {
         "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
       }
     },
     "configurationFunction": {
       "type": "string",
-      "defaultValue": "Deploy-AppServer.ps1\\DeployAppServer",
+      "defaultValue": "Deploy-WinServer.ps1\\DeployWinServer",
       "metadata": {
         "description": "DSC configuration function to call. Should contain filename and function in format fileName.ps1\\configurationfunction"
       }
@@ -31,21 +31,21 @@
     },
     "ServerRole": {
       "type": "string",
-      "defaultValue": "App",
+      "defaultValue": "Win",
       "metadata": {
-        "description": "IIS/SQL/APP"
+        "description": "IIS/SQL3,SQL4/Win"
       }
     },
     "DiskCount": {
       "type": "string",
       "defaultValue": "1",
       "metadata": {
-        "description": "1-4"
+        "description": "0-16"
       }
     },
     "DiskSize": {
-      "type": "string",
-      "defaultValue": "200",
+      "type": "int",
+      "defaultValue": 200,
       "metadata": {
         "Description": "Azure VM size of the VM"
       }
