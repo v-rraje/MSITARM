@@ -24,14 +24,14 @@
         },
         "registrationKey": {
           "type": "securestring",
-          "defaultValue": "JalVNAzBTtXPFxtrvvUFETxaa2S3SvJF8oDyMfa22LuilK9YBw72bTE4/HZ9nilnSDNphCMr8Ns7nWdbPdxtvw==",
+          "defaultValue": "",
             "metadata": {
                 "description": "Registration key to use to onboard to the Azure Automation DSC pull/reporting server"
             }
         },
         "registrationUrl": {
           "type": "string",
-          "defaultValue": "https://eus2-agentservice-prod-1.azure-automation.net/accounts/b38c1666-d54e-4ab4-9fd4-0d7b24bffff2",
+          "defaultValue": "",
             "metadata": {
                 "description": "Registration url of the Azure Automation DSC pull/reporting server"
             }
