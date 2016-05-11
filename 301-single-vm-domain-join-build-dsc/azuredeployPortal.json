@@ -141,10 +141,10 @@
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "redmond.corp.microsoft.com",
+      "defaultValue": "domain1.com",
       "allowedValues": [
-        "redmond.corp.microsoft.com",
-        "partners.extranet.microsoft.com"
+        "domain1.com",
+        "domain2.com"
       ],
       "metadata": {
         "description": "The FQDN of the AD domain"
