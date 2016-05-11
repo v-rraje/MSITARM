@@ -10,7 +10,7 @@
         },
      "modulesUrl": {
             "type": "string",
-            "defaultValue": "http://cloudmsarmprod.blob.core.windows.net/cloudmsscript/FormatDataDisk.ps1.zip",
+            "defaultValue": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-multiple-vm-domain-join-build-dsc/scripts/FormatDataDisk/FormatDataDisk.ps1.zip",
             "metadata": {
                 "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
             }
@@ -31,31 +31,56 @@
       },
       "ServerRole": {
         "type": "string",
-        "defaultValue": "A2",
+        "defaultValue": "",
         "metadata": {
-          "description": "Azure VM Size"
+          "description": "Azure VM Role, SQL3, SQL4, IIS, Win"
         }
       },
       "DiskSize": {
-        "type": "string",
-        "defaultValue": "200",
+        "type": "int",
+        "defaultValue": 200,
+        "maxValue": 1024,
         "metadata": {
           "description": "Azure Disk SizeGB"
         }
       },
       "DiskCount": {
-        "type": "string",
-        "defaultValue": "1",
-        "metadata": {
-          "description": "Azure DiskCount"
-        }
+      "type": "string",
+        "allowedValues": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16"
+        ],
+      "defaultValue": "2",
+      "metadata": {
+        "description": "Number of Disks for vm."
       }
+    }
     },
   "variables": {
-    "DiskArtifacts": "http://cloudmsarmprod.blob.core.windows.net/",
-    "4SQLDisk": {
+    "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-multiple-vm-domain-join-build-dsc/",
+    "SQL3Disk": {
       "vmSize": "[parameters('vmSize')]",
-      "diskCount": "4",
+      "SQLServer": {
+        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA\\",
+        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA\\",
+        "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA\\",
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\backup\\"
+      },
       "dataDisks": {
         "1": {
           "DiskName": "H",
@@ -66,21 +91,20 @@
           "DiskSize": "[parameters('DiskSize')]"
         },
         "3": {
-          "DiskName": "T",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "4": {
-          "DiskName": "S",
+          "DiskName": "E",
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "diskCaching": "None",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "3SQLDisk": {
-     "vmSize": "[parameters('vmSize')]",
-      "diskCount": "3",
+    "SQL4Disk": {
+      "vmSize": "[parameters('vmSize')]",
+      "SQLServer": {
+        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA\\",
+        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA\\",
+        "TempDbPath": "T:\\MSSqlServer\\MSSQL\\DATA\\",
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\backup\\"
+      },
       "dataDisks": {
         "1": {
           "DiskName": "H",
@@ -91,197 +115,37 @@
            "DiskSize": "[parameters('DiskSize')]"
         },
         "3": {
-          "DiskName": "S",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-       "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "2SQLDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "2",
-      "dataDisks": {
-        "1": {
-          "DiskName": "H",
+          "DiskName": "E",
           "DiskSize": "[parameters('DiskSize')]"
         },
-        "2": {
-          "DiskName": "S",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "1SQLDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "1",
-      "dataDisks": {
-        "1": {
-          "DiskName": "S",
-           "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "1AppDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "1",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-            "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "2AppDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "2",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-       "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "3AppDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "3",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "3": {
-          "DiskName": "P",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "4AppDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "4",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "3": {
-          "DiskName": "P",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "4": {
+         "4": {
           "DiskName": "T",
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'cloudmsdisk/DiskArray.json')]"
     },
-    "1IISDisk": {
+    "WinDisk": {
       "vmSize": "[parameters('vmSize')]",
-      "diskCount": "1",
       "dataDisks": {
         "1": {
-          "DiskName": "R",
+          "DiskName": "E",
             "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "2IISDisk": {
+    "IISDisk": {
       "vmSize": "[parameters('vmSize')]",
-      "diskCount": "2",
       "dataDisks": {
         "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-       "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "3IISDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "3",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "3": {
-          "DiskName": "P",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "4IISDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "4",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-            "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "3": {
-          "DiskName": "P",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-       "4": {
-          "DiskName": "T",
+          "DiskName": "E",
             "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "DiskSKU": "[variables(concat( parameters('DiskCount'),parameters('ServerRole'),'Disk'))]"
+    "DiskSKU": "[variables(concat(parameters('ServerRole'),'Disk'))]"
   },
     "resources": [
     {

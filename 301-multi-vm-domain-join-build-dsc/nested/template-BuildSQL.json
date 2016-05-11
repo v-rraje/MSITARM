@@ -2,20 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "vmName": {
+      "vmName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the existing VM to apply the DSC configuration to"
             }
         },
-        "modulesUrl": {
+      "modulesUrl": {
             "type": "string",
-            "defaultValue": "http://cloudmsarmprod.blob.core.windows.net/cloudmsscript/Deploy-SQLServer.ps1.zip",
+            "defaultValue": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-multiple-vm-domain-join-build-dsc/scripts/Deploy-SQLServer/Deploy-SQLServer.ps1.zip",
             "metadata": {
                 "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
             }
         },
-        "configurationFunction": {
+      "configurationFunction": {
         "type": "string",
         "defaultValue": "Deploy-SQLServer.ps1\\DeploySQLServer",
         "metadata": {
@@ -23,64 +23,155 @@
         }
       },
       "ServerRole": {
+          "type": "string",
+          "defaultValue": "Win",
+          "metadata": {
+            "description": "IIS/SQL3, SQL4/Win"
+          }
+        },
+      "vmSize": {
         "type": "string",
-        "defaultValue": "App",
+        "defaultValue": "Standard_A2"
+        },
+      "DiskCount": {
+        "type": "string",
+        "allowedValues": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16"
+        ],
+        "defaultValue": "2",
         "metadata": {
-          "description": "IIS/SQL/APP"
+          "description": "Number of Disks for vm."
         }
       },
-      "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_A2",
-      "metadata": {
-        "description": "Standard_A2"
+      "DiskSize": {
+        "type": "int",
+        "defaultValue": 200,
+        "minValue": 10,
+        "maxValue": 1024,
+        "metadata": {
+          "Description": "Azure VM size of the VM"
+        }
       }
     },
-    "DiskCount": {
-      "type": "string",
-      "defaultValue": "1",
-      "metadata": {
-        "description": "1-4"
-      }
+  "variables": {
+    "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-multiple-vm-domain-join-build-dsc/",
+    "diskCaching": "None",
+    "SQL3Disk": {
+      "vmSize": "[parameters('vmSize')]",
+      "SQLServer": {
+        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA\\",
+        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA\\",
+        "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA\\",
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\backup\\"
+      },
+      "dataDisks": {
+        "1": {
+          "DiskName": "H",
+          "DiskSize": "[parameters('DiskSize')]"
+        },
+        "2": {
+          "DiskName": "O",
+          "DiskSize": "[parameters('DiskSize')]"
+        },
+        "3": {
+          "DiskName": "E",
+          "DiskSize": "[parameters('DiskSize')]"
+        }
+      },
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "DiskSize": {
-      "type": "string",
-      "defaultValue": "200",
-      "allowedValues": [
-        "200",
-        "400",
-        "500",
-        "1000",
-        "2000",
-        "4000"
-      ],
-      "metadata": {
-        "Description": "Azure VM size of the VM"
-      }
-    }
+    "SQL4Disk": {
+      "vmSize": "[parameters('vmSize')]",
+      "SQLServer": {
+        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA\\",
+        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA\\",
+        "TempDbPath": "T:\\MSSqlServer\\MSSQL\\DATA\\",
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\backup\\"
+      },
+      "dataDisks": {
+        "1": {
+          "DiskName": "H",
+          "DiskSize": "[parameters('DiskSize')]"
+        },
+        "2": {
+          "DiskName": "O",
+          "DiskSize": "[parameters('DiskSize')]"
+        },
+        "3": {
+          "DiskName": "E",
+          "DiskSize": "[parameters('DiskSize')]"
+        },
+        "4": {
+          "DiskName": "T",
+          "DiskSize": "[parameters('DiskSize')]"
+        }
+      },
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "variables": {
-
+    "WinDisk": {
+      "vmSize": "[parameters('vmSize')]",
+      "dataDisks": {
+        "1": {
+          "DiskName": "E",
+          "DiskSize": "[parameters('DiskSize')]"
+        }
+      },
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
+    "IISDisk": {
+      "vmSize": "[parameters('vmSize')]",
+      "dataDisks": {
+        "1": {
+          "DiskName": "E",
+          "DiskSize": "[parameters('DiskSize')]"
+        }
+      },
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+    },
+    "DiskSKU": "[variables(concat(parameters('ServerRole'),'Disk'))]"
+  },
     "resources": [
-    {
+      {
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "name": "[concat(parameters('vmName'),'/Microsoft.Powershell.DSC')]",
         "apiVersion": "2015-06-15",
         "location": "[resourceGroup().location]",
         "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.15",
-            "autoUpgradeMinorVersion": true,
-            "protectedSettings": {},
-            "settings": {
-                "ModulesUrl": "[parameters('modulesUrl')]",
-                "SasToken": "",
-                "ConfigurationFunction": "[parameters('configurationFunction')]",
-                "Properties": []
-            }
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.15",
+          "autoUpgradeMinorVersion": true,
+          "protectedSettings": { },
+          "settings": {
+            "ModulesUrl": "[parameters('modulesUrl')]",
+            "SasToken": "",
+            "ConfigurationFunction": "[parameters('configurationFunction')]",
+            "Properties": [
+                {
+                        "Name": "Disks",
+                        "Value": "[variables('DiskSKU')]",
+                        "TypeName": "System.Array"
+                }
+              ]
+          }
         }
-    }]
+      }
+    ]
 }
 

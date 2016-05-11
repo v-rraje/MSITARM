@@ -24,14 +24,14 @@
         },
         "registrationKey": {
           "type": "securestring",
-          "defaultValue": "JalVNAzBTtXPFxtrvvUFETxaa2S3SvJF8oDyMfa22LuilK9YBw72bTE4/HZ9nilnSDNphCMr8Ns7nWdbPdxtvw==",
+          "defaultValue": "",
             "metadata": {
                 "description": "Registration key to use to onboard to the Azure Automation DSC pull/reporting server"
             }
         },
         "registrationUrl": {
           "type": "string",
-          "defaultValue": "https://eus2-agentservice-prod-1.azure-automation.net/accounts/b38c1666-d54e-4ab4-9fd4-0d7b24bffff2",
+          "defaultValue": "",
             "metadata": {
                 "description": "Registration url of the Azure Automation DSC pull/reporting server"
             }
@@ -105,83 +105,84 @@
     "variables": {
 
     },
-    "resources": [
+  "resources": [
     {
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(parameters('vmName'),'/Microsoft.Powershell.DSC')]",
-        "apiVersion": "2015-06-15",
-        "location": "[resourceGroup().location]",
-        "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.15",
-            "autoUpgradeMinorVersion": true,
-            "protectedSettings": {
-                "Items": {
-                    "registrationKeyPrivate": "[parameters('registrationKey')]"
-                }
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/Microsoft.Powershell.DSC')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.15",
+        "autoUpgradeMinorVersion": true,
+        "protectedSettings": {
+          "Items": {
+            "registrationKeyPrivate": "[parameters('registrationKey')]"
+          }
+        },
+        "settings": {
+          "ModulesUrl": "[parameters('modulesUrl')]",
+          "SasToken": "",
+          "ConfigurationFunction": "[parameters('configurationFunction')]",
+          "Properties": [
+            {
+              "Name": "RegistrationKey",
+              "Value": {
+                "UserName": "PLACEHOLDER_DONOTUSE",
+                "Password": "PrivateSettingsRef:registrationKeyPrivate"
+              },
+              "TypeName": "System.Management.Automation.PSCredential"
             },
-            "settings": {
-                "ModulesUrl": "[parameters('modulesUrl')]",
-                "SasToken": "",
-                "ConfigurationFunction": "[parameters('configurationFunction')]",
-                "Properties": [
-                    {
-                        "Name": "RegistrationKey",
-                        "Value": {
-                            "UserName": "PLACEHOLDER_DONOTUSE",
-                            "Password": "PrivateSettingsRef:registrationKeyPrivate"
-                        },
-                        "TypeName": "System.Management.Automation.PSCredential"
-                    },
-                    {
-                        "Name": "RegistrationUrl",
-                        "Value": "[parameters('registrationUrl')]",
-                        "TypeName": "System.String"
-                    },
-                    {
-                        "Name": "NodeConfigurationName",
-                        "Value": "[parameters('nodeConfigurationName')]",
-                        "TypeName": "System.String"
-                    },
-                    {
-                        "Name": "ConfigurationMode",
-                        "Value": "[parameters('configurationMode')]",
-                        "TypeName": "System.String"
-                    },
-                    {
-                        "Name": "ConfigurationModeFrequencyMins",
-                        "Value": "[parameters('configurationModeFrequencyMins')]",
-                        "TypeName": "System.Int32"
-                    },
-                    {
-                        "Name": "RefreshFrequencyMins",
-                        "Value": "[parameters('refreshFrequencyMins')]",
-                        "TypeName": "System.Int32"
-                    },
-                    {
-                        "Name": "RebootNodeIfNeeded",
-                        "Value": "[parameters('rebootNodeIfNeeded')]",
-                        "TypeName": "System.Boolean"
-                    },
-                    {
-                        "Name": "ActionAfterReboot",
-                        "Value": "[parameters('actionAfterReboot')]",
-                        "TypeName": "System.String"
-                    },
-                    {
-                        "Name": "AllowModuleOverwrite",
-                        "Value": "[parameters('allowModuleOverwrite')]",
-                        "TypeName": "System.Boolean"
-                    },
-                    {
-                        "Name": "Timestamp",
-                        "Value": "[parameters('timestamp')]",
-                        "TypeName": "System.String"
-                    }
-                ]
+            {
+              "Name": "RegistrationUrl",
+              "Value": "[parameters('registrationUrl')]",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "NodeConfigurationName",
+              "Value": "[parameters('nodeConfigurationName')]",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "ConfigurationMode",
+              "Value": "[parameters('configurationMode')]",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "ConfigurationModeFrequencyMins",
+              "Value": "[parameters('configurationModeFrequencyMins')]",
+              "TypeName": "System.Int32"
+            },
+            {
+              "Name": "RefreshFrequencyMins",
+              "Value": "[parameters('refreshFrequencyMins')]",
+              "TypeName": "System.Int32"
+            },
+            {
+              "Name": "RebootNodeIfNeeded",
+              "Value": "[parameters('rebootNodeIfNeeded')]",
+              "TypeName": "System.Boolean"
+            },
+            {
+              "Name": "ActionAfterReboot",
+              "Value": "[parameters('actionAfterReboot')]",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "AllowModuleOverwrite",
+              "Value": "[parameters('allowModuleOverwrite')]",
+              "TypeName": "System.Boolean"
+            },
+            {
+              "Name": "Timestamp",
+              "Value": "[parameters('timestamp')]",
+              "TypeName": "System.String"
             }
+          ]
         }
-    }]
+      }
+    }
+  ]
 }
 
