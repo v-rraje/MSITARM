@@ -4,15 +4,15 @@
   "parameters": {
     "vmName": {
       "type": "string",
-      "minLength": 3,
-      "maxLength": 13,
-      "metadata": {
-        "description": "Name for the Virtual Machine."
-      }
-    },
+      "defaultValue": "",
+            "minLength": 3,
+            "metadata": {
+                "description": "Name for the Virtual Machine."
+            }
+        },
     "localAdminUserName": {
       "type": "string",
-      "defaultValue": "ITVSO",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "Local Username for the Virtual Machine."
@@ -42,71 +42,92 @@
     },
     "vmSize": {
       "type": "string",
+      "defaultValue": "Standard_A2",
       "metadata": {
         "description": "Size for the Virtual Machine."
       }
     },
     "numberOfInstances": {
       "type": "int",
+      "defaultValue": 1,
       "metadata": {
         "description": "Number of VMs to deploy"
       }
     },
     "imagePublisher": {
       "type": "string",
-      "allowedValues": [ "MicrosoftWindowsServer", "MicrosoftSQLServer" ],
+      "defaultValue": "MicrosoftWindowsServer",
+      "allowedValues": [
+        "MicrosoftWindowsServer",
+        "MicrosoftSQLServer"
+      ],
       "metadata": {
-        "description": "OS Image Publisher"
+        "description": "OS Image Publisher. https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-cli-ps-findimage/"
       }
     },
     "imageOffer": {
       "type": "string",
+      "defaultValue": "WindowsServer",
       "metadata": {
-        "description": "OS Image Offer"
+        "description": "Allowed Windows values: WindowsServer. Allowed SQL Values: SQL2012SP2-WS2012, SQL2012SP2-WS2012R2,SQL2014-WS2012R2, SQL2014SP1-WS2012R2, SQL2016CTP3-WS2012R2, SQL2016CTP3.1-WS2012R2, SQL2016CTP3.2-WS2012R2, SQL2016RC3-WS2012R2v2."
       }
     },
     "sku": {
       "type": "string",
       "minLength": 1,
+      "defaultValue": "2012-R2-Datacenter",
       "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+        "description": "Allowed Windows values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter. Allowed SQL values: Enterprise, Standard, Web, Express."
       }
     },
     "ServerRole": {
       "type": "string",
-      "defaultValue": "App",
-      "allowedValues": [ "App", "IIS", "SQL" ]
+      "defaultValue": "Win",
+      "allowedValues": [
+        "Win",
+        "IIS",
+        "SQL3",
+        "SQL4"
+      ]
     },
     "DiskCount": {
       "type": "string",
-      "defaultValue": "1",
       "allowedValues": [
+        "0",
         "1",
         "2",
         "3",
-        "4"
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16"
       ],
+      "defaultValue": "2",
       "metadata": {
-        "Description": "Azure VM size of the VM"
+        "description": "Number of Disks for vm."
       }
     },
     "DiskSize": {
-      "type": "string",
-      "defaultValue": "200",
-      "allowedValues": [
-        "200",
-        "400",
-        "500",
-        "1000",
-        "2000",
-        "4000"
-      ],
+      "type": "int",
+      "defaultValue": 200,
+      "minValue": 10,
+      "maxValue": 1024,
       "metadata": {
-        "Description": "Azure VM size of the VM"
+        "Description": "Azure VM DiskSize of the VM"
       }
     },
     "userImageStorageAccountName": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -120,7 +141,7 @@
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "redmond.corp.microsoft.com",
+      "defaultValue": "",
       "metadata": {
         "description": "The FQDN of the AD domain"
       }
@@ -128,6 +149,7 @@
     "appID": {
       "type": "string",
       "minLength": 1,
+      "defaultValue": "",
       "metadata": {
         "description": "appID tag for the Virtual Machine."
       }
@@ -135,6 +157,7 @@
     "orgID": {
       "type": "string",
       "minLength": 1,
+      "defaultValue": "",
       "metadata": {
         "description": "orgID tag for the Virtual Machine."
       }
@@ -142,6 +165,7 @@
     "env": {
       "type": "string",
       "minLength": 1,
+      "defaultValue": "dev",
       "allowedValues": [
         "dev",
         "test",
@@ -153,8 +177,16 @@
     },
     "snoozeDate": {
       "type": "string",
+      "defaultValue": "1/1/15",
       "metadata": {
         "description": "Snooze date"
+      }
+    },
+    "localAdmins": {
+      "type": "string",
+      "defaultValue": "redmond\\[group],redmond\\[username]",
+      "metadata": {
+        "description": "local admins that can login to the VMs. csv list of domain\\user"
       }
     },
     "virtualNetwork": {
@@ -169,13 +201,6 @@
       "defaultValue": "",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
-      }
-    },
-    "localAdmins": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Additional admins that can login to the VMs"
       }
     },
     "subnetName": {
@@ -202,6 +227,10 @@
   },
   "variables": {
     "apiVersion": "2015-06-15",
+    "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
+    "modulesUrl": "[concat(variables('BaseURL'),'scripts/DomainJoin/DomainJoin.ps1.zip')]",
+    "FormatDisksUrl": "[concat(variables('BaseURL'), 'nested/template-DataDisks.json')]",
+    "Role":  "[substring(parameters('ServerRole'),0,3)]",
     "vnetSubscriptionid": "[subscription().subscriptionId]",
     "vnetID":  "[concat('/subscriptions/',variables('vnetSubscriptionid'),'/resourceGroups/',parameters('vnetResourceGroup'),'/providers/Microsoft.Network/virtualnetworks/',parameters('virtualNetwork'))]",
     "imageOffer": "[parameters('imageOffer')]",
@@ -217,17 +246,14 @@
     "vmName": "[parameters('vmName')]",
     "domainJoinOptions": 3,
     "vmExtensionName": "Microsoft.Powershell.DSC",
-    "DiskArtifacts": "http://cloudmsarmprod.blob.core.windows.net/",
-    "FormatDisksUrl": "[concat(variables('DiskArtifacts'), 'cloudmsvm/template-DataDisks.json')]",
-    "modulesUrl": "[concat(variables('DiskArtifacts'),'cloudmsscript/DomainJoin.ps1.zip')]",
-    "4SQLDisk": {
+    "diskCaching": "None",
+    "SQL3Disk": {
       "vmSize": "[parameters('vmSize')]",
-      "diskCount": "4",
       "SQLServer": {
-        "DataPath": "H:\\MSSQL\\DATA\\",
-        "LogPath": "O:\\MSSQL\\LOG\\",
-        "TempDbPath": "T:\\MSSQL\\DATA\\",
-        "backupPath": "S:\\MSSQL\\backup\\"
+        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA\\",
+        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA\\",
+        "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA\\",
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\backup\\"       
       },
       "dataDisks": {
         "1": {
@@ -239,27 +265,20 @@
           "DiskSize": "[parameters('DiskSize')]"
         },
         "3": {
-          "DiskName": "T",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "4": {
-          "DiskName": "S",
+          "DiskName": "E",
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "diskCaching": "None",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "3SQLDisk": {
+    "SQL4Disk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
-        "DataPath": "H:\\MSSQL\\DATA\\",
-        "LogPath": "O:\\MSSQL\\LOG\\",
-        "TempDbPath": "T:\\MSSQL\\DATA\\",
-        "backupPath": "H:\\MSSQL\\backup\\"
+        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA\\",
+        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA\\",
+        "TempDbPath": "T:\\MSSqlServer\\MSSQL\\DATA\\",
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\backup\\"
       },
-      "diskCount": "3",
       "dataDisks": {
         "1": {
           "DiskName": "H",
@@ -270,209 +289,37 @@
            "DiskSize": "[parameters('DiskSize')]"
         },
         "3": {
+          "DiskName": "E",
+          "DiskSize": "[parameters('DiskSize')]"
+        },
+         "4": {
           "DiskName": "T",
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "diskCaching": "None",
-       "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "2SQLDisk": {
+    "WinDisk": {
       "vmSize": "[parameters('vmSize')]",
-      "diskCount": "2",
-      "SQLServer": {
-        "DataPath": "H:\\MSSQL\\DATA\\",
-        "LogPath": "O:\\MSSQL\\LOG\\",
-        "TempDbPath": "O:\\MSSQL\\DATA\\",
-        "backupPath": "H:\\MSSQL\\backup\\"
-      },
       "dataDisks": {
         "1": {
-          "DiskName": "H",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "O",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "1SQLDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "1",
-      "SQLServer": {
-        "DataPath": "H:\\MSSQL\\DATA\\",
-        "LogPath": "H:\\MSSQL\\LOG\\",
-        "TempDbPath": "H:\\MSSQL\\DATA\\",
-        "backupPath": "H:\\MSSQL\\backup\\"
-      },
-      "dataDisks": {
-        "1": {
-          "DiskName": "H",
-           "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "1AppDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "1",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
+          "DiskName": "E",
             "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "2AppDisk": {
+    "IISDisk": {
       "vmSize": "[parameters('vmSize')]",
-      "diskCount": "2",
       "dataDisks": {
         "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
+          "DiskName": "E",
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "diskCaching": "None",
-       "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "3AppDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "3",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "3": {
-          "DiskName": "P",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "4AppDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "4",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "3": {
-          "DiskName": "P",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "4": {
-          "DiskName": "T",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "1IISDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "1",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-            "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "2IISDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "2",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-       "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "3IISDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "3",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "3": {
-          "DiskName": "P",
-          "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "4IISDisk": {
-      "vmSize": "[parameters('vmSize')]",
-      "diskCount": "4",
-      "dataDisks": {
-        "1": {
-          "DiskName": "R",
-            "DiskSize": "[parameters('DiskSize')]"
-        },
-        "2": {
-          "DiskName": "L",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-        "3": {
-          "DiskName": "P",
-          "DiskSize": "[parameters('DiskSize')]"
-        },
-       "4": {
-          "DiskName": "T",
-            "DiskSize": "[parameters('DiskSize')]"
-        }
-      },
-      "diskCaching": "None",
-      "diskSizeGB": "[parameters('DiskSize')]",
-      "vmDiskTemplate": "[concat(variables('DiskArtifacts'), 'cloudmsdisk/DiskArray.json')]"
-    },
-    "DiskSKU": "[variables(concat( parameters('DiskCount'),parameters('ServerRole'),'Disk'))]"
+    "DiskSKU": "[variables(concat(parameters('ServerRole'),'Disk'))]"
   },
   "resources": [
     { 
@@ -490,10 +337,10 @@
             "contentVersion": "1.0.0.0"
              }, 
              "parameters": {
-               "vmName": { "value": "[concat(parameters('vmName'),copyindex(1))]" },
-               "diskCount": { "value": "[variables('DiskSKU').diskCount]" },
-               "diskCaching": { "value": "[variables('DiskSKU').diskCaching]" },
-               "diskSizeGB": { "value": "[variables('DiskSKU').diskSizeGB]" },
+               "vmName": { "value": "[parameters('vmName')]" },
+               "diskCount": { "value": "[parameters('diskCount')]" },
+               "diskCaching": { "value": "[variables('diskCaching')]" },
+               "diskSizeGB": { "value": "[parameters('diskSize')]" },
                "userImageStorageAccountName":  { "value": "[parameters('userImageStorageAccountName')]" }
              } 
            } 
@@ -606,6 +453,48 @@
       }
     },
     {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),copyindex(1),'/', variables('vmExtensionName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "DSCExtensionLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "dependsOn": [
+         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),copyindex(1))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.8",
+        "settings": {
+          "ModulesUrl": "[variables('modulesUrl')]",
+          "SasToken": "",
+          "ConfigurationFunction": "DomainJoin.ps1\\DomainJoin",
+          "Properties": {
+            "Domain": "[parameters('DomainName')]",
+            "LocalAccount": {
+              "UserName": "[parameters('localAdminUserName')]",
+              "Password": "PrivateSettingsRef:localPassword"
+            },
+            "DomainAccount": {
+              "UserName": "[parameters('domainJoinUserName')]",
+              "Password": "PrivateSettingsRef:DomainPassword"
+            },
+            "AdditionalAdmins": "[parameters('localAdmins')]",
+            "OU": "[parameters('ouPath')]"
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "LocalPassword": "[parameters('localAdminUserName')]",
+            "DomainPassword": "[parameters('domainJoinPassword')]"
+          }
+        }
+      }
+    },
+       {
       "apiVersion": "2015-01-01",
       "name": "[concat(parameters('vmName'),copyindex(1),'-FormatDataDisks')]",
       "type": "Microsoft.Resources/deployments",
@@ -638,51 +527,9 @@
         }
       },
       "dependsOn": [
-          "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),copyindex(1))]"
+          "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('vmName'),copyindex(1)),variables('vmExtensionName'))]"        
        
       ]
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),copyindex(1),'/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "DSCExtensionLoop",
-        "count": "[parameters('numberOfInstances')]"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', parameters('vmName'),copyindex(1),'-FormatDataDisks')]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.8",
-        "settings": {
-          "ModulesUrl": "[variables('modulesUrl')]",
-          "SasToken": "",
-          "ConfigurationFunction": "DomainJoin.ps1\\DomainJoin",
-          "Properties": {
-            "Domain": "[parameters('DomainName')]",
-            "LocalAccount": {
-              "UserName": "[parameters('localAdminUserName')]",
-              "Password": "PrivateSettingsRef:localPassword"
-            },
-            "DomainAccount": {
-              "UserName": "[parameters('domainJoinUserName')]",
-              "Password": "PrivateSettingsRef:DomainPassword"
-            },
-            "AdditionalAdmins": "[parameters('localAdmins')]",
-            "OU": "[parameters('ouPath')]"
-          }
-        },
-        "protectedSettings": {
-          "Items": {
-            "LocalPassword": "[parameters('localAdminUserName')]",
-            "DomainPassword": "[parameters('domainJoinPassword')]"
-          }
-        }
-      }
     }
   ]
 }

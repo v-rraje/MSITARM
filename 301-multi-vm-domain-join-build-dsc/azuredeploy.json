@@ -142,11 +142,7 @@
     "domainName": {
       "type": "string",
       "defaultValue": "",
-      "allowedValues": [
-        "domain1.com",
-        "domain2.com"
-      ],
-      "metadata": {
+       "metadata": {
         "description": "The FQDN of the AD domain"
       }
     },
@@ -222,30 +218,45 @@
       }
     },
     "ouPath": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "The Organizational Unit the VM will join"
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The Organizational Unit the VM will join"
+        }
+      },
+    "PullServerRegistrationKey": {
+         "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The Organizational Unit the VM will join"
+        }
+      },
+    "PullServerRegistrationURI": {
+         "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The pull server URI"
+        }
       }
-    }
     },
     "variables": {
-        "apiVersion": "2015-01-01",
-        "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
-        "BaseURL": "http://cloudmsarmprod.blob.core.windows.net/",
-        "moduleURL": "[concat(variables('BaseURL'),'cloudmsscript/FormatDataDisk.ps1.zip')]",
-        "CreateVMUrl": "[concat(variables('BaseURL'), 'cloudmsmultivm/template-MultipleVM.json')]",
-        "FormatDisksUrl": "[concat(variables('BaseURL'), 'cloudmsvm/template-DataDisks.json')]",
-        "BuildMachineRoleURL": "[concat(variables('BaseURL'),'cloudmsvm/template-Build',parameters('ServerRole'), '.json')]",
-        "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),'cloudmsvm/template-ConfigureDscPull.json')]",
-        "AzureAutomation": {
-          "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
-          "RegistrationKey": "JalVNAzBTtXPFxtrvvUFETxaa2S3SvJF8oDyMfa22LuilK9YBw72bTE4/HZ9nilnSDNphCMr8Ns7nWdbPdxtvw==",
-          "registrationUrl": "https://eus2-agentservice-prod-1.azure-automation.net/accounts/b38c1666-d54e-4ab4-9fd4-0d7b24bffff2",
-          "nodeConfigurationName": "MSITNoPAK2.Corpnet",
-          "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
-          "timestamp": "1/1/2015"
-        }
+      "apiVersion": "2015-01-01",
+      "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
+      "Role":  "[substring(parameters('ServerRole'),0,3)]",
+      "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
+      "moduleURL": "[concat(variables('BaseURL'),'scripts/FormatDataDisk/FormatDataDisk.ps1.zip')]",
+      "CreateVMUrl": "[concat(variables('BaseURL'), 'nested/template-SingleVM.json')]",
+      "FormatDisksUrl": "[concat(variables('BaseURL'), 'nested/template-DataDisks.json')]",
+      "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
+      "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),'nested/template-ConfigureDscPull.json')]",
+      "AzureAutomation": {
+        "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
+        "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
+        "registrationUrl": "[parameters('PullServerRegistrationURI')]",
+        "nodeConfigurationName": "MSITNoPAK2.Corpnet",
+        "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+        "timestamp": "1/1/2015"
+      }
     },
     "resources": [
     {
