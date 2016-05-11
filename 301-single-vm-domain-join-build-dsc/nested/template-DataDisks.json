@@ -72,7 +72,7 @@
     }
     },
   "variables": {
-    "BaseURL": "https://github.com/Microsoft/MSITARM/tree/master/301-single-vm-domain-join-build-dsc/",
+    "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
     "SQL3Disk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
