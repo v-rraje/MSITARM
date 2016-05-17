@@ -12,7 +12,7 @@
         },
     "localAdminUserName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "ITVSO",
       "minLength": 1,
       "metadata": {
         "description": "Local Username for the Virtual Machine."
@@ -47,19 +47,11 @@
         "description": "Size for the Virtual Machine."
       }
     },
-    "numberOfInstances": {
-      "type": "int",
-      "defaultValue": 1,
-      "metadata": {
-        "description": "Number of VMs to deploy"
-      }
-    },
     "imagePublisher": {
       "type": "string",
       "defaultValue": "MicrosoftWindowsServer",
       "allowedValues": [
-        "MicrosoftWindowsServer",
-        "MicrosoftSQLServer"
+        "MicrosoftWindowsServer"
       ],
       "metadata": {
         "description": "OS Image Publisher. https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-cli-ps-findimage/"
@@ -76,6 +68,11 @@
       "type": "string",
       "minLength": 1,
       "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+		    "2012-Datacenter",
+		    "2012-R2-Datacenter"
+      ],
       "metadata": {
         "description": "Allowed Windows values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter. Allowed SQL values: Enterprise, Standard, Web, Express."
       }
@@ -85,9 +82,7 @@
       "defaultValue": "Win",
       "allowedValues": [
         "Win",
-        "IIS",
-        "SQL3",
-        "SQL4"
+        "IIS"
       ]
     },
     "DiskCount": {
@@ -141,13 +136,12 @@
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "domain1.com",
+      "defaultValue": "redmond.corp.microsoft.com",
       "allowedValues": [
-        "domain1.com",
-        "domain2.com"
+        "redmond.corp.microsoft.com"
       ],
       "metadata": {
-        "description": "The FQDN of the AD domain"
+        "description": "The FQDN of the AD domain, currently only Redmond domain is supported. "
       }
     },
     "appID": {
@@ -188,9 +182,9 @@
     },
     "localAdmins": {
       "type": "string",
-      "defaultValue": "redmond\\[group],redmond\\[username]",
+      "defaultValue": "Redmond\\psitadm,Redmond\\SQLSvcAccounts",
       "metadata": {
-        "description": "local admins that can login to the VMs. csv list of domain\\user"
+        "description": "local admins that can login to the VMs. csv list of domain\\user,domain\\group "
       }
     },
     "virtualNetwork": {
@@ -214,30 +208,23 @@
         "description": "Name for the subnet"
       }
     },
-    "subnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24)"
-      }
-    },
     "ouPath": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
     },
     "PullServerRegistrationKey": {
          "type": "string",
-        "defaultValue": "",
+        "defaultValue": "DtOvyfhxbRkS+kXw9PerJP4RQx48HxCcvKruEyd/vfz2gKplxr+UtJDpsdBjltyDhhMa5As4OGKFb3M+p5vlbQ==",
         "metadata": {
           "description": "The Organizational Unit the VM will join"
         }
       },
     "PullServerRegistrationURI": {
          "type": "string",
-        "defaultValue": "",
+        "defaultValue": "https://eus2-agentservice-prod-1.azure-automation.net/accounts/d9886cc8-9990-4461-972b-155d710f1ace",
         "metadata": {
           "description": "The pull server URI"
         }
@@ -248,7 +235,7 @@
       "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
       "Role":  "[substring(parameters('ServerRole'),0,3)]",
       "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
-      "moduleURL": "[concat(variables('BaseURL'),'scripts/FormatDataDisk/FormatDataDisk.ps1.zip')]",
+      "moduleURL": "[concat(variables('BaseURL'),'scripts/FormatDataDisks/FormatDataDisk.ps1.zip')]",
       "CreateVMUrl": "[concat(variables('BaseURL'), 'nested/template-SingleVM.json')]",
       "FormatDisksUrl": "[concat(variables('BaseURL'), 'nested/template-DataDisks.json')]",
       "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
@@ -302,7 +289,7 @@
                       "value": "[parameters('DiskSize')]"
                   },
                   "numberOfInstances": {
-                      "value": "[parameters('numberOfInstances')]"
+                      "value": "1"
                   },
                   "imagePublisher": {
                       "value": "[parameters('imagePublisher')]"
@@ -337,6 +324,9 @@
                 "localAdmins": {
                   "value": "[parameters('localAdmins')]"
                 },
+                "SQLAdmins": {
+                  "value": ""
+                },
                 "virtualNetwork": {
                   "value": "[parameters('virtualNetwork')]"
                   },
@@ -346,10 +336,7 @@
                 "subnetName": {
                       "value": "[parameters('subnetName')]"
                   },
-                  "subnetPrefix": {
-                      "value": "[parameters('subnetPrefix')]"
-                  },
-                  "ouPath": {
+                "ouPath": {
                       "value": "[parameters('ouPath')]"
                   }
               }
