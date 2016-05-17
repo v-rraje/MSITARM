@@ -60,7 +60,7 @@
   "variables": {
     "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
     "configurationFunction": "FormatDataDisk.ps1\\FormatDataDisks",
-    "modulesUrl": "[concat(variables('BaseURL'),'scripts/FormatDataDisk.ps1.zip')]",
+    "modulesUrl": "[concat(variables('BaseURL'),'scripts/FormatDataDisk/FormatDataDisk.ps1.zip')]",
     "SQL3Disk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
