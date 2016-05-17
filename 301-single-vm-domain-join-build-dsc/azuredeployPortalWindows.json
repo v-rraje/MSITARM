@@ -289,7 +289,7 @@
                       "value": "[parameters('DiskSize')]"
                   },
                   "numberOfInstances": {
-                      "value": "1"
+                      "value": 1
                   },
                   "imagePublisher": {
                       "value": "[parameters('imagePublisher')]"
@@ -388,9 +388,7 @@
                   "vmName": {
                     "value": "[parameters('vmName')]"
                   },
-                  "modulesUrl": {
-                    "value": "[variables('AzureAutomation').Url]"
-                  },
+                 
                   "RegistrationKey": {
                     "value": "[variables('AzureAutomation').RegistrationKey]"
                   },
@@ -399,9 +397,6 @@
                   },
                   "nodeConfigurationName": {
                      "value": "[variables('AzureAutomation').nodeConfigurationName]"
-                  },
-                  "configurationFunction": {
-                    "value": "[variables('AzureAutomation').configurationFunction]"
                   },
                   "timestamp": {
                     "value":  "[variables('AzureAutomation').timestamp]"
