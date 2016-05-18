@@ -5,11 +5,18 @@
     "vmName": {
       "type": "string",
       "defaultValue": "",
-            "minLength": 3,
-            "metadata": {
-                "description": "Name for the Virtual Machine."
-            }
-        },
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "Description": "Number of Azure VM to create."
+      }
+    },
     "localAdminUserName": {
       "type": "string",
       "defaultValue": "ITVSO",
@@ -106,7 +113,7 @@
         "15",
         "16"
       ],
-      "defaultValue": "2",
+      "defaultValue": "3",
       "metadata": {
         "description": "Number of Disks for vm."
       }
@@ -187,7 +194,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "local admins that can login to the VMs. csv list of domain\\user,domain\\group "
+        "description": "local admins that can login to the VMs. csv list of domain\\user"
       }
     },
     "virtualNetwork": {
@@ -234,12 +241,12 @@
       }
   },
    "variables": {
-      "apiVersion": "2015-01-01",
+     "apiVersion": "2015-01-01",
       
       "branch": "develop",
       "folder":  "/301-single-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
-    
+  
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
       "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
       "formatDiskstemplate": "nested/template-DataDisks.json",
@@ -247,15 +254,15 @@
       "configurePullTemplate":  "nested/template-ConfigureDscPull.json",
       "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
 
-      "Role":  "[substring(parameters('DiskConfig'),0,3)]",
-
+      "Role": "[substring(parameters('DiskConfig'),0,3)]",
+           
       "moduleURL": "[concat(variables('BaseURL'),variables('formatDiskszip'))]",
       "CreateVMUrl": "[concat(variables('BaseURL'),variables('createVMtemplate'))]",
       "FormatDisksUrl": "[concat(variables('BaseURL'),variables('formatDiskstemplate'))]",
       "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),variables('configurePullTemplate'))]",
-
-      "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
       
+      "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
+
       "AzureAutomation": {
         "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
         "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
@@ -305,7 +312,7 @@
                       "value": "[parameters('DiskSize')]"
                   },
                   "numberOfInstances": {
-                      "value": 1
+                      "value": "1"
                   },
                   "imagePublisher": {
                       "value": "[parameters('imagePublisher')]"
@@ -391,37 +398,40 @@
         ]
       },
       {
-            "apiVersion": "2015-01-01",
-            "name": "AttachVMtoPullServer",
-            "type": "Microsoft.Resources/deployments",
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('AttachVMtoPullServerURL')]",
-                    "contentVersion": "1.0.0.0"
+        "apiVersion": "2015-01-01",
+        "name": "[concat('AttachVMtoPullServer',parameters('DiskConfig'),copyindex(1))]",
+        "type": "Microsoft.Resources/deployments",
+        "copy": {
+          "name": "AttachVMtoPullServerLoop",
+          "count": "[parameters('numberOfInstances')]"
+        },
+          "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                  "uri": "[variables('AttachVMtoPullServerURL')]",
+                  "contentVersion": "1.0.0.0"
+              },
+              "parameters": {
+                "vmName": {
+                  "value": "[concat(parameters('vmName'),copyindex(1))]"
                 },
-                   "parameters": {
-                  "vmName": {
-                    "value": "[parameters('vmName')]"
-                  },
-                 
-                  "RegistrationKey": {
-                    "value": "[variables('AzureAutomation').RegistrationKey]"
-                  },
-                  "registrationUrl": {
-                    "value": "[variables('AzureAutomation').registrationUrl]"
-                  },
-                  "nodeConfigurationName": {
-                     "value": "[variables('AzureAutomation').nodeConfigurationName]"
-                  },
-                  "timestamp": {
-                    "value":  "[variables('AzureAutomation').timestamp]"
-                  }
+                "RegistrationKey": {
+                  "value": "[variables('AzureAutomation').RegistrationKey]"
+                },
+                "registrationUrl": {
+                  "value": "[variables('AzureAutomation').registrationUrl]"
+                },
+                "nodeConfigurationName": {
+                    "value": "[variables('AzureAutomation').nodeConfigurationName]"
+                },
+                "timestamp": {
+                  "value":  "[variables('AzureAutomation').timestamp]"
                 }
-            },
-            "dependsOn": [
-                "[concat('Microsoft.Resources/deployments/',parameters('vmName'),'-BuildMachineRole-',variables('Role'))]"
-            ]
-        }
+              }
+          },
+          "dependsOn": [
+              "[concat('Microsoft.Resources/deployments/',parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]"
+          ]
+      }
     ]
 }

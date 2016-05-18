@@ -32,18 +32,19 @@ Configuration DeploySQLServer
                         md Temp
                     }
                     $sw = New-Object System.IO.StreamWriter(“C:\Temp\sqlinstall.log”)
-                    $sw.WriteLine("$(Get-Date -Format g) Starting.")    
+                    $sw.WriteLine("$(Get-Date -Format g) Starting.") 
+                       
                     $sw.WriteLine("$(Get-Date -Format g) -----------------------------------------------------.")    
                     $sw.WriteLine("$(Get-Date -Format g) Set DataPath=$($using:disks.SQLServer.DataPath)")    
                     $sw.WriteLine("$(Get-Date -Format g) Set LogPath=$($using:disks.SQLServer.LogPath)")    
                     $sw.WriteLine("$(Get-Date -Format g) Set TempDbPath=$($using:disks.SQLServer.TempDbPath)")    
                     $sw.WriteLine("$(Get-Date -Format g) Set BackupPath=$($using:disks.SQLServer.BackupPath)")    
-                    $sw.WriteLine("$(Get-Date -Format g) -----------------------------------------------------.")    
+                    $sw.WriteLine("$(Get-Date -Format g) -----------------------------------------------------.")  
+                      
                     try{      
                 
                         $ErrorActionPreference = "SilentlyContinue"
-       
-
+                        Start-Sleep 60
                         ###############################################
                         #
                         # SQL COnfiguration
@@ -52,16 +53,20 @@ Configuration DeploySQLServer
                          $sw.WriteLine("$(Get-Date -Format g) Creating Data, Log, Tempdb, and backup paths if they dont exist.")
 
                         if($(test-path -Path $($using:disks.SQLServer.DataPath)) -eq $false){
-                            md $($using:disks.SQLServer.DataPath)
+                            $sw.WriteLine("$(Get-Date -Format g)  MD $($using:disks.SQLServer.DataPath)") 
+                            md $($($using:disks.SQLServer.DataPath)+'\')
                         }
                         if($(test-path -Path $($using:disks.SQLServer.LogPath)) -eq $false){
-                            md $($using:disks.SQLServer.LogPath)
+                            $sw.WriteLine("$(Get-Date -Format g) MD $($using:disks.SQLServer.LogPath)") 
+                            md $($($using:disks.SQLServer.LogPath)+'\')
                         }
                         if($(test-path -Path $($using:disks.SQLServer.BackupPath)) -eq $false){
-                            md $($using:disks.SQLServer.BackupPath)
+                            $sw.WriteLine("$(Get-Date -Format g) MD $($using:disks.SQLServer.BackupPath)") 
+                            md $($($using:disks.SQLServer.BackupPath)+'\')
                         }
                         if($(test-path -Path $($using:disks.SQLServer.tempdbpath)) -eq $false){
-                            md $($using:disks.SQLServer.tempdbpath)
+                            $sw.WriteLine("$(Get-Date -Format g) MD $($using:disks.SQLServer.tempdbpath)") 
+                            md $($($using:disks.SQLServer.tempdbpath)+'\')
                         }
 
                         ###########################################
@@ -82,11 +87,13 @@ Configuration DeploySQLServer
 
                         $db = $srv.Databases["master"] 
                         $NumberOfProcessors = Get-WmiObject -Class Win32_ComputerSystem 
+                        $sw.WriteLine("$(Get-Date -Format g) NumberOfProcessors= $($NumberOfProcessors)") 
+                       
 
-                        
                         ###########################################
                         #  Set Auth Mode to Windows Integrated
                         ############################################
+                          $sw.WriteLine("$(Get-Date -Format g) Setting Auth Mode to Windows Integrated") 
                         $srv.Settings.LoginMode = [Microsoft.SqlServer.Management.SMO.ServerLoginMode]::Integrated
                         $srv.Alter()
 
@@ -124,11 +131,22 @@ Configuration DeploySQLServer
                         ############################################
                         # Set Max D.O.P.:  n=num of procs
                         ############################################
-                        $sw.WriteLine("$(Get-Date -Format g) Set Max D.O.P.:  n=num of procs")
+                        $sw.WriteLine("$(Get-Date -Format g) Set Max D.O.P.:  n=num of procs,m=maxDop")
+                        $sw.WriteLine("$(Get-Date -Format g)                  n=1 then m=1")
+                        $sw.WriteLine("$(Get-Date -Format g)                  n=2-7 then m=2")
+                        $sw.WriteLine("$(Get-Date -Format g)                  n=8-16 then m=4")
+                        $sw.WriteLine("$(Get-Date -Format g)                  n>16 then m=8")
+                        if($($NumberOfProcessors.NumberOfProcessors) -eq 1) { $maxDop=1 }
+                        if($($NumberOfProcessors.NumberOfProcessors) -ge 2 -and $($NumberOfProcessors.NumberOfProcessors) -le 7) { $maxDop=2 }
+                        if($($NumberOfProcessors.NumberOfProcessors) -ge 8 -and $($NumberOfProcessors.NumberOfProcessors) -le 16) { $maxDop=4 }
+                        if($($NumberOfProcessors.NumberOfProcessors) -gt 16) { $maxDop=8 }
+
                         $sw.WriteLine("$(Get-Date -Format g) Before: altering MaxDegreeOfParallelism" + $srv.configuration.MaxDegreeOfParallelism.ConfigValue)
+
                         $srv.configuration.MaxDegreeOfParallelism.ConfigValue;
-                        $srv.configuration.MaxDegreeOfParallelism.ConfigValue =$NumberOfProcessors.NumberOfProcessors;
+                        $srv.configuration.MaxDegreeOfParallelism.ConfigValue =$maxDop
                         $srv.configuration.Alter();
+
                         $sw.WriteLine("$(Get-Date -Format g) After: altering MaxDegreeOfParallelism" + $srv.configuration.MaxDegreeOfParallelism.ConfigValue)
 
                         ############################################
@@ -293,24 +311,16 @@ Configuration DeploySQLServer
                         # Configure Temp DB:  
                         # num of data files = num of procs, equi-sized, autogrow
                         ############################################
-                        $drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'T:'"
+                        #$drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'T:'"
                             if ($drive){
-                                $TempDrive="T:"
-                                $TempLogDrive="T:"
-
+                                $TempDrive=$($using:disks.SQLServer.TempDbPath).split("\")[0] 
                                 $TempPath = $($using:disks.SQLServer.TempDbPath)
-                                $TempLogPath = $($using:disks.SQLServer.TempDbPath) 
-
                             }else{
-                                $TempDrive="H:"
-                                $TempLogDrive="O:"
-
+                                $TempDrive=$($using:disks.SQLServer.TempDbPath).split("\")[0]         
                                 $TempPath = $($using:disks.SQLServer.TempDbPath)
-                                $TempLogPath = $($using:disks.SQLServer.LogPath) 
-
                             }
                         
-                            #$sw.WriteLine("$(Get-Date -Format g) Configuting Temp DB on T:...")
+                            #$sw.WriteLine("$(Get-Date -Format g) Configuting Temp DB on ?:...")
 				            "$(Get-Date -Format g) Configuring Temp DB on  $TempDrive..."
 
 	                        # get the spavce avail on T: and subtract 50 GB.  From that, divide it up to the number of files:
@@ -373,10 +383,10 @@ Configuration DeploySQLServer
 	                        ################################################################
 
                             ################################################################
-                            if($(test-path -path $($tempLogPath)) -eq $false) {
-                                $sw.WriteLine("$(Get-Date -Format g) Creating $($TempLogPath)")
-				                "$(Get-Date -Format g) Creating $($TempLogPath)"
-                                md $TempLogPath 
+                            if($(test-path -path $($tempPath)) -eq $false) {
+                                $sw.WriteLine("$(Get-Date -Format g) Creating $($TempPath)")
+				                "$(Get-Date -Format g) Creating $($TempPath)"
+                                md $TempPath 
                             }
                             ################################################################
 	                        # log file
@@ -384,7 +394,7 @@ Configuration DeploySQLServer
                             $sw.WriteLine("$(Get-Date -Format g) Moving log file...")	
 				            "$(Get-Date -Format g) Moving log file..."
 
-	                        $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog, FILENAME = '$($TempLogPath)\templog.ldf')"
+	                        $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog, FILENAME = '$($TempPath)\templog.ldf')"
 				            $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
 				            Invoke-Sqlcmd -Database master -Query $q
 

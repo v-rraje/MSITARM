@@ -80,14 +80,14 @@
         "description": "Allowed Windows values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter. Allowed SQL values: Enterprise, Standard, Web, Express."
       }
     },
-    "ServerRole": {
+    "DiskConfig": {
       "type": "string",
       "defaultValue": "Win",
       "allowedValues": [
         "Win",
         "IIS",
-        "SQL3",
-        "SQL4"
+        "SQLStd",
+        "SQLPrem"
       ]
     },
     "DiskCount": {
@@ -245,14 +245,27 @@
   },
     "variables": {
       "apiVersion": "2015-01-01",
-      "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
-      "Role":  "[substring(parameters('ServerRole'),0,3)]",
+      
+      "branch": "develop",
+      "folder":  "/301-single-vm-domain-join-build-dsc/",
+      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+  
+      "domainJoinzip": "scripts/DomainJoin/DomainJoin.ps1.zip",
+      "formatDiskszip": "scripts/FormatDataDisk/FormatDataDisk.ps1.zip",
+      "formatDiskstemplate": "nested/template-DataDisks.json",
+      "createVMtemplate": "nested/template-SingleVM.json",
+      "configurePullTemplate":  "nested/template-ConfigureDscPull.json",
       "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
-      "moduleURL": "[concat(variables('BaseURL'),'scripts/FormatDataDisk/FormatDataDisk.ps1.zip')]",
-      "CreateVMUrl": "[concat(variables('BaseURL'), 'nested/template-SingleVM.json')]",
-      "FormatDisksUrl": "[concat(variables('BaseURL'), 'nested/template-DataDisks.json')]",
+
+      "Role": "[substring(parameters('DiskConfig'),0,3)]",
+           
+      "moduleURL": "[concat(variables('BaseURL'),variables('formatDiskszip'))]",
+      "CreateVMUrl": "[concat(variables('BaseURL'),variables('createVMtemplate'))]",
+      "FormatDisksUrl": "[concat(variables('BaseURL'),variables('formatDiskstemplate'))]",
+      "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),variables('configurePullTemplate'))]",
+      
       "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
-      "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),'nested/template-ConfigureDscPull.json')]",
+
       "AzureAutomation": {
         "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
         "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
@@ -289,8 +302,8 @@
                   "vmName": {
                       "value": "[parameters('vmName')]"
                   },
-                  "ServerRole": {
-                      "value": "[parameters('ServerRole')]"
+                  "DiskConfig": {
+                      "value": "[parameters('DiskConfig')]"
                   },
                   "vmSize": {
                       "value": "[parameters('vmSize')]"
@@ -366,8 +379,8 @@
             "vmName": {
               "value": "[parameters('vmName')]"
             },
-            "ServerRole": {
-              "value": "[parameters('ServerRole')]"
+            "DiskConfig": {
+              "value": "[parameters('DiskConfig')]"
             },
             "vmSize": {
               "value": "[parameters('vmSize')]"

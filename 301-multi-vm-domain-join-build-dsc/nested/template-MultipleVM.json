@@ -5,11 +5,18 @@
     "vmName": {
       "type": "string",
       "defaultValue": "",
-            "minLength": 3,
-            "metadata": {
-                "description": "Name for the Virtual Machine."
-            }
-        },
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    },
     "localAdminUserName": {
       "type": "string",
       "defaultValue": "",
@@ -47,13 +54,6 @@
         "description": "Size for the Virtual Machine."
       }
     },
-    "numberOfInstances": {
-      "type": "int",
-      "defaultValue": 1,
-      "metadata": {
-        "description": "Number of VMs to deploy"
-      }
-    },
     "imagePublisher": {
       "type": "string",
       "defaultValue": "MicrosoftWindowsServer",
@@ -80,14 +80,14 @@
         "description": "Allowed Windows values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter. Allowed SQL values: Enterprise, Standard, Web, Express."
       }
     },
-    "ServerRole": {
+    "DiskConfig": {
       "type": "string",
       "defaultValue": "Win",
       "allowedValues": [
         "Win",
         "IIS",
-        "SQL3",
-        "SQL4"
+        "SQLStd",
+        "SQLPrem"
       ]
     },
     "DiskCount": {
@@ -111,7 +111,7 @@
         "15",
         "16"
       ],
-      "defaultValue": "2",
+      "defaultValue": "1",
       "metadata": {
         "description": "Number of Disks for vm."
       }
@@ -184,9 +184,16 @@
     },
     "localAdmins": {
       "type": "string",
-      "defaultValue": "redmond\\[group],redmond\\[username]",
+      "defaultValue": "",
       "metadata": {
         "description": "local admins that can login to the VMs. csv list of domain\\user"
+      }
+    },
+    "SQLAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SQL SYS admins that can login to the Default SQL Instance instaqlled on the VM. csv list of domain\\user"
       }
     },
     "virtualNetwork": {
@@ -198,7 +205,7 @@
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "ERNetwork",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }
@@ -208,13 +215,6 @@
       "defaultValue": "Subnet-1",
       "metadata": {
         "description": "Name for the subnet"
-      }
-    },
-    "subnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24)"
       }
     },
     "ouPath": {
@@ -227,104 +227,120 @@
   },
   "variables": {
     "apiVersion": "2015-06-15",
-    "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-multiple-vm-domain-join-build-dsc/",
-    "modulesUrl": "[concat(variables('BaseURL'),'scripts/DomainJoin/DomainJoin.ps1.zip')]",
-    "FormatDisksUrl": "[concat(variables('BaseURL'), 'nested/template-DataDisks.json')]",
-    "Role":  "[substring(parameters('ServerRole'),0,3)]",
+
+      "branch": "develop",
+      "folder":  "/301-single-vm-domain-join-build-dsc/",
+      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+  
+    "DomainJoinzip": "scripts/DomainJoin.ps1.zip",
+    "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
+    "formatDiskstemplate": "nested/template-DataDisks.json",
+    "diskarrayTemplate": "nested/DiskArray.json",
+
+    "modulesUrl": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]",
+    "FormatDisksUrl": "[concat(variables('BaseURL'), variables('formatDiskstemplate'))]",
+
     "vnetSubscriptionid": "[subscription().subscriptionId]",
     "vnetID":  "[concat('/subscriptions/',variables('vnetSubscriptionid'),'/resourceGroups/',parameters('vnetResourceGroup'),'/providers/Microsoft.Network/virtualnetworks/',parameters('virtualNetwork'))]",
     "imageOffer": "[parameters('imageOffer')]",
     "imagePublisher": "[parameters('imagePublisher')]",
     "sku": "[parameters('sku')]",
     "nicName": "[parameters('vmName')]",
-    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk')]",
+    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'),'osDisk')]",
     "subnetName": "[parameters('subnetName')]",
-    "subnetPrefix": "[parameters('subnetPrefix')]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
     "autologonContent": "[concat('<AutoLogon><Password><Value>',parameters('localAdminPassword'),'</Value></Password><Domain>.</Domain><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>',parameters('localAdminUserName'),'</Username></AutoLogon>')]",
     "firstLogonCommands": "<FirstLogonCommands><SynchronousCommand><CommandLine>netsh advfirewall firewall set rule group=&quot;Windows Management Instrumentation (WMI)&quot; new enable=Yes</CommandLine><Description>Update Firewall Settings</Description><Order>1</Order></SynchronousCommand><SynchronousCommand><CommandLine>logoff.exe</CommandLine><Description>Logoff</Description><Order>2</Order></SynchronousCommand></FirstLogonCommands>",
-    "vmName": "[parameters('vmName')]",
     "domainJoinOptions": 3,
-    "vmExtensionName": "Microsoft.Powershell.DSC",
+    "vmExtensionName": "Microsoft.Powershell.DSC", 
     "diskCaching": "None",
-    "SQL3Disk": {
+    "SQLStdDisk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
-        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA\\",
-        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA\\",
-        "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA\\",
-        "backupPath": "E:\\MSSqlServer\\MSSQL\\backup\\"       
+        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
+        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA",
+        "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA",
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\Backup"       
       },
       "dataDisks": {
         "1": {
           "DiskName": "H",
+          "DiskLabel": "Data",
           "DiskSize": "[parameters('DiskSize')]"
         },
         "2": {
           "DiskName": "O",
+          "DiskLabel": "Logs",
           "DiskSize": "[parameters('DiskSize')]"
         },
         "3": {
           "DiskName": "E",
+          "DiskLabel": "Backups",
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), variables('diskarrayTemplate'))]"
     },
-    "SQL4Disk": {
+    "SQLPremDisk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
-        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA\\",
-        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA\\",
-        "TempDbPath": "T:\\MSSqlServer\\MSSQL\\DATA\\",
-        "backupPath": "E:\\MSSqlServer\\MSSQL\\backup\\"
+        "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
+        "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA",
+        "TempDbPath": "T:\\MSSqlServer\\MSSQL\\DATA",
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\Backup"
       },
       "dataDisks": {
         "1": {
           "DiskName": "H",
+          "DiskLabel": "Data",
            "DiskSize": "[parameters('DiskSize')]"
         },
         "2": {
           "DiskName": "O",
+          "DiskLabel": "Logs",
            "DiskSize": "[parameters('DiskSize')]"
         },
         "3": {
           "DiskName": "E",
+          "DiskLabel": "Backups",
           "DiskSize": "[parameters('DiskSize')]"
         },
          "4": {
           "DiskName": "T",
+          "DiskLabel": "TempDB",
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+     "vmDiskTemplate": "[concat(variables('BaseURL'), variables('diskarrayTemplate'))]"
     },
     "WinDisk": {
       "vmSize": "[parameters('vmSize')]",
       "dataDisks": {
         "1": {
           "DiskName": "E",
+          "DiskLabel": "Data",
             "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+     "vmDiskTemplate": "[concat(variables('BaseURL'), variables('diskarrayTemplate'))]"
     },
     "IISDisk": {
       "vmSize": "[parameters('vmSize')]",
       "dataDisks": {
         "1": {
           "DiskName": "E",
+          "DiskLabel": "Data",
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), variables('diskarrayTemplate'))]"
     },
-    "DiskSKU": "[variables(concat(parameters('ServerRole'),'Disk'))]"
+    "DiskSKU": "[variables(concat(parameters('DiskConfig'),'Disk'))]"
   },
   "resources": [
     { 
        "apiVersion": "2015-01-01", 
-       "name": "[concat(variables('vmName'),copyindex(1),'-DiskArray')]",
+       "name": "[concat(parameters('vmName'),copyindex(1),'-DiskArray')]",
         "type": "Microsoft.Resources/deployments", 
         "copy": {
             "name": "DataDiskLoop",
@@ -377,7 +393,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'),copyindex(1))]",
+      "name": "[concat(parameters('vmName'),copyindex(1))]",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -399,7 +415,7 @@
           "vmSize": "[variables('DiskSKU').vmSize]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'),copyindex(1))]",
+          "computerName": "[concat(parameters('vmName'),copyindex(1))]",
           "adminUsername": "[parameters('localAdminUserName')]",
           "adminPassword": "[parameters('localAdminPassword')]",
           "windowsConfiguration": {
@@ -436,12 +452,12 @@
           "osDisk": {
             "caching": "ReadWrite",
             "createOption": "FromImage",
-            "name": "[concat(variables('vmName'),copyindex(1),'-osDisk')]",
+            "name": "[concat(parameters('vmName'),copyindex(1),'-osDisk')]",
             "vhd": {
               "uri": "[concat(variables('osDiskVhdName'),copyindex(1),'.vhd')]"
             }
           },
-          "dataDisks": "[reference(concat(variables('vmName'),copyindex(1),'-DiskArray')).outputs.dataDiskArray.value]"
+          "dataDisks": "[reference(concat(parameters('vmName'),copyindex(1),'-DiskArray')).outputs.dataDiskArray.value]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -482,7 +498,8 @@
               "UserName": "[parameters('domainJoinUserName')]",
               "Password": "PrivateSettingsRef:DomainPassword"
             },
-            "AdditionalAdmins": "[parameters('localAdmins')]",
+            "LocalAdmins": "[parameters('localAdmins')]",
+            "SQLAdmins": "[parameters('SQLAdmins')]",
             "OU": "[parameters('ouPath')]"
           }
         },
@@ -512,8 +529,8 @@
           "vmName": {
             "value": "[concat(parameters('vmName'),copyindex(1))]"
           },
-          "ServerRole": {
-            "value": "[parameters('ServerRole')]"
+          "DiskConfig": {
+            "value": "[parameters('DiskConfig')]"
           },
           "vmSize": {
             "value": "[parameters('vmSize')]"

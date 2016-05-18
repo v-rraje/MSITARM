@@ -8,11 +8,11 @@
                 "description": "Name of the existing VM to apply the DSC configuration to"
             }
         },
-      "ServerRole": {
+      "DiskConfig": {
           "type": "string",
           "defaultValue": "Win",
           "metadata": {
-            "description": "IIS/SQL3, SQL4/Win"
+            "description": "IIS/SQLStd, SQLPrem/Win"
           }
         },
       "vmSize": {
@@ -56,16 +56,22 @@
       }
     },
   "variables": {
-    "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
+    
+    "branch": "develop",
+    "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/301-single-vm-domain-join-build-dsc/')]",
+    
+    "deploySQLServerZip":  "scripts/Deploy-SQLServer.ps1.zip",
     "configurationFunction": "Deploy-SQLServer.ps1\\DeploySQLServer",
-    "modulesUrl": "[concat(variables('BaseURL'),'scripts/Deploy-SQLServer/Deploy-SQLServer.ps1.zip')]",
+    
+    "modulesUrl": "[concat(variables('BaseURL'),variables('deploySQLServerZip'))]",
+
     "diskCaching": "None",
-    "SQL3Disk": {
+    "SQLStdDisk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
         "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
         "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA",
-        "TempDbPath": "H:\\MSSqlServer\\MSSQL\\DATA",
+        "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA",
         "backupPath": "E:\\MSSqlServer\\MSSQL\\Backup"       
       },
       "dataDisks": {
@@ -87,7 +93,7 @@
       },
       "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "SQL4Disk": {
+    "SQLPremDisk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
         "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
@@ -141,7 +147,7 @@
       },
       "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
     },
-    "DiskSKU": "[variables(concat(parameters('ServerRole'),'Disk'))]"
+    "DiskSKU": "[variables(concat(parameters('DiskConfig'),'Disk'))]"
   },
     "resources": [
       {
