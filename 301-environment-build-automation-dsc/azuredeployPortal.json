@@ -72,8 +72,7 @@
       "type": "string",
       "defaultValue": "redmond.corp.microsoft.com",
       "allowedValues": [
-        "redmond.corp.microsoft.com",
-        "partners.extranet.microsoft.com"
+        "redmond.corp.microsoft.com"
       ],
       "metadata": {
         "description": "The FQDN of the AD domain"
@@ -117,14 +116,14 @@
     },
     "localAdmins": {
       "type": "string",
-      "defaultValue": "redmond\\cptteamb,redmond\\[username]",
+      "defaultValue": "",
       "metadata": {
         "description": "Local admins that can login to the VMs. CSV list. must be users in partners. domain\\user."
       }
     },
     "virtualNetwork": {
       "type": "string",
-      "defaultValue": "MSITPILOT01-CORP-CUS-1",
+      "defaultValue": "",
       "metadata": {
         "description": "Name for the VirtualNetwork"
       }
@@ -143,13 +142,6 @@
         "description": "Name for the subnet"
       }
     },
-    "subnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24)"
-      }
-    },
     "ouPath": {
       "type": "string",
       "defaultValue": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
@@ -159,8 +151,11 @@
     }
   },
   "variables": {
-    "BaseURL": "http://cloudmsarmprod.blob.core.windows.net/",
-    "CreateVMUrl": "[concat(variables('BaseURL'), 'cloudmsmultivm/azuredeploy.json')]",
+      "branch": "develop",
+      "folder":  "/301-single-vm-domain-join-build-dsc/",
+      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+  
+    "CreateVMUrl": "[concat(variables('BaseURL'), 'Azurededeploy.json')]",
     "IIS": {
       "imagePublisher": "MicrosoftWindowsServer",
       "imageOffer": "WindowsServer",
@@ -174,7 +169,7 @@
       "imagePublisher": "MicrosoftSQLServer",
       "imageOffer": "SQL2012SP2-WS2012R2",
       "sku": "Enterprise",
-      "Role": "SQL",
+      "Role": "SQLPrem",
       "vmSize": "Standard_D2",
       "diskCount": "4",
       "diskSize": "200"
@@ -207,8 +202,8 @@
           "vmName": {
             "value": "[concat(parameters('vmName'),variables('IIS').Role,'-')]"
           },
-          "ServerRole": {
-            "value": "[variables('IIS').Role]"
+          "DiskConfig": {
+            "value": "[variables('IIS').RDiskConfigole]"
           },
           "vmSize": {
             "value": "[variables('IIS').vmSize]"
@@ -264,9 +259,6 @@
           "vnetResourceGroup": {
             "value": "[parameters('vnetResourceGroup')]"
           },
-          "subnetPrefix": {
-            "value": "[parameters('subnetPrefix')]"
-          },
           "ouPath": {
             "value": "[parameters('ouPath')]"
           }
@@ -299,8 +291,8 @@
           "vmName": {
             "value": "[concat(parameters('vmName'),variables('SQL').Role,'-')]"
           },
-          "ServerRole": {
-            "value": "[variables('SQL').Role]"
+          "DiskConfig": {
+            "value": "[variables('SQL').DiskConfig]"
           },
           "vmSize": {
             "value": "[variables('SQL').vmSize]"
@@ -355,9 +347,6 @@
           },
           "subnetName": {
             "value": "[parameters('subnetName')]"
-          },
-          "subnetPrefix": {
-            "value": "[parameters('subnetPrefix')]"
           },
           "ouPath": {
             "value": "[parameters('ouPath')]"

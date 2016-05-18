@@ -74,7 +74,7 @@
         "description": "Allowed Windows values: WindowsServer. Allowed SQL Values: SQL2012SP2-WS2012, SQL2012SP2-WS2012R2,SQL2014-WS2012R2, SQL2014SP1-WS2012R2, SQL2016CTP3-WS2012R2, SQL2016CTP3.1-WS2012R2, SQL2016CTP3.2-WS2012R2, SQL2016RC3-WS2012R2v2."
       }
     },
-     "sku": {
+    "sku": {
       "type": "string",
       "minLength": 1,
       "defaultValue": "Enterprise",
@@ -88,12 +88,12 @@
         "description": "Allowed SQL values: Enterprise, Standard, Web, Express."
       }
     },
-    "ServerRole": {
+    "DiskConfig": {
       "type": "string",
-      "defaultValue": "SQL3",
+      "defaultValue": "SQLStd",
       "allowedValues": [
-        "SQL3",
-        "SQL4"
+        "SQLStd",
+        "SQLPrem"
       ]
     },
     "DiskCount": {
@@ -138,6 +138,9 @@
     "StorageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS"
+      ],
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -211,7 +214,7 @@
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "ERNetwork",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }
@@ -232,7 +235,7 @@
     },
     "PullServerRegistrationKey": {
          "type": "string",
-        "defaultValue": "DtOvyfhxbRkS+kXw9PerJP4RQx48HxCcvKruEyd/vfz2gKplxr+UtJDpsdBjltyDhhMa5As4OGKFb3M+p5vlbQ==",
+        "defaultValue": "",
         "metadata": {
           "description": "The Organizational Unit the VM will join"
         }
@@ -247,14 +250,27 @@
   },
    "variables": {
       "apiVersion": "2015-01-01",
-      "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
-      "Role":  "[substring(parameters('ServerRole'),0,3)]",
+
+      "branch": "develop",
+      "folder":  "/301-single-vm-domain-join-build-dsc/",
+      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+          
+      "domainJoinzip": "scripts/DomainJoin.ps1.zip",
+      "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
+      "formatDiskstemplate": "nested/template-DataDisks.json",
+      "createVMtemplate": "nested/template-SingleVM.json",
+      "configurePullTemplate":  "nested/template-ConfigureDscPull.json",
       "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
-      "moduleURL": "[concat(variables('BaseURL'),'scripts/FormatDataDisks/FormatDataDisk.ps1.zip')]",
-      "CreateVMUrl": "[concat(variables('BaseURL'), 'nested/template-SingleVM.json')]",
-      "FormatDisksUrl": "[concat(variables('BaseURL'), 'nested/template-DataDisks.json')]",
+
+      "Role":  "[substring(parameters('DiskConfig'),0,3)]",
+       
+      "moduleURL": "[concat(variables('BaseURL'),variables('formatDiskszip'))]",
+      "CreateVMUrl": "[concat(variables('BaseURL'),variables('createVMtemplate'))]",
+      "FormatDisksUrl": "[concat(variables('BaseURL'),variables('formatDiskstemplate'))]",
+      "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),variables('configurePullTemplate'))]",
+
       "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
-      "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),'nested/template-ConfigureDscPull.json')]",
+
       "AzureAutomation": {
         "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
         "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
@@ -291,8 +307,8 @@
                   "vmName": {
                       "value": "[parameters('vmName')]"
                   },
-                  "ServerRole": {
-                      "value": "[parameters('ServerRole')]"
+                  "DiskConfig": {
+                      "value": "[parameters('DiskConfig')]"
                   },
                   "vmSize": {
                       "value": "[parameters('vmSize')]"
@@ -371,8 +387,8 @@
             "vmName": {
               "value": "[parameters('vmName')]"
             },
-            "ServerRole": {
-              "value": "[parameters('ServerRole')]"
+            "DiskConfig": {
+              "value": "[parameters('DiskConfig')]"
             },
             "vmSize": {
               "value": "[parameters('vmSize')]"

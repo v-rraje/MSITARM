@@ -15,11 +15,11 @@
         "description": "Standard_A2"
       }
     },
-    "ServerRole": {
+    "DiskConfig": {
       "type": "string",
       "defaultValue": "Win",
       "metadata": {
-        "description": "IIS/SQL3,SQL4/Win"
+        "description": "IIS/SQLPrem,SQLStd/Win"
       }
     },
      "DiskCount": {
@@ -59,9 +59,14 @@
       }
     },
     "variables": {
-      "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
+      
+      "branch": "develop",
+      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/301-single-vm-domain-join-build-dsc/')]",
+
+      "IISDeployzip": "scripts/Deploy-IISServer.ps1.zip",
+
       "configurationFunction": "Deploy-WebServer.ps1\\DeployWebServer",
-      "modulesUrl": "[concat(variables('BaseURL'),'scripts/Deploy-IISServer/Deploy-IISServer.ps1.zip')]"
+      "modulesUrl": "[concat(variables('BaseURL'),variables('IISDeployzip'))]"
     },
     "resources": [
     {

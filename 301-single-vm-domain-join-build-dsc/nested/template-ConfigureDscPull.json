@@ -31,7 +31,7 @@
         },
         "configurationMode": {
             "type": "string",
-            "defaultValue": "ApplyAndMonitor",
+            "defaultValue": "ApplyAndAutoCorrect",
             "allowedValues": [
                 "ApplyOnly",
                 "ApplyAndMonitor",

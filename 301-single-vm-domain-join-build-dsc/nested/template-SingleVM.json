@@ -94,10 +94,10 @@
         "description": "Allowed Windows values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter. Allowed SQL values: Enterprise, Standard, Web, Express."
       }
     },
-    "ServerRole": {
+    "DiskConfig": {
       "type": "string",
       "defaultValue": "Win",
-      "allowedValues": [ "Win", "IIS", "SQL3","SQL4" ]
+      "allowedValues": [ "Win", "IIS", "SQLStd","SQLPrem" ]
     },
     "diskCount": {
       "type": "string",
@@ -217,9 +217,18 @@
   },
   "variables": {
     "apiVersion": "2015-06-15",
-    "BaseURL": "https://raw.githubusercontent.com/Microsoft/MSITARM/master/301-single-vm-domain-join-build-dsc/",
-    "modulesUrl": "[concat(variables('BaseURL'),'scripts/DomainJoin/DomainJoin.ps1.zip')]",
-    "FormatDisksUrl": "[concat(variables('BaseURL'), 'nested/template-DataDisks.json')]",
+    
+    "branch": "develop",
+    "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/301-single-vm-domain-join-build-dsc/')]",
+
+    "DomainJoinzip": "scripts/DomainJoin.ps1.zip",
+    "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
+    "formatDiskstemplate": "nested/template-DataDisks.json",
+    "diskarrayTemplate": "nested/DiskArray.json",
+
+    "modulesUrl": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]",
+    "FormatDisksUrl": "[concat(variables('BaseURL'), variables('formatDiskstemplate'))]",
+
     "vnetSubscriptionid": "[subscription().subscriptionId]",
     "vnetID":  "[concat('/subscriptions/',variables('vnetSubscriptionid'),'/resourceGroups/',parameters('vnetResourceGroup'),'/providers/Microsoft.Network/virtualnetworks/',parameters('virtualNetwork'))]",
     "imageOffer": "[parameters('imageOffer')]",
@@ -234,12 +243,12 @@
     "domainJoinOptions": 3,
     "vmExtensionName": "Microsoft.Powershell.DSC", 
     "diskCaching": "None",
-    "SQL3Disk": {
+    "SQLStdDisk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
         "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
         "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA",
-        "TempDbPath": "H:\\MSSqlServer\\MSSQL\\DATA",
+        "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA",
         "backupPath": "E:\\MSSqlServer\\MSSQL\\Backup"       
       },
       "dataDisks": {
@@ -259,9 +268,9 @@
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), variables('diskarrayTemplate'))]"
     },
-    "SQL4Disk": {
+    "SQLPremDisk": {
       "vmSize": "[parameters('vmSize')]",
       "SQLServer": {
         "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
@@ -291,7 +300,7 @@
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+     "vmDiskTemplate": "[concat(variables('BaseURL'), variables('diskarrayTemplate'))]"
     },
     "WinDisk": {
       "vmSize": "[parameters('vmSize')]",
@@ -302,7 +311,7 @@
             "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+     "vmDiskTemplate": "[concat(variables('BaseURL'), variables('diskarrayTemplate'))]"
     },
     "IISDisk": {
       "vmSize": "[parameters('vmSize')]",
@@ -313,9 +322,9 @@
           "DiskSize": "[parameters('DiskSize')]"
         }
       },
-      "vmDiskTemplate": "[concat(variables('BaseURL'), 'nested/DiskArray.json')]"
+      "vmDiskTemplate": "[concat(variables('BaseURL'), variables('diskarrayTemplate'))]"
     },
-    "DiskSKU": "[variables(concat(parameters('ServerRole'),'Disk'))]"
+    "DiskSKU": "[variables(concat(parameters('DiskConfig'),'Disk'))]"
   },
   "resources": [
     { 
@@ -490,8 +499,8 @@
           "vmName": {
             "value": "[concat(parameters('vmName'))]"
           },
-          "ServerRole": {
-            "value": "[parameters('ServerRole')]"
+          "DiskConfig": {
+            "value": "[parameters('DiskConfig')]"
           },
           "vmSize": {
             "value": "[parameters('vmSize')]"
