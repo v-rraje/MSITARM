@@ -113,7 +113,7 @@
         "15",
         "16"
       ],
-      "defaultValue": "3",
+      "defaultValue": "1",
       "metadata": {
         "description": "Number of Disks for vm."
       }
@@ -244,13 +244,13 @@
      "apiVersion": "2015-01-01",
       
       "branch": "develop",
-      "folder":  "/301-single-vm-domain-join-build-dsc/",
+      "folder":  "/301-multi-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
   
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
       "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
       "formatDiskstemplate": "nested/template-DataDisks.json",
-      "createVMtemplate": "nested/template-SingleVM.json",
+      "createVMtemplate": "nested/template-MultipleVM.json",
       "configurePullTemplate":  "nested/template-ConfigureDscPull.json",
       "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
 
@@ -312,7 +312,7 @@
                       "value": "[parameters('DiskSize')]"
                   },
                   "numberOfInstances": {
-                      "value": "1"
+                       "value": "[parameters('numberOfInstances')]"
                   },
                   "imagePublisher": {
                       "value": "[parameters('imagePublisher')]"
@@ -367,8 +367,12 @@
       },
       {
         "apiVersion": "2015-01-01",
-        "name": "[concat(parameters('vmName'),'-BuildMachineRole-',variables('Role'))]",
+        "name": "[concat(parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]",
         "type": "Microsoft.Resources/deployments",
+        "copy": {
+          "name": "BuildMachineRoleLoop",
+          "count": "[parameters('numberOfInstances')]"
+        },
         "properties": {
           "mode": "Incremental",
           "templateLink": {
