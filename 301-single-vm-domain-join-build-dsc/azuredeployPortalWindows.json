@@ -106,7 +106,7 @@
         "15",
         "16"
       ],
-      "defaultValue": "2",
+      "defaultValue": "1",
       "metadata": {
         "description": "Number of Disks for vm."
       }

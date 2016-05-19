@@ -242,7 +242,7 @@
     },
     "PullServerRegistrationKey": {
          "type": "string",
-        "defaultValue": "",
+        "defaultValue": "DtOvyfhxbRkS+kXw9PerJP4RQx48HxCcvKruEyd/vfz2gKplxr+UtJDpsdBjltyDhhMa5As4OGKFb3M+p5vlbQ==",
         "metadata": {
           "description": "The Organizational Unit the VM will join"
         }
@@ -259,13 +259,13 @@
       "apiVersion": "2015-01-01",
 
       "branch": "develop",
-      "folder":  "/301-single-vm-domain-join-build-dsc/",
+      "folder":  "/301-multi-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
   
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
       "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
       "formatDiskstemplate": "nested/template-DataDisks.json",
-      "createVMtemplate": "nested/template-SingleVM.json",
+      "createVMtemplate": "nested/template-MultipleVM.json",
       "configurePullTemplate":  "nested/template-ConfigureDscPull.json",
       "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
 
@@ -363,7 +363,7 @@
             "value": "[parameters('localAdmins')]"
           },
           "SQLAdmins": {
-                  "value": ""
+                 "value": "[parameters('SQLAdmins')]"
           },
           "subnetName": {
             "value": "[parameters('subnetName')]"
@@ -380,9 +380,9 @@
         }
       }
     },
-      {
+   {
         "apiVersion": "2015-01-01",
-        "name": "[concat('BuildMachineRole',parameters('DiskConfig'),copyindex(1))]",
+        "name": "[concat(parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]",
         "type": "Microsoft.Resources/deployments",
         "copy": {
           "name": "BuildMachineRoleLoop",
@@ -396,9 +396,9 @@
           },
           "parameters": {
             "vmName": {
-              "value": "[concat(parameters('vmName'),copyindex(1))]"
+              "value": "[parameters('vmName')]"
             },
-            "ServerRole": {
+            "DiskConfig": {
               "value": "[parameters('DiskConfig')]"
             },
             "vmSize": {
@@ -413,7 +413,7 @@
           }
         },
         "dependsOn": [
-          "[concat('Microsoft.Resources/deployments/',parameters('vmName'),'-CreateVMs')]"
+          "[concat('Microsoft.Resources/deployments/',parameters('vmName'), '-CreateVM')]"
         ]
       },
       {
@@ -430,7 +430,7 @@
                   "uri": "[variables('AttachVMtoPullServerURL')]",
                   "contentVersion": "1.0.0.0"
               },
-                  "parameters": {
+              "parameters": {
                 "vmName": {
                   "value": "[concat(parameters('vmName'),copyindex(1))]"
                 },
