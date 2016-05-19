@@ -41,9 +41,11 @@ Configuration DeploySQLServer
                     $sw.WriteLine("$(Get-Date -Format g) Set BackupPath=$($using:disks.SQLServer.BackupPath)")    
                     $sw.WriteLine("$(Get-Date -Format g) -----------------------------------------------------.")  
                       
-                    try{      
+                    #try{      
                 
-                        $ErrorActionPreference = "SilentlyContinue"
+                        #$ErrorActionPreference = "SilentlyContinue"
+                        $ErrorActionPreference = "Stop"
+
                         Start-Sleep 60
                         ###############################################
                         #
@@ -416,7 +418,7 @@ Configuration DeploySQLServer
                             net start sqlserveragent
                             
                         
-
+                    <#
                     }
 
                     catch {
@@ -431,6 +433,7 @@ Configuration DeploySQLServer
                         $ErrorActionPreference = 'Stop'
             
                     }
+                    #>
 
                     ###############################################
                     #
