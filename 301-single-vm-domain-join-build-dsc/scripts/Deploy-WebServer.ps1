@@ -5,7 +5,7 @@ Configuration DeployWebServer
   [string[]]$MachineName = "localhost"
   )
 
-  Node ($MachineName)
+  Node localhost
   {
 	   
     foreach ($Feature in @("Web-Server", `
