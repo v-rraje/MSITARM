@@ -56,7 +56,7 @@
       }
     },
   "variables": {
-
+    
       "branch": "develop",
       "folder":  "/301-multi-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
@@ -166,13 +166,13 @@
             "ModulesUrl": "[variables('modulesUrl')]",
             "SasToken": "",
             "ConfigurationFunction": "[variables('configurationFunction')]",
-            "Properties": [
-                {
-                        "Name": "Disks",
-                        "Value": "[variables('DiskSKU')]",
-                        "TypeName": "System.Array"
+            "Properties":  {
+                    "DataPath": "[variables('DiskSKU').SQLServer.DataPath]",
+                    "LogPath": "[variables('DiskSKU').SQLServer.LogPath]",
+                    "BackupPath": "[variables('DiskSKU').SQLServer.BackupPath]",
+                    "TempDBPath": "[variables('DiskSKU').SQLServer.TempDBPath]"
                 }
-              ]
+            
           }
         }
       }

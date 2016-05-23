@@ -242,7 +242,7 @@
     },
     "PullServerRegistrationKey": {
          "type": "string",
-        "defaultValue": "DtOvyfhxbRkS+kXw9PerJP4RQx48HxCcvKruEyd/vfz2gKplxr+UtJDpsdBjltyDhhMa5As4OGKFb3M+p5vlbQ==",
+        "defaultValue": "",
         "metadata": {
           "description": "The Organizational Unit the VM will join"
         }
@@ -257,11 +257,11 @@
   },
     "variables": {
       "apiVersion": "2015-01-01",
-         
+
       "branch": "develop",
       "folder":  "/301-multi-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
-    
+  
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
       "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
       "formatDiskstemplate": "nested/template-DataDisks.json",

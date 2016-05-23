@@ -242,11 +242,11 @@
   },
    "variables": {
      "apiVersion": "2015-01-01",
-   
+      
       "branch": "develop",
-      "folder":  "/301-multi-vm-domain-join-build-dsc/",
+      "folder":  "/301-single-vm-multi-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
-    
+  
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
       "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
       "formatDiskstemplate": "nested/template-DataDisks.json",
