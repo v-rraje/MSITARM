@@ -229,7 +229,7 @@
     "apiVersion": "2015-06-15",
    
       "branch": "develop",
-      "folder": "/301-single-vm-multi-join-build-dsc/",
+      "folder": "/301-multi-vm-domain-join-build-dsc/",
       "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
     
     "DomainJoinzip": "scripts/DomainJoin.ps1.zip",
