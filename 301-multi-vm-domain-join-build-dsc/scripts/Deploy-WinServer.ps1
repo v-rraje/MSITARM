@@ -2,42 +2,29 @@
 Configuration DeployWinServer
 {
   param (  
-  [string[]]$MachineName = "localhost"
+  [string[]]$MachineName = $env:COMPUTERNAME
   )
 
-  Node ($MachineName)
+  Node localhost
   {
-	   
-   
-    #script block to download WebPI MSI 
-    Script DownloadWebPIImage
-    {
-        GetScript = {
-            @{
-                Result = "WebPIInstall"
-            }
+	
+        cd\
+        if($(test-path -path c:\temp) -eq $false){
+            md Temp
         }
-        TestScript = {
-            Test-Path "C:\WindowsAzure\wpilauncher.exe"
-        }
-        SetScript ={
-            $source = "http://go.microsoft.com/fwlink/?LinkId=255386"
-            $destination = "C:\WindowsAzure\wpilauncher.exe"
-            Invoke-WebRequest $source -OutFile $destination
-       
-        }
-    }
-
-    Package WebPi_Installation
+        
+        Script NoOp
         {
-            Ensure = "Present"
-            Name = "Microsoft Web Platform Installer 5.0"
-            Path = "C:\WindowsAzure\wpilauncher.exe"
-            ProductId = '4D84C195-86F0-4B34-8FDE-4A17EB41306A'
-            Arguments = ''
-        }
-    
-	    
+         SetScript = { 
+            $sw = New-Object System.IO.StreamWriter(“C:\Temp\Wininstall.log”)
+            $sw.WriteLine("$(Get-Date -Format g) $MachineName Completed.") 
+	        $sw.Close()
+         }
+        TestScript = { Test-Path "C:\Temp\Wininstall.log" }
+        GetScript = { <# This must return a hash table #> }          
+       }  
+
+
   }
 
 }

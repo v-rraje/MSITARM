@@ -2,14 +2,49 @@
 Configuration DeploySQLServer
 {
   param (  
-   $Disks
+   [Parameter(Mandatory)]
+   [string] $DataPath="H:\MSSqlServer\MSSQL\DATA",
+   [Parameter(Mandatory)]
+   [string] $LogPath="O:\MSSqlServer\MSSQL\DATA",
+   [Parameter(Mandatory)]
+   [string] $BackupPath="E:\MSSqlServer\MSSQL\DATA",
+   [Parameter(Mandatory)]
+   [string] $TempDBPath="T:\MSSqlServer\MSSQL\DATA"
   )
 
   Node localhost
   {
-	   
-   
-    Script ConfigureSQLServerLocal{
+  	    
+        if($(test-path "t:") -eq $true) {
+        $drive = "T:"
+        }else{
+        $drive = "D:"
+        }
+        File SQLDataPath {
+            Type = 'Directory'
+            DestinationPath = "H:\MSSqlServer\MSSQL\DATA"
+            Ensure = "Present"
+        }
+        
+        File SQLLogPath {
+            Type = 'Directory'
+            DestinationPath = "O:\MSSqlServer\MSSQL\DATA"
+            Ensure = "Present"
+        }
+  
+        File SQLTempdbPath {
+            Type = 'Directory'
+            DestinationPath = $($drive + "\MSSqlServer\MSSQL\DATA")
+            Ensure = "Present"
+        }
+      
+        File SQLBackupPath {
+            Type = 'Directory'
+            DestinationPath = "E:\MSSqlServer\MSSQL\DATA"
+            Ensure = "Present"
+        }
+          
+          Script ConfigureSQLServerLocal{
             GetScript = {
                 @{
                 }
@@ -17,57 +52,52 @@ Configuration DeploySQLServer
 
             SetScript = {
 
-                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } | % { $_.Caption }
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
                 $ret = $false
 
-                if($sqlInstances -ne $null -and $sqlInstances -gt 0){
-
+                if($sqlInstances -ne $null){
 
                     #
-                    # Start
+                    # Start SQL if its not running so we can chat with it.
                     #
-
+                     if($sqlInstances.state -eq 'Stopped'){
+                        net start mssqlserver
+                        Start-Sleep 15
+                     }   
+                      
                     cd\
                     if($(test-path -path c:\temp) -eq $false){
-                        md Temp
+                            md Temp
                     }
+                  
+                    ## wait here til the tempdb drive is online.
                     $sw = New-Object System.IO.StreamWriter(“C:\Temp\sqlinstall.log”)
                     $sw.WriteLine("$(Get-Date -Format g) Starting.") 
-                       
-                    $sw.WriteLine("$(Get-Date -Format g) -----------------------------------------------------.")    
-                    $sw.WriteLine("$(Get-Date -Format g) Set DataPath=$($using:disks.SQLServer.DataPath)")    
-                    $sw.WriteLine("$(Get-Date -Format g) Set LogPath=$($using:disks.SQLServer.LogPath)")    
-                    $sw.WriteLine("$(Get-Date -Format g) Set TempDbPath=$($using:disks.SQLServer.TempDbPath)")    
-                    $sw.WriteLine("$(Get-Date -Format g) Set BackupPath=$($using:disks.SQLServer.BackupPath)")    
-                    $sw.WriteLine("$(Get-Date -Format g) -----------------------------------------------------.")  
+                   
+                        $ready=$false
+                        $Time = [System.Diagnostics.Stopwatch]::StartNew()
+                        do {
+
+                            $disk = $(test-path -Path $($using:TempdbPath))
+
+                            if($disk) {$ready = $true} else {
+                                $sw.WriteLine("$(Get-Date -Format g) $pid Waiting for $($using:TempdbPath)") 
+                                sleep 30}
+                            
+                                $CurrentTime = $Time.Elapsed
+                                if($CurrentTime.minutes -gt 10) {$ready = $true}
+
+                        }until ($ready) 
+
+                    try{  
+  
+                        #$ErrorActionPreference = "SilentlyContinue"
                       
-                    try{      
-                
-                        $ErrorActionPreference = "SilentlyContinue"
-                        Start-Sleep 60
                         ###############################################
                         #
                         # SQL COnfiguration
                         #
                         ###############################################
-                         $sw.WriteLine("$(Get-Date -Format g) Creating Data, Log, Tempdb, and backup paths if they dont exist.")
-
-                        if($(test-path -Path $($using:disks.SQLServer.DataPath)) -eq $false){
-                            $sw.WriteLine("$(Get-Date -Format g)  MD $($using:disks.SQLServer.DataPath)") 
-                            md $($($using:disks.SQLServer.DataPath)+'\')
-                        }
-                        if($(test-path -Path $($using:disks.SQLServer.LogPath)) -eq $false){
-                            $sw.WriteLine("$(Get-Date -Format g) MD $($using:disks.SQLServer.LogPath)") 
-                            md $($($using:disks.SQLServer.LogPath)+'\')
-                        }
-                        if($(test-path -Path $($using:disks.SQLServer.BackupPath)) -eq $false){
-                            $sw.WriteLine("$(Get-Date -Format g) MD $($using:disks.SQLServer.BackupPath)") 
-                            md $($($using:disks.SQLServer.BackupPath)+'\')
-                        }
-                        if($(test-path -Path $($using:disks.SQLServer.tempdbpath)) -eq $false){
-                            $sw.WriteLine("$(Get-Date -Format g) MD $($using:disks.SQLServer.tempdbpath)") 
-                            md $($($using:disks.SQLServer.tempdbpath)+'\')
-                        }
 
                         ###########################################
                         #  New SQL SMO connection
@@ -93,14 +123,14 @@ Configuration DeploySQLServer
                         ###########################################
                         #  Set Auth Mode to Windows Integrated
                         ############################################
-                          $sw.WriteLine("$(Get-Date -Format g) Setting Auth Mode to Windows Integrated") 
+                        $sw.WriteLine("$(Get-Date -Format g) Setting Auth Mode to Windows Integrated") 
                         $srv.Settings.LoginMode = [Microsoft.SqlServer.Management.SMO.ServerLoginMode]::Integrated
                         $srv.Alter()
 
                         ###########################################
                         #  Set the backup location to $disks.SQLServer.backupPath
                         ############################################
-                        $BackupDir = $($using:disks.SQLServer.backupPath)
+                        $BackupDir = $($using:backupPath)
                         $sw.WriteLine("$(Get-Date -Format g) Set Backup location to $($BackupDir)")
 
                         $sw.WriteLine("$(Get-Date -Format g) Updating SQL...")
@@ -110,7 +140,7 @@ Configuration DeploySQLServer
                         ###########################################
                         #  Set the data location to $disks.SQLServer.backupPath
                         ############################################
-                        $DefaultFileDir = $($using:disks.SQLServer.DataPath)
+                        $DefaultFileDir = $($using:DataPath)
                         $sw.WriteLine("$(Get-Date -Format g) Set Backup location to $($DefaultFileDir)")
 
                         $sw.WriteLine("$(Get-Date -Format g) Updating SQL...")
@@ -120,7 +150,7 @@ Configuration DeploySQLServer
                         ###########################################
                         #  Set the backup location to $disks.SQLServer.backupPath
                         ############################################
-                        $DefaultLog = $($using:disks.SQLServer.LogPath)
+                        $DefaultLog = $($using:LogPath)
                         $sw.WriteLine("$(Get-Date -Format g) Set Backup location to $($DefaultLog)")
                         
                         $sw.WriteLine("$(Get-Date -Format g) Updating SQL...")
@@ -208,8 +238,7 @@ Configuration DeploySQLServer
                         $srv.configuration.MaxServerMemory.ConfigValue = 1015808
                         }
                         $srv.configuration.Alter(); 
-
-
+                        
                         $sw.WriteLine("$(Get-Date -Format g) After altering MaxServerMemory: " + $srv.configuration.MaxServerMemory.ConfigValue)
 
 
@@ -217,11 +246,17 @@ Configuration DeploySQLServer
                         # Configure SQL Server Agent Service
                         ############################################
                         $sw.WriteLine("$(Get-Date -Format g) Configure SQL Server Agent Service....")
-                        net start SQLSERVERAGENT
+                         
+                         $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                         if($sqlInstances.State -eq 'Stopped'){
+                            net start SQLSERVERAGENT
+                         }
+
                         $db = New-Object Microsoft.SqlServer.Management.Smo.Database
                         $db = $srv.Databases.Item("msdb")
                         # Select SQLAgent 
                         $SQLAgent = $db.parent.JobServer ;
+                     
                         # Show settings
                         $CurrentSettings = $SQLAgent | select @{n="SQLInstance";e={$db.parent.Name}},MaximumHistoryRows, MaximumJobHistoryRows ;
                         $CurrentSettings | ft -AutoSize ;
@@ -251,32 +286,78 @@ Configuration DeploySQLServer
                         $sw.WriteLine("$(Get-Date -Format g) Configure Master, Model and MSDB DBs ")
                         INVOKE-sqlcmd  -Database model -Query "Alter database [model] set recovery simple with no_wait"
 
-                        INVOKE-sqlcmd  -Database master -Query "Alter database [master] modify file (Name = [master], Size = 50 MB)"
-
-                        INVOKE-sqlcmd  -Database master -Query "Alter database [master] modify file (Name = [master], Filegrowth = 5 MB)"
-
-                        INVOKE-sqlcmd  -Database master -Query "Alter database [master] modify file (Name = [mastLog], Size = 20 MB)"
-
-                        INVOKE-sqlcmd  -Database master -Query "Alter database [master] modify file (Name = [mastLog], Filegrowth = 5 MB)"
-
-
-                        INVOKE-sqlcmd  -Database msdb -Query "Alter database [msdb] modify file (Name = [msdbData], Size = 50 MB)"
-
-                        INVOKE-sqlcmd  -Database msdb -Query "Alter database [msdb] modify file (Name = [msdbData], Filegrowth = 5 MB)"
-
-                        INVOKE-sqlcmd  -Database msdb -Query "Alter database [msdb] modify file (Name = [msdbLog], Size = 20 MB)"
-
-                        INVOKE-sqlcmd  -Database msdb -Query "Alter database [msdb] modify file (Name = [msdbLog], Filegrowth = 5 MB)"
-
-
-                        INVOKE-sqlcmd  -Database model -Query "Alter database [model] modify file (Name = [modeldev], Size = 50 MB)"
-
-                        INVOKE-sqlcmd  -Database model -Query "Alter database [model] modify file (Name = [modeldev], Filegrowth = 5 MB)"
-
-                        INVOKE-sqlcmd  -Database model -Query "Alter database [model] modify file (Name = [modellog], Size = 20 MB)"
-
-                        INVOKE-sqlcmd  -Database model -Query "Alter database [model] modify file (Name = [modellog], Filegrowth = 5 MB)"
-
+                        try{
+                            INVOKE-sqlcmd  -Database master -Query "Alter database [master] modify file (Name = [master], Size = 50 MB)"
+                        }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try {
+                            INVOKE-sqlcmd  -Database master -Query "Alter database [master] modify file (Name = [master], Filegrowth = 5 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try {
+                            INVOKE-sqlcmd  -Database master -Query "Alter database [master] modify file (Name = [mastLog], Size = 20 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try{
+                                INVOKE-sqlcmd  -Database master -Query "Alter database [master] modify file (Name = [mastLog], Filegrowth = 5 MB)"
+                        }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try{
+                            INVOKE-sqlcmd  -Database msdb -Query "Alter database [msdb] modify file (Name = [msdbData], Size = 50 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try {
+                            INVOKE-sqlcmd  -Database msdb -Query "Alter database [msdb] modify file (Name = [msdbData], Filegrowth = 5 MB)"
+                        }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try{
+                            INVOKE-sqlcmd  -Database msdb -Query "Alter database [msdb] modify file (Name = [msdbLog], Size = 20 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try{
+                            INVOKE-sqlcmd  -Database msdb -Query "Alter database [msdb] modify file (Name = [msdbLog], Filegrowth = 5 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try{
+                            INVOKE-sqlcmd  -Database model -Query "Alter database [model] modify file (Name = [modeldev], Size = 50 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try{
+                            INVOKE-sqlcmd  -Database model -Query "Alter database [model] modify file (Name = [modeldev], Filegrowth = 5 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try{
+                            INVOKE-sqlcmd  -Database model -Query "Alter database [model] modify file (Name = [modellog], Size = 20 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
+                        try{
+                            INVOKE-sqlcmd  -Database model -Query "Alter database [model] modify file (Name = [modellog], Filegrowth = 5 MB)"
+                         }catch{
+                            [string]$errorMessage = $Error[0].Exception
+		                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                        }
                         ############################################
                         # Set BUILTIN Administrators group = Removed
                         ############################################
@@ -285,7 +366,6 @@ Configuration DeploySQLServer
                         
                         $q = "if Exists(select 1 from sys.syslogins where name='[BUILTIN\Administrators]') drop login [BUILTIN\Administrators]"
 				        Invoke-Sqlcmd -Database master -Query $q
-
 
 
                         ############################################
@@ -312,14 +392,10 @@ Configuration DeploySQLServer
                         # num of data files = num of procs, equi-sized, autogrow
                         ############################################
                         #$drive = Get-WmiObject -Class win32_volume -Filter "DriveLetter = 'T:'"
-                            if ($drive){
-                                $TempDrive=$($using:disks.SQLServer.TempDbPath).split("\")[0] 
-                                $TempPath = $($using:disks.SQLServer.TempDbPath)
-                            }else{
-                                $TempDrive=$($using:disks.SQLServer.TempDbPath).split("\")[0]         
-                                $TempPath = $($using:disks.SQLServer.TempDbPath)
-                            }
-                        
+                      
+                            $TempDrive=$($using:TempDbPath).split("\")[0] 
+                            $TempPath = $($using:TempDbPath)
+                                                   
                             #$sw.WriteLine("$(Get-Date -Format g) Configuting Temp DB on ?:...")
 				            "$(Get-Date -Format g) Configuring Temp DB on  $TempDrive..."
 
@@ -342,78 +418,244 @@ Configuration DeploySQLServer
 	                        $TempPath = $TempPath + '\'
                             $TempLogPath = $TempPath 
                             }
+                            
                             ################################################################
-	                        # Create the folder for our temp db files
-                            if($(test-path -path $($tempPath)) -eq $false) {
-                                $sw.WriteLine("$(Get-Date -Format g) Creating $($TempPath)")
-				                "$(Get-Date -Format g) Creating $($TempPath)"
-                                md $($TempPath) 
-                            }
-                            ################################################################
-
-
 	                        # Build the sql commands to move/create the files and invoke them...
-	
                             ################################################################
 	                        # 1st data file	
                             $sw.WriteLine("$(Get-Date -Format g) Moving first data file...")	
 				            "$(Get-Date -Format g) Moving first data file..."
+  
+                                do {
+                                    try{
+	                                    $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = tempdev, FILENAME = '$($TempPath)\tempdb.mdf')"
+				                        $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
+	                                    Invoke-Sqlcmd -Database master -Query $q
 
-	                        $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = tempdev, FILENAME = '$($TempPath)\tempdb.mdf')"
-				            $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
-	                        Invoke-Sqlcmd -Database master -Query $q
+                                        "$(Get-Date -Format g) Restarting SQL Server."
+                                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                                             if($sqlInstances.State -eq 'Running'){
+                                                net stop sqlserveragent
+                                             }
+                                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                                             if($sqlInstances.state -eq 'Running'){
+                                                net stop mssqlserver
+                                             }
+                                             start-sleep 30
+                                               $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                                             if($sqlInstances.State -eq 'Stopped'){
+                                                net start sqlserveragent
+                                             }
+                                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                                             if($sqlInstances.state -eq 'Stopped'){
+                                                net start mssqlserver
+                                             }
+                                            Start-Sleep 30
 
-                            "$(Get-Date -Format g) Restarting SQL Server."
-                            net stop sqlserveragent
-                            net stop mssqlserver
-                            Start-Sleep 15
-                            net start mssqlserver
+                                          }catch{
+                                            [string]$errorMessage = $Error[0].Exception
+		                                    $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                                          }
 
-	                        $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = tempdev, SIZE = $($fileSize)MB, MAXSIZE = $($maxFileGrowthSizeMB)MB, FILEGROWTH = $($fileGrowthMB)MB)"
-				            $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
-	                        Invoke-Sqlcmd -Database master -Query $q
+                                    $ready = $(test-path -Path $("$($TempPath)\tempdb.mdf"))
+                                    
+                                    $CurrentTime = $Time.Elapsed
+                                    if($CurrentTime.minutes -gt 5) {$ready = $true}
 
+                                    if(!$ready) {start-sleep 60} else {$msg="Done"}
+                                    $sw.WriteLine("$(Get-Date -Format g) $msg") 
+
+                                }until ($ready)
+
+                            ################################################################
+	                        # ALTER DATABASE [tempdb] MODIFY FILE (NAME = tempdev
+                            ################################################################                                                            
+                             $ready=$false
+                             $Time = [System.Diagnostics.Stopwatch]::StartNew()
+
+                                do {
+                                    try{
+	                                    $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = tempdev, SIZE = $($fileSize)MB, MAXSIZE = $($maxFileGrowthSizeMB)MB, FILEGROWTH = $($fileGrowthMB)MB)"
+				                        $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
+	                                    Invoke-Sqlcmd -Database master -Query $q
+                                        $ready=$true
+                                    }catch{
+                                        $ready=$false
+                                        [string]$errorMessage = $Error[0].Exception
+		                                $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                                    }
+  
+                                        $CurrentTime = $Time.Elapsed
+                                        if($CurrentTime.minutes -gt 5) {$ready = $true}
+
+                                        if(!$ready) {start-sleep 30} else {$msg="Done"}
+                                        $sw.WriteLine("$(Get-Date -Format g) $msg") 
+
+                                 }until ($ready)
+
+                            ################################################################
 	                        # remaining data files
+                            ################################################################
+
 	                        $sw.WriteLine("$(Get-Date -Format g) Creating remaining data files...")	
 				            "$(Get-Date -Format g) Creating remaining data files..."
                             for ($i = 2; $i -le $fileCount; $i++) {
-		                        $q = "ALTER DATABASE [tempdb] ADD FILE ( NAME = tempdev$($i), SIZE = $($fileSize)MB, MAXSIZE = $($maxFileGrowthSizeMB)MB, FILEGROWTH = $($fileGrowthMB)MB, FILENAME = '$($TempPath)\tempdb$($i).mdf')"; 
-		                        Invoke-Sqlcmd -Database master -Query $q	                        
+
+                                $ready=$false
+                                $First=$false
+                                $Time = [System.Diagnostics.Stopwatch]::StartNew()
+                                $msg="Create tempdev$($i)"
+                                do {
+                                    try{
+                                    
+                                    $q = "IF NOT EXISTS(SELECT 1 FROM tempdb.dbo.sysfiles WHERE name = 'tempdev$($i)') Begin ALTER DATABASE [tempdb] ADD FILE ( NAME = tempdev$($i), SIZE = $($fileSize)MB, MAXSIZE = $($maxFileGrowthSizeMB)MB, FILEGROWTH = $($fileGrowthMB)MB, FILENAME = '$($TempPath)\tempdb$($i).mdf') END "; 
+		                            Invoke-Sqlcmd -Database master -Query $q
+                                    
+                                    }catch{
+                                        [string]$errorMessage = $Error[0].Exception
+		                                $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                                    }
+
+                                    $ready = $(test-path -Path $("$TempPath\tempdb$($i).mdf"))
+                                    
+                                    $CurrentTime = $Time.Elapsed
+                                    if($CurrentTime.minutes -gt 5) {$ready = $true}
+
+                                    if(!$ready) {
+                                        if($first) { #long intial sleep, short checks
+                                                start-sleep 240
+                                                $msg+=" ? "
+                                            }else{
+                                                start-sleep 60
+                                                $msg+="."
+                                            }
+                                        $first=$true
+                                        } else {$msg="Done"}
+                                    $sw.WriteLine("$(Get-Date -Format g) $msg") 
+
+                                }until ($ready)
+
+		                        	                        
                             }
-	                        ################################################################
 
                             ################################################################
-                            if($(test-path -path $($tempPath)) -eq $false) {
-                                $sw.WriteLine("$(Get-Date -Format g) Creating $($TempPath)")
-				                "$(Get-Date -Format g) Creating $($TempPath)"
-                                md $TempPath 
-                            }
+                            $sw.WriteLine("$(Get-Date -Format g) Restarting SQL...")	
+				            ################################################################
+                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                                if($sqlInstances.State -eq 'Running'){
+                                net stop sqlserveragent
+                                }
+                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                                if($sqlInstances.state -eq 'Running'){
+                                net stop mssqlserver
+                                }
+                                start-sleep 30
+                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                                if($sqlInstances.State -eq 'Stopped'){
+                                net start sqlserveragent
+                                }
+                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                                if($sqlInstances.state -eq 'Stopped'){
+                                net start mssqlserver
+                                }
+                                Start-Sleep 30
+
                             ################################################################
 	                        # log file
                             ################################################################
                             $sw.WriteLine("$(Get-Date -Format g) Moving log file...")	
 				            "$(Get-Date -Format g) Moving log file..."
+                        
+                             $ready=$false
+                             $Time = [System.Diagnostics.Stopwatch]::StartNew()
 
-	                        $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog, FILENAME = '$($TempPath)\templog.ldf')"
-				            $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
-				            Invoke-Sqlcmd -Database master -Query $q
+                                do {
+                                    try{
 
-                            "$(Get-Date -Format g) Restarting SQL Server."
-	                        net stop mssqlserver
-                            Start-Sleep 15
-                            net start mssqlserver
+	                                    $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog, FILENAME = '$($TempPath)\templog.ldf')"
+				                        $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
 
-	                        $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog, SIZE = $($fileSize)MB, MAXSIZE = $($maxFileGrowthSizeMB)MB, FILEGROWTH = $($fileGrowthMB)MB)"
-				            $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
-				            Invoke-Sqlcmd -Database master -Query $q
-                            
-                            $sw.WriteLine("$(Get-Date -Format g) Restarting SQL Server.")	
-				            "$(Get-Date -Format g) Restarting SQL Server."
+                                            $sw.WriteLine("$(Get-Date -Format g) Restarting SQL Server.")	
+       				                        Invoke-Sqlcmd -Database master -Query $q
+                                            $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                                                if($sqlInstances.State -eq 'Running'){
+                                                net stop sqlserveragent
+                                                }
+                                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                                                if($sqlInstances.state -eq 'Running'){
+                                                net stop mssqlserver
+                                                }
+                                                start-sleep 30
+                                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                                                if($sqlInstances.State -eq 'Stopped'){
+                                                net start sqlserveragent
+                                                }
+                                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                                                if($sqlInstances.state -eq 'Stopped'){
+                                                net start mssqlserver
+                                                }
+                                            Start-Sleep 30
 
-                            net stop mssqlserver
-                            Start-Sleep 15
-                            net start mssqlserver
-                            net start sqlserveragent
+                                    }catch{}
+  
+                                    $ready = $(test-path -Path $("$($TempPath)\templog.ldf"))
+                                    
+                                    $CurrentTime = $Time.Elapsed
+                                    if($CurrentTime.minutes -gt 5) {$ready = $true}
+
+                                    if(!$ready) {start-sleep 30} else {$msg="Done"}
+                                    $sw.WriteLine("$(Get-Date -Format g) $msg") 
+
+                             }until ($ready)
+                                                         
+                             ################################################################
+                             ##ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog
+                             ################################################################
+
+                             $ready=$false
+                             $Time = [System.Diagnostics.Stopwatch]::StartNew()
+
+                               do {
+                                    try{
+
+	                                    $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog, SIZE = $($fileSize)MB, MAXSIZE = $($maxFileGrowthSizeMB)MB, FILEGROWTH = $($fileGrowthMB)MB)"
+				                        $sw.WriteLine("$(Get-Date -Format g)  - $($q)")
+				                        Invoke-Sqlcmd -Database master -Query $q
+                                        $ready=$true
+                                    }catch{
+                                        $ready=$false
+                                        [string]$errorMessage = $Error[0].Exception
+		                                $sw.WriteLine("$(Get-Date -Format g) An error occurred: $($errorMessage)")
+                                    }
+  
+                                        $CurrentTime = $Time.Elapsed
+                                        if($CurrentTime.minutes -gt 5) {$ready = $true}
+
+                                        if(!$ready) {start-sleep 30} else {$msg="Done"}
+                                        $sw.WriteLine("$(Get-Date -Format g) $msg") 
+
+                                 }until ($ready)
+
+                                $sw.WriteLine("$(Get-Date -Format g) Restarting SQL Server.")	
+       				            Invoke-Sqlcmd -Database master -Query $q
+                                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                                    if($sqlInstances.State -eq 'Running'){
+                                    net stop sqlserveragent
+                                    }
+                                    $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                                    if($sqlInstances.state -eq 'Running'){
+                                    net stop mssqlserver
+                                    }
+                                    start-sleep 30
+                                    $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
+                                    if($sqlInstances.State -eq 'Stopped'){
+                                    net start sqlserveragent
+                                    }
+                                    $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                                    if($sqlInstances.state -eq 'Stopped'){
+                                    net start mssqlserver
+                                    }
+                                
                             
                         
 
@@ -428,10 +670,6 @@ Configuration DeploySQLServer
                     
                     finally{
         
-                        $ErrorActionPreference = 'Stop'
-            
-                    }
-
                     ###############################################
                     #
                     # OK, lets wrap it up...
@@ -440,15 +678,18 @@ Configuration DeploySQLServer
                     
                     $sw.WriteLine("$(Get-Date -Format g) Fin.")	
                     $sw.Close()
+
+                    $ErrorActionPreference = 'Stop'
+            
+                    }
+
+                   
                     
                 }
             
-            }
-
+            }  
             TestScript = {$false}
-            
+
         }
-
     }
-
 }
