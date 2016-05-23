@@ -244,7 +244,7 @@
      "apiVersion": "2015-01-01",
       
       "branch": "develop",
-      "folder":  "/301-multi-vm-domain-join-build-dsc/",
+      "folder":  "/301-multi-vm-domainjoin-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
   
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
@@ -381,7 +381,7 @@
           },
           "parameters": {
             "vmName": {
-              "value": "[parameters('vmName')]"
+              "value": "[concat(parameters('vmName'),copyindex(1))]"
             },
             "DiskConfig": {
               "value": "[parameters('DiskConfig')]"

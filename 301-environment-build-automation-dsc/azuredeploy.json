@@ -2,6 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "vmName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 6,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
     "localAdminUserName": {
       "type": "string",
       "defaultValue": "",
@@ -32,14 +40,6 @@
         "description": "Password for domain joining"
       }
     },
-    "vmName": {
-      "type": "string",
-      "minLength": 3,
-      "maxLength": 12,
-      "metadata": {
-        "description": "Name for the Virtual Machine."
-      }
-    },
     "numberOfIIS": {
       "type": "int",
       "defaultValue": 2,
@@ -48,7 +48,7 @@
       }
     },
     "numberOfSQL": {
-      "type": "int", 
+      "type": "int",
       "defaultValue": 2,
       "metadata": {
         "description": "Number of VMs to deploy"
@@ -56,6 +56,7 @@
     },
     "userImageStorageAccountName": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -69,11 +70,7 @@
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "redmond.corp.microsoft.com",
-      "allowedValues": [
-        "redmond.corp.microsoft.com",
-        "partners.extranet.microsoft.com"
-      ],
+      "defaultValue": "",
       "metadata": {
         "description": "The FQDN of the AD domain"
       }
@@ -88,6 +85,7 @@
     },
     "orgID": {
       "type": "string",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "orgID tag for the Virtual Machine."
@@ -96,6 +94,7 @@
     "env": {
       "type": "string",
       "minLength": 1,
+      "defaultValue": "dev",
       "allowedValues": [
         "dev",
         "test",
@@ -107,11 +106,19 @@
     },
     "snoozeDate": {
       "type": "string",
+      "defaultValue": "1/1/16",
       "metadata": {
         "description": "Snooze date"
       }
     },
     "localAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Local admins that can login to the VMs. CSV list. must be users in partners. domain\\user."
+      }
+    },
+    "SQLAdmins": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
@@ -127,7 +134,7 @@
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "ERNetwork",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }
@@ -139,47 +146,69 @@
         "description": "Name for the subnet"
       }
     },
-    "subnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "Subnet prefix that defines how many IP addresses are available on the Subnet(10.0.0.0/24)"
-      }
-    },
     "ouPath": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
+    },
+    "PullServerRegistrationKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    },
+    "PullServerRegistrationURI": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The pull server URI"
+      }
     }
   },
   "variables": {
-    "BaseURL": "http://cloudmsarmprod.blob.core.windows.net/",
-    "CreateVMUrl": "[concat(variables('BaseURL'), 'cloudmsmultivm/azuredeploy.json')]",
+
+      "branch": "develop",
+      "folder":  "/301-multi-vm-domain-join-build-dsc/",
+      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+
+    "CreateVMUrl": "[concat(variables('BaseURL'), 'nested/azuredeploy.json')]",
+
     "IIS": {
       "imagePublisher": "MicrosoftWindowsServer",
       "imageOffer": "WindowsServer",
       "sku": "2012-R2-Datacenter",
+      "DiskConfig": "IIS",
       "Role": "IIS",
-      "vmSize": "Standard_A2",
+      "vmSize": "Standard_A4",
       "diskCount": "1",
-      "diskSize": "200"
+      "diskSize": 200
     },
     "SQL": {
       "imagePublisher": "MicrosoftSQLServer",
       "imageOffer": "SQL2012SP2-WS2012R2",
       "sku": "Enterprise",
+      "DiskConfig": "SQLStd",
       "Role": "SQL",
-      "vmSize": "Standard_D2",
-      "diskCount": "4",
-      "diskSize": "200"
-    }
+      "vmSize": "Standard_D4",
+      "diskCount": "3",
+      "diskSize": 200
+    },
+    "AzureAutomation": {
+        "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
+        "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
+        "registrationUrl": "[parameters('PullServerRegistrationURI')]",
+        "nodeConfigurationName": "MSITNoPAK2.Corpnet",
+        "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+        "timestamp": "1/1/2015"
+      }
   },
   "resources": [
     {
       "apiVersion": "2015-01-01",
-      "name": "CreateIISsvr",
+      "name": "[concat(parameters('vmName'),'-CreateIISsvr')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -203,8 +232,8 @@
           "vmName": {
             "value": "[concat(parameters('vmName'),variables('IIS').Role,'-')]"
           },
-          "ServerRole": {
-            "value": "[variables('IIS').Role]"
+          "DiskConfig": {
+            "value": "[variables('IIS').DiskConfig]"
           },
           "vmSize": {
             "value": "[variables('IIS').vmSize]"
@@ -251,6 +280,9 @@
           "localAdmins": {
             "value": "[parameters('localAdmins')]"
           },
+          "SQLAdmins": {
+            "value": ""
+          },
           "subnetName": {
             "value": "[parameters('subnetName')]"
           },
@@ -260,18 +292,21 @@
           "vnetResourceGroup": {
             "value": "[parameters('vnetResourceGroup')]"
           },
-          "subnetPrefix": {
-            "value": "[parameters('subnetPrefix')]"
-          },
           "ouPath": {
             "value": "[parameters('ouPath')]"
+          },
+          "PullServerRegistrationKey": {
+            "value": "[variables('AzureAutomation').RegistrationKey]"
+          },
+           "PullServerRegistrationURI": {
+            "value": "[variables('AzureAutomation').registrationUrl]"
           }
         }
       }
-    },
+    }, 
     {
       "apiVersion": "2015-01-01",
-      "name": "CreateSQLsvr",
+      "name": "[concat(parameters('vmName'),'-CreateSQLsvr')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -295,8 +330,8 @@
           "vmName": {
             "value": "[concat(parameters('vmName'),variables('SQL').Role,'-')]"
           },
-          "ServerRole": {
-            "value": "[variables('SQL').Role]"
+          "DiskConfig": {
+            "value": "[variables('SQL').DiskConfig]"
           },
           "vmSize": {
             "value": "[variables('SQL').vmSize]"
@@ -343,20 +378,26 @@
           "localAdmins": {
             "value": "[parameters('localAdmins')]"
           },
+          "SQLAdmins": {
+            "value": ""
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
           "virtualNetwork": {
             "value": "[parameters('virtualNetwork')]"
           },
           "vnetResourceGroup": {
             "value": "[parameters('vnetResourceGroup')]"
           },
-          "subnetName": {
-            "value": "[parameters('subnetName')]"
-          },
-          "subnetPrefix": {
-            "value": "[parameters('subnetPrefix')]"
-          },
           "ouPath": {
             "value": "[parameters('ouPath')]"
+          },
+          "PullServerRegistrationKey": {
+            "value": "[variables('AzureAutomation').RegistrationKey]"
+          },
+           "PullServerRegistrationURI": {
+            "value": "[variables('AzureAutomation').registrationUrl]"
           }
         }
       }
