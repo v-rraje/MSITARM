@@ -242,7 +242,7 @@
     },
     "PullServerRegistrationKey": {
          "type": "string",
-        "defaultValue": "",
+        "defaultValue": "DtOvyfhxbRkS+kXw9PerJP4RQx48HxCcvKruEyd/vfz2gKplxr+UtJDpsdBjltyDhhMa5As4OGKFb3M+p5vlbQ==",
         "metadata": {
           "description": "The Organizational Unit the VM will join"
         }

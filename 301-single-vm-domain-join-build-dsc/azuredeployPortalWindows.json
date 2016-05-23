@@ -106,7 +106,7 @@
         "15",
         "16"
       ],
-      "defaultValue": "1",
+      "defaultValue": "2",
       "metadata": {
         "description": "Number of Disks for vm."
       }
@@ -239,7 +239,7 @@
       "branch": "develop",
       "folder":  "/301-single-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
-
+    
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
       "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
       "formatDiskstemplate": "nested/template-DataDisks.json",
