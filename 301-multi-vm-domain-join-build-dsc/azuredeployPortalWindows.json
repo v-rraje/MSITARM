@@ -243,7 +243,7 @@
    "variables": {
      "apiVersion": "2015-01-01",
       
-      "branch": "develop",
+      "branch": "master",
       "folder":  "/301-multi-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
   
@@ -381,7 +381,7 @@
           },
           "parameters": {
             "vmName": {
-              "value": "[parameters('vmName')]"
+              "value": "[concat(parameters('vmName'),copyindex(1))]"
             },
             "DiskConfig": {
               "value": "[parameters('DiskConfig')]"

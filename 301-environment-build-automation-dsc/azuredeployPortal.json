@@ -2,6 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "vmName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 6,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
     "localAdminUserName": {
       "type": "string",
       "defaultValue": "ITVSO",
@@ -32,14 +40,6 @@
         "description": "Password for domain joining"
       }
     },
-    "vmName": {
-      "type": "string",
-      "minLength": 3,
-      "maxLength": 12,
-      "metadata": {
-        "description": "Name for the Virtual Machine."
-      }
-    },
     "numberOfIIS": {
       "type": "int",
       "defaultValue": 2,
@@ -48,7 +48,7 @@
       }
     },
     "numberOfSQL": {
-      "type": "int", 
+      "type": "int",
       "defaultValue": 2,
       "metadata": {
         "description": "Number of VMs to deploy"
@@ -80,7 +80,7 @@
     },
     "appID": {
       "type": "string",
-      "defaultValue": "ICTO-11627",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "appID tag for the Virtual Machine."
@@ -88,7 +88,7 @@
     },
     "orgID": {
       "type": "string",
-	  "defaultValue": "500084",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "orgID tag for the Virtual Machine."
@@ -97,7 +97,7 @@
     "env": {
       "type": "string",
       "minLength": 1,
-	  "defaultValue": "dev",
+      "defaultValue": "dev",
       "allowedValues": [
         "dev",
         "test",
@@ -109,12 +109,19 @@
     },
     "snoozeDate": {
       "type": "string",
-	   "defaultValue": "1/1/16",
+      "defaultValue": "1/1/16",
       "metadata": {
         "description": "Snooze date"
       }
     },
     "localAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Local admins that can login to the VMs. CSV list. must be users in partners. domain\\user."
+      }
+    },
+    "SQLAdmins": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
@@ -148,37 +155,63 @@
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
+    },
+    "PullServerRegistrationKey": {
+      "type": "string",
+      "defaultValue": "DtOvyfhxbRkS+kXw9PerJP4RQx48HxCcvKruEyd/vfz2gKplxr+UtJDpsdBjltyDhhMa5As4OGKFb3M+p5vlbQ==",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    },
+    "PullServerRegistrationURI": {
+      "type": "string",
+      "defaultValue": "https://eus2-agentservice-prod-1.azure-automation.net/accounts/d9886cc8-9990-4461-972b-155d710f1ace",
+      "metadata": {
+        "description": "The pull server URI"
+      }
     }
   },
   "variables": {
-      "branch": "develop",
-      "folder":  "/301-single-vm-domain-join-build-dsc/",
+
+      "branch": "master",
+      "folder":  "/301-multi-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
-  
-    "CreateVMUrl": "[concat(variables('BaseURL'), 'Azurededeploy.json')]",
+
+    "CreateVMUrl": "[concat(variables('BaseURL'), 'nested/azuredeploy.json')]",
+
     "IIS": {
       "imagePublisher": "MicrosoftWindowsServer",
       "imageOffer": "WindowsServer",
       "sku": "2012-R2-Datacenter",
+      "DiskConfig": "IIS",
       "Role": "IIS",
-      "vmSize": "Standard_A2",
+      "vmSize": "Standard_A4",
       "diskCount": "1",
-      "diskSize": "200"
+      "diskSize": 200
     },
     "SQL": {
       "imagePublisher": "MicrosoftSQLServer",
       "imageOffer": "SQL2012SP2-WS2012R2",
       "sku": "Enterprise",
-      "Role": "SQLPrem",
-      "vmSize": "Standard_D2",
-      "diskCount": "4",
-      "diskSize": "200"
-    }
+      "DiskConfig": "SQLStd",
+      "Role": "SQL",
+      "vmSize": "Standard_D4",
+      "diskCount": "3",
+      "diskSize": 200
+    },
+    "AzureAutomation": {
+        "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
+        "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
+        "registrationUrl": "[parameters('PullServerRegistrationURI')]",
+        "nodeConfigurationName": "MSITNoPAK2.Corpnet",
+        "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+        "timestamp": "1/1/2015"
+      }
   },
   "resources": [
     {
       "apiVersion": "2015-01-01",
-      "name": "CreateIISsvr",
+      "name": "[concat(parameters('vmName'),'-CreateIISsvr')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -203,7 +236,7 @@
             "value": "[concat(parameters('vmName'),variables('IIS').Role,'-')]"
           },
           "DiskConfig": {
-            "value": "[variables('IIS').RDiskConfigole]"
+            "value": "[variables('IIS').DiskConfig]"
           },
           "vmSize": {
             "value": "[variables('IIS').vmSize]"
@@ -250,6 +283,9 @@
           "localAdmins": {
             "value": "[parameters('localAdmins')]"
           },
+          "SQLAdmins": {
+            "value": ""
+          },
           "subnetName": {
             "value": "[parameters('subnetName')]"
           },
@@ -261,13 +297,19 @@
           },
           "ouPath": {
             "value": "[parameters('ouPath')]"
+          },
+          "PullServerRegistrationKey": {
+            "value": "[variables('AzureAutomation').RegistrationKey]"
+          },
+           "PullServerRegistrationURI": {
+            "value": "[variables('AzureAutomation').registrationUrl]"
           }
         }
       }
-    },
+    }, 
     {
       "apiVersion": "2015-01-01",
-      "name": "CreateSQLsvr",
+      "name": "[concat(parameters('vmName'),'-CreateSQLsvr')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
@@ -339,17 +381,26 @@
           "localAdmins": {
             "value": "[parameters('localAdmins')]"
           },
+          "SQLAdmins": {
+            "value": ""
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
           "virtualNetwork": {
             "value": "[parameters('virtualNetwork')]"
           },
           "vnetResourceGroup": {
             "value": "[parameters('vnetResourceGroup')]"
           },
-          "subnetName": {
-            "value": "[parameters('subnetName')]"
-          },
           "ouPath": {
             "value": "[parameters('ouPath')]"
+          },
+          "PullServerRegistrationKey": {
+            "value": "[variables('AzureAutomation').RegistrationKey]"
+          },
+           "PullServerRegistrationURI": {
+            "value": "[variables('AzureAutomation').registrationUrl]"
           }
         }
       }
