@@ -19,55 +19,33 @@
       "type": "string",
       "defaultValue": "Win",
       "metadata": {
-        "description": "IIS/SQLPrem,SQLStd/Win"
+        "description": "IIS/SQLStd,SQLPrem/Win"
       }
     },
-     "DiskCount": {
-        "type": "string",
-        "allowedValues": [
-          "0",
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9",
-          "10",
-          "11",
-          "12",
-          "13",
-          "14",
-          "15",
-          "16"
-        ],
-        "defaultValue": "2",
-        "metadata": {
-          "description": "Number of Disks for vm."
-        }
-      },
-     "DiskSize": {
-        "type": "int",
-        "defaultValue": 200,
-        "minValue": 10,
-        "maxValue": 1024,
-        "metadata": {
-          "Description": "Azure VM size of the VM"
-        }
+    "DiskCount": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "0-16"
       }
     },
-    "variables": {
-      
+    "DiskSize": {
+      "type": "int",
+      "defaultValue": 200,
+      "metadata": {
+        "Description": "Azure VM size of the VM"
+      }
+    }
+  },
+  "variables": {
+    
       "branch": "master",
-      "folder": "/301-single-vm-domain-join-build-dsc/",
+      "folder": "/301-multi-vm-domain-join-build-dsc/",
       "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
 
-      "IISDeployzip": "scripts/Deploy-WebServer.ps1.zip",
-
-      "configurationFunction": "Deploy-WebServer.ps1\\DeployWebServer",
-      "modulesUrl": "[concat(variables('BaseURL'),variables('IISDeployzip'))]"
+    "deployWinZip": "scripts/Deploy-WinServer.ps1.zip",
+    "configurationFunction": "Deploy-WinServer.ps1\\DeployWinServer",
+    "modulesUrl": "[concat(variables('BaseURL'),variables('deployWinZip'))]"
     },
     "resources": [
     {

@@ -61,8 +61,8 @@
     "variables": {
       
       "branch": "master",
-      "folder": "/301-single-vm-domain-join-build-dsc/",
-      "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+      "folder":  "/301-multi-vm-domain-join-build-dsc/",
+      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
 
       "IISDeployzip": "scripts/Deploy-WebServer.ps1.zip",
 
