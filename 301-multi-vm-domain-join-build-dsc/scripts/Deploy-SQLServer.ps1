@@ -1888,16 +1888,12 @@ Configuration DeploySQLServer
                                                                            
                         $DBFG = $MyDatabase.FileGroups;
                         foreach ($DBF in $DBFG.Files) {
-                           if(($FileSize) -ne $dbf.Size) {
+                          
                                $DBF.MaxSize = -1
                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
                                $dbf.Size = $($fileSize)
                                $dbf.Growth = "$fileGrowthMB"
-                               $dbf.Alter()
-
-                           } else {"$($DBF.Name) Size to $($dbf.Size), growth=$($dbf.Growth)"}
-                         
-
+                               $dbf.Alter()                        
                         }
 
                        
@@ -2037,7 +2033,7 @@ Configuration DeploySQLServer
                         $MyDatabase = $srv.Databases[$DatabaseName]
           
                         foreach ($DBF in $MyDatabase.LogFiles) {
-                           if(($fileSize) -ne $dbf.Size -or ($fileGrowthMB) -ne $dbf.Growth -or ($maxFileGrowthSizeMB) -ne $dbf.MaxSize) {
+                          
                                $DBF.MaxSize = -1
                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
                                $dbf.Size = ($LogfileSize)
@@ -2045,8 +2041,6 @@ Configuration DeploySQLServer
                                $dbf.Alter()
 
                                "$($DBF.Name) Size is $($dbf.Size) MB,Growth is $($dbf.Growth) MB, MaxSize is $($dbf.MaxSize) MB"
-
-                           } else {"$($DBF.Name) Size is $fileSize MB,Growth is $fileGrowthMB MB, MaxSize is $maxFileGrowthSizeMB MB"}
 
                         }
 
