@@ -71,7 +71,6 @@
 		    "SQL2012SP2-WS2012",
         "SQL2014SP1-WS2012R2",
 		    "SQL2014-WS2012R2",
-		    "SQL2014SP1-WS2012R2",
 		    "SQL2016CTP3-WS2012R2",
 		    "SQL2016CTP3.1-WS2012R2", 
 		    "SQL2016CTP3.2-WS2012R2", 
@@ -258,7 +257,7 @@
     "variables": {
       "apiVersion": "2015-01-01",
 
-      "branch": "master",
+      "branch": "develop",
       "folder": "/301-multi-vm-domain-join-build-dsc/",
       "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
   
@@ -282,9 +281,9 @@
         "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
         "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
         "registrationUrl": "[parameters('PullServerRegistrationURI')]",
-        "nodeConfigurationName": "MSITNoPAK2.Corpnet",
+        "nodeConfigurationName": "MSITNoPAK.ISRM_GC",
         "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
-        "timestamp": "1/1/2015"
+        "timestamp": "1/1/2016"
       }
     },
     "resources": [

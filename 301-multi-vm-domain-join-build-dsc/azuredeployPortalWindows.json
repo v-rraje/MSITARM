@@ -243,7 +243,7 @@
    "variables": {
      "apiVersion": "2015-01-01",
       
-      "branch": "master",
+      "branch": "develop",
       "folder":  "/301-multi-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
   
@@ -267,7 +267,7 @@
         "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
         "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
         "registrationUrl": "[parameters('PullServerRegistrationURI')]",
-        "nodeConfigurationName": "MSITNoPAK2.Corpnet",
+        "nodeConfigurationName": "MSITNoPAK.ISRM_GC",
         "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
         "timestamp": "1/1/2015"
       }
