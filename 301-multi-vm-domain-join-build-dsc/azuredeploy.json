@@ -248,7 +248,6 @@
       "createVMtemplate": "nested/template-MultipleVM.json",
       "configurePullTemplate":  "nested/template-ConfigureDscPull.json",
       "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
-
       "Role": "[substring(parameters('DiskConfig'),0,3)]",
            
       "moduleURL": "[concat(variables('BaseURL'),variables('formatDiskszip'))]",
