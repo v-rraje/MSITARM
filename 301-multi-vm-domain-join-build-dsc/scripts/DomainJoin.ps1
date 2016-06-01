@@ -15,7 +15,7 @@ configuration DomainJoin
     
     $adminlist = $LocalAdmins.split(",")
     
-    Import-DscResource -ModuleName xComputerManagement
+    Import-DscResource -ModuleName cComputerManagement
     Import-DscResource -ModuleName xActiveDirectory
 
     Import-Module ServerManager
