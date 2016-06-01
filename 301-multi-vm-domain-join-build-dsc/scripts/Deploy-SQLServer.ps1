@@ -14,6 +14,7 @@ Configuration DeploySQLServer
 
   Node localhost
   {
+    $ErrorPath = $(split-path $("$dataPath") -Parent)+"\Log"
 
   	    Script ConfigureEventLog{
             GetScript = {
@@ -23,17 +24,17 @@ Configuration DeploySQLServer
             SetScript = {
                 try {
 
-                    new-EventLog -LogName Application -source 'CloudMSArmTemplates' -ErrorAction SilentlyContinue
-                    Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "Created"
+                    new-EventLog -LogName Application -source 'AzureArmTemplates' -ErrorAction SilentlyContinue
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "Created"
 
                 } catch{}
             }
             TestScript = {
                 try{
                     $pass=$false
-                    $logs=get-eventlog -LogName Application | ? {$_.source -eq 'CloudMSArmTemplates'} | select -first 1
+                    $logs=get-eventlog -LogName Application | ? {$_.source -eq 'AzureArmTemplates'} | select -first 1
                     if($logs) {$pass= $true} else {$pass= $false}
-                    if($pass) {Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "ServerLoginMode $pass" }
+                    if($pass) {Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ServerLoginMode $pass" }
 
                 } catch{}
               
@@ -47,25 +48,501 @@ Configuration DeploySQLServer
             DestinationPath = $DataPath
             Ensure = "Present"
         }
-        
+        Script ConfigureDataPath{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                   
+                    try { 
+ 
+                        $Root = $($using:DataPath)
+
+                        if($(test-path -path $root) -eq $true) {
+                        
+                            $ACL = Get-Acl $Root
+ 
+                            $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+
+                            $propagation = [system.security.accesscontrol.PropagationFlags]"None" 
+
+                            $acl.SetAccessRuleProtection($True, $False)
+
+                            #Adding the Rule
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\MSSQLSERVER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\SQLSERVERAGENT", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("CREATOR OWNER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT AUTHORITY\SYSTEM", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Administrators", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Users", "ReadAndExecute", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+
+                            #Setting the Change
+                            Set-Acl $Root $acl
+                      }                         
+                       
+                    } catch{
+                       [string]$errorMessage = $Error[0].Exception
+                       if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
+                       }
+                    }
+                }           
+            TestScript = { 
+
+                $pass = $true
+
+                $Root = $($using:DataPath)
+
+                if($(test-path -path $root) -eq $true) {
+                    $ACL = Get-Acl $Root
+                
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT SERVICE\MSSQLSERVER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    }
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -ne 'NT SERVICE\SQLSERVERAGENT'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Users'}}).FileSystemRights -ne 'ReadAndExecute'){
+                        $pass= $false
+                    }                      
+
+                } else {
+                    $pass = $false
+                }
+
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureDataPath $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureDataPath $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[File]SQLDataPath"
+        }
+       
         File SQLLogPath {
             Type = 'Directory'
             DestinationPath = $LogPath
             Ensure = "Present"
         }
-  
+        Script ConfigureLogPath{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                   
+                    try { 
+ 
+                        $Root = $($using:logPath)
+
+                        if($(test-path -path $root) -eq $true) {
+                        
+                            $ACL = Get-Acl $Root
+ 
+                            $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+
+                            $propagation = [system.security.accesscontrol.PropagationFlags]"None" 
+
+                            $acl.SetAccessRuleProtection($True, $False)
+
+                            #Adding the Rule
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\MSSQLSERVER", "FullControl", $inherit, $propagation, "Allow")   
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\SQLSERVERAGENT", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("CREATOR OWNER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                            
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT AUTHORITY\SYSTEM", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Administrators", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Users", "ReadAndExecute", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                            #Setting the Change
+                            Set-Acl $Root $acl
+                      }                         
+                       
+                    } catch{
+                       [string]$errorMessage = $Error[0].Exception
+                       if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureLogPath: $errorMessage"
+                       }
+                    }
+                }
+            TestScript = { 
+
+                $pass = $true
+
+                $Root = $($using:LogPath)
+
+               if($(test-path -path $root) -eq $true) {
+                    $ACL = Get-Acl $Root
+                
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT SERVICE\MSSQLSERVER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    }
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -ne 'NT SERVICE\SQLSERVERAGENT'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Users'}}).FileSystemRights -ne 'ReadAndExecute'){
+                        $pass= $false
+                    } 
+
+                } else {
+                    $pass = $false
+                }
+                
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureLogPath $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureLogPath $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[File]SQLLogPath"
+        }
+
         File SQLTempdbPath {
             Type = 'Directory'
             DestinationPath = $TempDBPath
             Ensure = "Present"
         }
-      
+        Script ConfigureTempdbPath{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                   
+                    try { 
+ 
+                        $Root = $($using:TempdbPath)
+
+                        if($(test-path -path $root) -eq $true) {
+                        
+                            $ACL = Get-Acl $Root
+ 
+                            $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+
+                            $propagation = [system.security.accesscontrol.PropagationFlags]"None" 
+
+                            $acl.SetAccessRuleProtection($True, $False)
+
+                            #Adding the Rule
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\MSSQLSERVER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\SQLSERVERAGENT", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("CREATOR OWNER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                            
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT AUTHORITY\SYSTEM", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Administrators", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Users", "ReadAndExecute", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            #Setting the Change
+                            Set-Acl $Root $acl
+                      }                         
+                       
+                    } catch{
+                       [string]$errorMessage = $Error[0].Exception
+                       if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureTempdbPath: $errorMessage"
+                       }
+                    }
+                }
+            TestScript = { 
+
+                $pass = $true
+
+                $Root = $($using:TempdbPath)
+
+               if($(test-path -path $root) -eq $true) {
+                    $ACL = Get-Acl $Root
+                
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT SERVICE\MSSQLSERVER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    }
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -ne 'NT SERVICE\SQLSERVERAGENT'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    }
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Users'}}).FileSystemRights -ne 'ReadAndExecute'){
+                        $pass= $false
+                    } 
+                     
+                } else {
+                    $pass = $false
+                }
+                
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureTempdbPath $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureTempdbPath $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[File]SQLTempdbPath"
+        }
+
         File SQLBackupPath {
             Type = 'Directory'
             DestinationPath = $BackupPath
             Ensure = "Present"
         }
+        Script ConfigurebacakupPath{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                   
+                    try { 
+ 
+                        $Root = $($using:BackupPath)
+
+                        if($(test-path -path $root) -eq $true) {
+                        
+                            $ACL = Get-Acl $Root
+ 
+                            $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+
+                            $propagation = [system.security.accesscontrol.PropagationFlags]"None" 
+
+                            $acl.SetAccessRuleProtection($True, $False)
+
+                            #Adding the Rule
+
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\MSSQLSERVER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\SQLSERVERAGENT", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("CREATOR OWNER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                            
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT AUTHORITY\SYSTEM", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Administrators", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+    
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Users", "ReadAndExecute", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            #Setting the Change
+                            Set-Acl $Root $acl
+                      }                         
+                       
+                    } catch{
+                       [string]$errorMessage = $Error[0].Exception
+                       if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigurebacakupPath: $errorMessage"
+                       }
+                    }
+                }
+            TestScript = { 
+
+                $pass = $true
+
+                $Root = $($using:BackupPath)
+
+               if($(test-path -path $root) -eq $true) {
+                    $ACL = Get-Acl $Root
                 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT SERVICE\MSSQLSERVER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    }
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -ne 'NT SERVICE\SQLSERVERAGENT'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    }
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Users'}}).FileSystemRights -ne 'ReadAndExecute'){
+                        $pass= $false
+                    } 
+                     
+                } else {
+                    $pass = $false
+                }
+                
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigurebacakupPath $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigurebacakupPath $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[File]SQLBackupPath"
+        }
+
+        File SQLErrorPath {
+            Type = 'Directory'
+            DestinationPath = $ErrorPath
+            Ensure = "Present"
+        }
+        Script ConfigureErrorPath{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                   
+                    try { 
+ 
+                        $Root = $($using:ErrorPath)
+
+                        if($(test-path -path $root) -eq $true) {
+                        
+                            $ACL = Get-Acl $Root
+ 
+                            $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+
+                            $propagation = [system.security.accesscontrol.PropagationFlags]"None" 
+
+                            $acl.SetAccessRuleProtection($True, $False)
+
+                            #Adding the Rule
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\MSSQLSERVER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT SERVICE\SQLSERVERAGENT", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("CREATOR OWNER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT AUTHORITY\SYSTEM", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Administrators", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Users", "ReadAndExecute", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            #Setting the Change
+                            Set-Acl $Root $acl
+                      }                         
+                       
+                    } catch{
+                       [string]$errorMessage = $Error[0].Exception
+                       if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureErrorPath: $errorMessage"
+                       }
+                    }
+            }           
+            TestScript = { 
+
+                $pass = $true
+
+                $Root = $($using:ErrorPath)
+
+               if($(test-path -path $root) -eq $true) {
+                    $ACL = Get-Acl $Root
+                
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT SERVICE\MSSQLSERVER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    }
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -ne 'NT SERVICE\SQLSERVERAGENT'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Users'}}).FileSystemRights -ne 'ReadAndExecute'){
+                        $pass= $false
+                    } 
+                } else {
+                    $pass = $false
+                }
+                
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureErrorPath $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureErrorPath $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[File]SQLErrorPath"
+        }
+                      
         Script ConfigureServerLoginMode{
             GetScript = {
                 @{
@@ -96,7 +573,7 @@ Configuration DeploySQLServer
                     } catch {
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureServerLoginMode: $errorMessage"
                         }
                     }
                 }
@@ -121,14 +598,19 @@ Configuration DeploySQLServer
             
                         if($srv.Settings.LoginMode -eq "Integrated") {$pass =  $true} else {$pass =  $false}
                 
-                        Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "ServerLoginMode $pass" 
-
                     }catch {$pass = $false}
+                }else{$pass=$true}
+
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureServerLoginMode $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureServerLoginMode $pass"
                 }
+                
               
               return $pass
             }
-            DependsOn = "[Script]ConfigureEventLog"
+            DependsOn = "[Script]ConfigureErrorPath"
 
         }
 
@@ -159,11 +641,14 @@ Configuration DeploySQLServer
                         ############################################
                         # Set Max D.O.P.:  n=num of procs
                         ############################################
-                        $NumberOfProcessors = Get-WmiObject -Class Win32_ComputerSystem 
-                        if($($NumberOfProcessors.NumberOfProcessors) -eq 1) { $maxDop=1 }
-                        if($($NumberOfProcessors.NumberOfProcessors) -ge 2 -and $($NumberOfProcessors.NumberOfProcessors) -le 7) { $maxDop=2 }
-                        if($($NumberOfProcessors.NumberOfProcessors) -ge 8 -and $($NumberOfProcessors.NumberOfProcessors) -le 16) { $maxDop=4 }
-                        if($($NumberOfProcessors.NumberOfProcessors) -gt 16) { $maxDop=8 }
+                       
+                        $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
+                        $coreCount = $cpu.NumberOfCores
+
+                        if($($coreCount) -eq 1) { $maxDop=1 }
+                        if($($coreCount) -ge 2 -and $($coreCount) -le 7) { $maxDop=2 }
+                        if($($coreCount) -ge 8 -and $($coreCount) -le 16) { $maxDop=4 }
+                        if($($coreCount) -gt 16) { $maxDop=8 }
                                           
                         $srv.configuration.MaxDegreeOfParallelism.ConfigValue =$maxDop
                         $srv.configuration.Alter();
@@ -171,7 +656,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureMaxDop: $errorMessage"
                         } 
                     }
                 }
@@ -201,27 +686,28 @@ Configuration DeploySQLServer
                         ############################################
                         $pass=$false
 
-                        $NumberOfProcessors = Get-WmiObject -Class Win32_ComputerSystem 
-                        if($($NumberOfProcessors.NumberOfProcessors) -eq 1) { $maxDop=1 }
-                        if($($NumberOfProcessors.NumberOfProcessors) -ge 2 -and $($NumberOfProcessors.NumberOfProcessors) -le 7) { $maxDop=2 }
-                        if($($NumberOfProcessors.NumberOfProcessors) -ge 8 -and $($NumberOfProcessors.NumberOfProcessors) -le 16) { $maxDop=4 }
-                        if($($NumberOfProcessors.NumberOfProcessors) -gt 16) { $maxDop=8 }
+                        $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
+                        $coreCount = $cpu.NumberOfCores
 
-                        $maxdop
-
-                        $srv.configuration.MaxDegreeOfParallelism.ConfigValue;
+                        if($($coreCount) -eq 1) { $maxDop=1 }
+                        if($($coreCount) -ge 2 -and $($coreCount) -le 7) { $maxDop=2 }
+                        if($($coreCount) -ge 8 -and $($coreCount) -le 16) { $maxDop=4 }
+                        if($($coreCount) -gt 16) { $maxDop=8 }
                 
                         if($srv.configuration.MaxDegreeOfParallelism.ConfigValue -eq $maxDop) { $pass= $true} else { $pass= $false}
                         
-                        Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "ServerLoginMode $pass"
-
                     } catch{ $pass= $false}
 
                 } else { $pass= $false}
 
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureMaxDop $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureMaxDop $pass"
+                }
              return $pass
             }
-            DependsOn = "[Script]ConfigureEventLog"
+            DependsOn = "[Script]ConfigureServerLoginMode"
         }
 
         Script ConfigureDefaultLocations{
@@ -275,7 +761,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDefaultLocations: $errorMessage"
                         }
                     }
                 }
@@ -328,7 +814,11 @@ Configuration DeploySQLServer
 
                 } else {$pass=$false}
 
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "DefaultLocations $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureDefaultLocations $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureDefaultLocations $pass"
+                }
 
              return $pass
             }
@@ -365,9 +855,17 @@ Configuration DeploySQLServer
 
                         $PhysicalRAM = (Get-WMIObject -class Win32_PhysicalMemory -ComputerName:$env:COMPUTERNAME |Measure-Object -Property capacity -Sum | % {[Math]::Round(($_.sum / 1GB),2)})
                       
+                       if($PhysicalRAM -eq 7) 
+                        {
+                        $srv.configuration.MaxServerMemory.ConfigValue = 4096 
+                        }
                         if($PhysicalRAM -eq 8) 
                         {
                         $srv.configuration.MaxServerMemory.ConfigValue = 4096
+                        }
+                         if($PhysicalRAM -eq 14) 
+                        {
+                        $srv.configuration.MaxServerMemory.ConfigValue = 10240 
                         }
                         if($PhysicalRAM -eq 16) 
                         {
@@ -377,6 +875,10 @@ Configuration DeploySQLServer
                         {
                         $srv.configuration.MaxServerMemory.ConfigValue = 19456   
                         }
+                         if($PhysicalRAM -eq 28) 
+                        {
+                        $srv.configuration.MaxServerMemory.ConfigValue = 22528 
+                        }
                         if($PhysicalRAM -eq 32) 
                         {
                         $srv.configuration.MaxServerMemory.ConfigValue = 25600
@@ -385,6 +887,11 @@ Configuration DeploySQLServer
                         {
                         $srv.configuration.MaxServerMemory.ConfigValue = 38912
                         }
+                        if($PhysicalRAM -eq 56) 
+                        {
+                        $srv.configuration.MaxServerMemory.ConfigValue = 45056
+                        }
+
                         if($PhysicalRAM -eq 64) 
                         {
                         $srv.configuration.MaxServerMemory.ConfigValue = 52224
@@ -397,13 +904,29 @@ Configuration DeploySQLServer
                         {
                         $srv.configuration.MaxServerMemory.ConfigValue = 77824
                         }
+                         if($PhysicalRAM -eq 112) 
+                        {
+                        $srv.configuration.MaxServerMemory.ConfigValue = 91136 
+                        }
                         if($PhysicalRAM -eq 128) 
                         {
                         $srv.configuration.MaxServerMemory.ConfigValue = 104448
                         }
+                         if($PhysicalRAM -eq 140) 
+                        {
+                        $srv.configuration.MaxServerMemory.ConfigValue = 114688 
+                        }
+                         if($PhysicalRAM -eq 224) 
+                        {
+                        $srv.configuration.MaxServerMemory.ConfigValue = 196608 
+                        }
                         if($PhysicalRAM -eq 256) 
                         {
                         $srv.configuration.MaxServerMemory.ConfigValue = 229376
+                        }
+                         if($PhysicalRAM -eq 448) 
+                        {
+                        $srv.configuration.MaxServerMemory.ConfigValue = 425984 
                         }
                         if($PhysicalRAM -eq 512) 
                         {
@@ -423,7 +946,7 @@ Configuration DeploySQLServer
                     } catch{
                        [string]$errorMessage = $Error[0].Exception
                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureMaxMemory: $errorMessage"
                        }
                     }
                 }
@@ -448,8 +971,15 @@ Configuration DeploySQLServer
 
                     $PhysicalRAM = (Get-WMIObject -class Win32_PhysicalMemory -ComputerName:$env:COMPUTERNAME |Measure-Object -Property capacity -Sum | % {[Math]::Round(($_.sum / 1GB),2)})
                            
-                      
+                       if($PhysicalRAM -eq 7) 
+                        {
+                            $srvRAM = 4096
+                        }
                         if($PhysicalRAM -eq 8) 
+                        {
+                            $srvRAM = 10240
+                        }
+                        if($PhysicalRAM -eq 14) 
                         {
                             $srvRAM = 4096
                         }
@@ -461,6 +991,10 @@ Configuration DeploySQLServer
                         {
                             $srvRAM = 19456   
                         }
+                        if($PhysicalRAM -eq 28) 
+                        {
+                            $srvRAM = 22528
+                        }
                         if($PhysicalRAM -eq 32) 
                         {
                             $srvRAM = 25600
@@ -468,6 +1002,10 @@ Configuration DeploySQLServer
                         if($PhysicalRAM -eq 48) 
                         {
                             $srvRAM = 38912
+                        }
+                        if($PhysicalRAM -eq 56) 
+                        {
+                            $srvRAM = 45056
                         }
                         if($PhysicalRAM -eq 64) 
                         {
@@ -481,13 +1019,29 @@ Configuration DeploySQLServer
                         {
                             $srvRAM = 77824
                         }
+                        if($PhysicalRAM -eq 112) 
+                        {
+                            $srvRAM = 91136
+                        }
                         if($PhysicalRAM -eq 128) 
                         {
                             $srvRAM = 104448
                         }
+                        if($PhysicalRAM -eq 140) 
+                        {
+                            $srvRAM = 114688
+                        }
+                        if($PhysicalRAM -eq 224) 
+                        {
+                            $srvRAM = 196608
+                        }
                         if($PhysicalRAM -eq 256) 
                         {
                             $srvRAM = 229376
+                        }
+                        if($PhysicalRAM -eq 448) 
+                        {
+                            $srvRAM = 425984
                         }
                         if($PhysicalRAM -eq 512) 
                         {
@@ -509,7 +1063,11 @@ Configuration DeploySQLServer
                         }
                 }else {$pass=$false}
 
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "MaxMemory $pass"
+               if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureMaxMemory $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureMaxMemory $pass"
+                }
 
              return $pass
             }
@@ -577,7 +1135,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureSQLAgent: $errorMessage"
                         }
                     }
                 }
@@ -614,198 +1172,17 @@ Configuration DeploySQLServer
                 
                 }else {$pass=$false}
 
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "SQLAgentConfiguration $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureSQLAgent $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureSQLAgent $pass"
+                }
 
              return $pass
             }
             DependsOn = "[Script]ConfigureMaxMemory"
-        }
-
-        Script ConfigureMasterDataFile{
-            GetScript = {
-                @{
-                }
-            }
-            SetScript = {
-
-                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
-
-                if($sqlInstances -ne $null){
-                   
-                    try {  
-                        ############################################
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
-                        ############################################
-
-                        $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
-
-                        $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
-
-                        $DatabaseName="Master"
-
-                        $MyDatabase = $srv.Databases[$DatabaseName]
-                                                                      
-                        $DBFG = $MyDatabase.FileGroups;
-                        foreach ($DBF in $DBFG.Files) {
-                           if((50*1024) -ne $dbf.Size) {
-
-                               $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
-                               $dbf.Size = (50*1024)
-                               $dbf.Alter()
-
-                           } else {"$($DBF.Name) Size to 50MB"}
-                           
-                           if((5*1024) -ne $dbf.Growth) {
-
-                               $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
-                               $dbf.Growth = (5*1024)
-                               $dbf.Alter()
-
-                           } else {"$($DBF.Name) Filegrowth to 5MB"}
-
-                        }
-
-                       
-                    } catch{
-                        [string]$errorMessage = $Error[0].Exception
-                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
-                        }
-                    }
-                }
-            }
-            TestScript = { 
-            
-                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
-
-                if($sqlInstances -ne $null){
-                     
-                    ############################################
-                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
-                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
-                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
-                     ############################################
-
-                    $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
-                
-                     $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
-
-                    $DatabaseName="Master"
-
-                    $MyDatabase = $srv.Databases[$DatabaseName]
-                                                                      
-                    $DBFG = $MyDatabase.FileGroups;
-                    $pass=$true
-                    foreach ($DBF in $DBFG.Files) {
-                        if((50*1024) -ne $dbf.Size) {
-                            $pass= $false
-                        } 
-                        if((5*1024) -ne $dbf.Growth) {
-                            $pass= $false
-                        } 
-                    }
-
-                }else {$pass=$false}
-
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "MasterDataFile $pass"
-
-               return $pass
-            }
-            DependsOn = "[Script]ConfigureSQLAgent"
-        }
-
-        Script ConfigureMasterLogFile{
-            GetScript = {
-                @{
-                }
-            }
-            SetScript = {
-
-                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
-                
-                if($sqlInstances -ne $null){
-                   
-                    try {    
-                      
-                        ############################################
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
-                        ############################################
-
-                        $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
-
-                        $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
-
-                        $DatabaseName="Master"
-
-                        $MyDatabase = $srv.Databases[$DatabaseName]
-                      
-                        foreach ($DBF in $MyDatabase.LogFiles) {
-                           if((50*1024) -ne $dbf.Size) {
-                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
-                               $dbf.Size = (20*1024)
-                               $dbf.Alter()
-
-                           } else {"$($DBF.Name) Size to 50MB"}
-                           
-                           if((5*1024) -ne $dbf.Growth) {
-                               $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
-                               $dbf.Growth = (5*1024)
-                               $dbf.Alter()
-
-                           } else {"$($DBF.Name) Filegrowth to 5MB"}
-
-                        }
-
-                       
-                    } catch{
-                        [string]$errorMessage = $Error[0].Exception
-                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
-                        }
-                    }
-                }
-            }
-            TestScript = { 
-                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
-                           
-                if($sqlInstances -ne $null){
-                     
-                    ############################################
-                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
-                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
-                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
-                    ############################################
-
-                    $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
-                
-                     $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
-
-                    $DatabaseName="Master"
-
-                    $MyDatabase = $srv.Databases[$DatabaseName]
-                    $pass=$true
-
-                    foreach ($DBF in $MyDatabase.LogFiles) {
-                        if((20*1024) -ne $dbf.Size) {
-                            $pass= $false
-                        } 
-                        if((5*1024) -ne $dbf.Growth) {
-                            $pass= $false
-                        } 
-                    }
-                } else {$pass=$false}
-
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "MasterLogFile $pass"
-
-               return $pass
-            }
-            DependsOn = "[Script]ConfigureMasterDataFile"
-        }
-
+        }  
+        
         Script ConfigureModelDataFile{
             GetScript = {
                 @{
@@ -853,7 +1230,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureModelDataFile: $errorMessage"
                         }
                     }
                 }
@@ -889,11 +1266,15 @@ Configuration DeploySQLServer
                     }
                 } else {$pass=$false}
 
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "ModelDataFile $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureModelDataFile $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureModelDataFile $pass"
+                }
 
                return $pass
             }
-            DependsOn = "[Script]ConfigureMasterLogFile"
+            DependsOn = "[Script]ConfigureSQLAgent"
         }
 
         Script ConfigureModelLogFile{
@@ -940,7 +1321,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureModelLogFile: $errorMessage"
                         }
                     }
                 }
@@ -975,13 +1356,17 @@ Configuration DeploySQLServer
                     }
                 } else {$pass=$false}
 
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "ModelLogFile $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureModelLogFile $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureModelLogFile $pass"
+                }
 
                return $pass
             }
             DependsOn = "[Script]ConfigureModelDataFile"
         }
-
+         
         Script ConfigureMSDBDataFile{
             GetScript = {
                 @{
@@ -1025,7 +1410,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureMSDBDataFile: $errorMessage"
                         } else {$errorMessage}
                     }
                 }
@@ -1062,7 +1447,11 @@ Configuration DeploySQLServer
                     }
                     } else {$pass=$false}
 
-                    Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "MSDBDataFile $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureMSDBDataFile $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureMSDBDataFile $pass"
+                }
 
                return $pass
             }
@@ -1113,7 +1502,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureMSDBLogFile: $errorMessage"
                         } else {$errorMessage}
                     }
                 }
@@ -1149,7 +1538,7 @@ Configuration DeploySQLServer
 
                  }else {$pass=$false}
                  
-                 Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "MSDBLogFile $pass"
+                 Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureMSDBLogFile $pass"
 
                return $pass
             }
@@ -1172,7 +1561,7 @@ Configuration DeploySQLServer
                     }catch{
                        [string]$errorMessage = $Error[0].Exception
                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureAuditing: $errorMessage"
                         } else {$errorMessage}
                     }
                 }
@@ -1193,7 +1582,11 @@ Configuration DeploySQLServer
 
                 }
             
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "ModelDataFile $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureAuditing $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureAuditing $pass"
+                }
 
              return $pass 
             }
@@ -1218,7 +1611,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureBuiltInAdmins: $errorMessage"
                         } else {$errorMessage}
                     }
                 }
@@ -1238,7 +1631,11 @@ Configuration DeploySQLServer
                   
                 }catch{$pass=$false}
             
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "BuiltInAdmins $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureBuiltInAdmins $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureBuiltInAdmins $pass"
+                }
 
              return $pass
             }
@@ -1307,7 +1704,7 @@ Configuration DeploySQLServer
                             } catch{
                                 [string]$errorMessage = $Error[0].Exception
                                 if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                                    Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveTempdbFiles: $errorMessage"
                                 } else {$errorMessage}
                             }
                     }
@@ -1328,7 +1725,11 @@ Configuration DeploySQLServer
                     if($readyLog -and $readyData){return $true} else {return $false}
                 }
 
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "MoveTempdb $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "MoveTempdbFiles $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "MoveTempdbFiles $pass"
+                }
 
              return $pass
             }
@@ -1359,6 +1760,9 @@ Configuration DeploySQLServer
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
                         $fileCount = $cpu.NumberOfCores
 
+                        #maximum of 8 to start, the additional ones to be added by the server Owners
+                        if($fileCount -gt 8){ $fileCount = 8 }
+
                         $maxFileGrowthSizeMB = $TempDBSpaceAvailMB / $fileCount 
                         $maxFileGrowthSizeMB = [math]::truncate($maxFileGrowthSizeMB)
 	                    $fileSize     = '1000'
@@ -1380,7 +1784,7 @@ Configuration DeploySQLServer
                                     
                                     }catch{
                                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
                                         }else {$errorMessage}
                                     }
                                                                                                
@@ -1395,7 +1799,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "AddTempdbFiles: $errorMessage"
                         } else {$errorMessage}
                    }
                 }
@@ -1421,7 +1825,11 @@ Configuration DeploySQLServer
                     }
                 }
 
-                Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "AddTempdbFiles $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "AddTempdbFiles $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "AddTempdbFiles $pass"
+                }
 
              return $pass
             }
@@ -1452,21 +1860,26 @@ Configuration DeploySQLServer
                         $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
 
                         $DatabaseName="tempdb"
+                        $tempDrive = $(split-path $($using:tempdbpath) -Qualifier)  
+                        $TempPath = $($using:TempDbPath)
 
                         $MyDatabase = $srv.Databases[$DatabaseName]
-                         
-                        $fileSize     = $(1024*1000)
-                        $fileGrowthMB = $(1024*50)
+                        $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
+                        $TempDBSpaceAvailGB = $FreeSpaceGB - 50
+	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
+                       
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
                         $fileCount = $cpu.NumberOfCores
 
                         if($fileCount -gt 8){ $fileCount = 8 }
                        
+                        $fileSize     = $(1024*1000)
+                        $fileGrowthMB = $(1024*50)
                         if($FreeSpaceGB -ge  10 -and $FreeSpaceGB -lt 50 ){
                             $fileSize     = $(1024*500)
                             $fileGrowthMB = $(1024*50)
                         }elseif($FreeSpaceGB -ge  50  ){
-                            $fileSize     = $(1024*100)
+                            $fileSize     = $(1024*1000)
                             $fileGrowthMB = $(1024*100)
                         }
 
@@ -1491,7 +1904,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureTempDataFile: $errorMessage"
                         }else {$errorMessage}
                     }
                 }
@@ -1509,11 +1922,11 @@ Configuration DeploySQLServer
 
                     $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
                 
-                     $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+                    $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
 
                     $DatabaseName="tempdb"
                    
-                    $TempDrive=$($using:TempDbPath).split("\")[0] 
+                    $tempDrive = $(split-path $($using:tempdbpath) -Qualifier)  
                     $TempPath = $($using:TempDbPath)
 
                     $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
@@ -1529,7 +1942,7 @@ Configuration DeploySQLServer
                         $fileSize     = $(1024*500)
                         $fileGrowthMB = $(1024*50)
                     }elseif($FreeSpaceGB -ge  50  ){
-                        $fileSize     = $(1024*100)
+                        $fileSize     = $(1024*1000)
                         $fileGrowthMB = $(1024*100)
                     }
 
@@ -1551,7 +1964,11 @@ Configuration DeploySQLServer
                     }
                     } else {$pass=$false}
 
-                    Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "ConfigureTempDataFile $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureTempDataFile $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureTempDataFile $pass"
+                }
 
                return $pass
             }
@@ -1582,9 +1999,10 @@ Configuration DeploySQLServer
                         $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
 
                         $DatabaseName="tempdb"
+                        $tempDrive = $(split-path $($using:tempdbpath) -Qualifier)  
+                        $TempPath = $($using:TempDbPath)
+                    
                         
-                        $fileSize     = $(1024*1000)
-                        $fileGrowthMB = $(1024*50)
                         $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
                         $TempDBSpaceAvailGB = $FreeSpaceGB - 50
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
@@ -1592,14 +2010,24 @@ Configuration DeploySQLServer
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
                         $fileCount = $cpu.NumberOfCores
 
+                        $DatafileSize     = $(1024*1000)
+                        $fileGrowthMB = $(1024*50)
+                        if($FreeSpaceGB -ge  10 -and $FreeSpaceGB -lt 50 ){
+                            $DatafileSize = $(1024*500)
+                            $fileGrowthMB = $(1024*50)
+                        }elseif($FreeSpaceGB -ge  50  ){
+                            $DatafileSize = $(1024*1000)
+                            $fileGrowthMB = $(1024*100)
+                        }
 
                         if($fileCount -gt 8){ $fileCount = 8 }
-                       
+                        $LogfileSize     = $(.25 * $($fileCount * $DatafileSize))
+
                         if($FreeSpaceGB -ge  10 -and $FreeSpaceGB -lt 50 ){
                             $fileSize     = $(1024*500)
                             $fileGrowthMB = $(1024*50)
                         }elseif($FreeSpaceGB -ge  50  ){
-                            $fileSize     = $(1024*100)
+                            $fileSize     = $(1024*1000)
                             $fileGrowthMB = $(1024*100)
                         }
 
@@ -1612,7 +2040,7 @@ Configuration DeploySQLServer
                            if(($fileSize) -ne $dbf.Size -or ($fileGrowthMB) -ne $dbf.Growth -or ($maxFileGrowthSizeMB) -ne $dbf.MaxSize) {
                                $DBF.MaxSize = -1
                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
-                               $dbf.Size = ($fileSize)
+                               $dbf.Size = ($LogfileSize)
                                $dbf.Growth = $fileGrowthMB
                                $dbf.Alter()
 
@@ -1626,7 +2054,7 @@ Configuration DeploySQLServer
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 3001 -entrytype Error -message $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureTempLogFile: $errorMessage"
                         } else {$errorMessage}
                     }
                 }
@@ -1643,11 +2071,12 @@ Configuration DeploySQLServer
                     ############################################
 
                     $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
-                
+                    
                     $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
 
                     $DatabaseName="tempdb"
-                    
+                    $TempDrive = $(split-path $($using:tempdbpath) -Qualifier)    
+
                         $fileSize     = $(1024*1000)
                         $fileGrowthMB = $(1024*50)
                         $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
@@ -1663,7 +2092,7 @@ Configuration DeploySQLServer
                             $fileSize     = $(1024*500)
                             $fileGrowthMB = $(1024*50)
                         }elseif($FreeSpaceGB -ge  50  ){
-                            $fileSize     = $(1024*100)
+                            $fileSize     = $(1024*1000)
                             $fileGrowthMB = $(1024*100)
                         }
 
@@ -1689,12 +2118,212 @@ Configuration DeploySQLServer
 
                  }else {$pass=$false}
                  
-                 Write-EventLog -LogName Application -source CloudMSArmTemplates -eventID 1000 -entrytype Information -message "ConfigureTempLogFile $pass"
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureTempLogFile $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureTempLogFile $pass"
+                }
 
                return $pass
             }
             DependsOn = "[Script]ConfigureTempDataFile"
         }
-    }
+          
+        Script ConfigureMasterDataFile{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+
+                if($sqlInstances -ne $null){
+                   
+                    try {  
+                        ############################################
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                        ############################################
+
+                        $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
+
+                        $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+
+                        $DatabaseName="Master"
+
+                        $MyDatabase = $srv.Databases[$DatabaseName]
+                                                                      
+                        $DBFG = $MyDatabase.FileGroups;
+                        foreach ($DBF in $DBFG.Files) {
+                           if((50*1024) -ne $dbf.Size) {
+
+                               $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
+                               $dbf.Size = (50*1024)
+                               $dbf.Alter()
+
+                           } else {"$($DBF.Name) Size to 50MB"}
+                           
+                           if((5*1024) -ne $dbf.Growth) {
+
+                               $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
+                               $dbf.Growth = (5*1024)
+                               $dbf.Alter()
+
+                           } else {"$($DBF.Name) Filegrowth to 5MB"}
+
+                        }
+
+                       
+                    } catch{
+                        [string]$errorMessage = $Error[0].Exception
+                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureMasterDataFile: $errorMessage"
+                        }
+                    }
+                }
+            }
+            TestScript = { 
+            
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+
+                if($sqlInstances -ne $null){
+                     
+                    ############################################
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                     ############################################
+
+                    $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
+                
+                     $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+
+                    $DatabaseName="Master"
+
+                    $MyDatabase = $srv.Databases[$DatabaseName]
+                                                                      
+                    $DBFG = $MyDatabase.FileGroups;
+                    $pass=$true
+                    foreach ($DBF in $DBFG.Files) {
+                        if((50*1024) -ne $dbf.Size) {
+                            $pass= $false
+                        } 
+                        if((5*1024) -ne $dbf.Growth) {
+                            $pass= $false
+                        } 
+                    }
+
+                }else {$pass=$false}
+
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureMasterDataFile $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureMasterDataFile $pass"
+                }
+
+               return $pass
+            }
+            DependsOn = "[Script]ConfigureSQLAgent"
+        }
+
+        Script ConfigureMasterLogFile{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                
+                if($sqlInstances -ne $null){
+                   
+                    try {    
+                      
+                        ############################################
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                        ############################################
+
+                        $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
+
+                        $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+
+                        $DatabaseName="Master"
+
+                        $MyDatabase = $srv.Databases[$DatabaseName]
+                      
+                        foreach ($DBF in $MyDatabase.LogFiles) {
+                           if((50*1024) -ne $dbf.Size) {
+                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
+                               $dbf.Size = (20*1024)
+                               $dbf.Alter()
+
+                           } else {"$($DBF.Name) Size to 50MB"}
+                           
+                           if((5*1024) -ne $dbf.Growth) {
+                               $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
+                               $dbf.Growth = (5*1024)
+                               $dbf.Alter()
+
+                           } else {"$($DBF.Name) Filegrowth to 5MB"}
+
+                        }
+
+                       
+                    } catch{
+                        [string]$errorMessage = $Error[0].Exception
+                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureMasterLogFile: $errorMessage"
+                        }
+                    }
+                }
+            }
+            TestScript = { 
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                           
+                if($sqlInstances -ne $null){
+                     
+                    ############################################
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                    ############################################
+
+                    $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
+                
+                     $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+
+                    $DatabaseName="Master"
+
+                    $MyDatabase = $srv.Databases[$DatabaseName]
+                    $pass=$true
+
+                    foreach ($DBF in $MyDatabase.LogFiles) {
+                        if((20*1024) -ne $dbf.Size) {
+                            $pass= $false
+                        } 
+                        if((5*1024) -ne $dbf.Growth) {
+                            $pass= $false
+                        } 
+                    }
+                } else {$pass=$false}
+
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureMasterLogFile $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureMasterLogFile $pass"
+                }
+
+               return $pass
+            }
+            DependsOn = "[Script]ConfigureMasterDataFile"
+        }
+
+      
+
+}
 
 }
