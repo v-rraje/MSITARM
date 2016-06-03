@@ -20,6 +20,9 @@
     "localAdmins": {
       "value": ""
     },
+    "SQLAdmins": {
+      "value": ""
+    },
     "appID": {
       "value": ""
     },
