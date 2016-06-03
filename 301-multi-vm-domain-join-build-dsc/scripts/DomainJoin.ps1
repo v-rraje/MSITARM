@@ -261,8 +261,7 @@ configuration DomainJoin
                 }
             }
             TestScript = {
-                $global:DSCMachineStatus = 1
-
+                
                 $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } | % { $_.Caption }
                 $ret=$false
 
