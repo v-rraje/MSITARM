@@ -1182,7 +1182,341 @@ Configuration DeploySQLServer
             }
             DependsOn = "[Script]ConfigureMaxMemory"
         }  
+       
+        Script MoveMasterFiles{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                $ret = $false
+
+                if($sqlInstances -ne $null){
+                   
+                    try { 
+
+                        ################################################################
+	                    # Data.
+                        ################################################################                     
+                        $DataPath = $($using:dataPath)
+                        $logPath = $($using:logPath)
+                        $ErrorPath = $($using:ErrorPath)
+                	    $flagsToAdd = ";-T1118"
+
+                        ################################################################
+	                    # Alter DB...
+                        ################################################################
         
+                           $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                        if($sqlInstances -ne $null -and $sqlInstances.State -eq 'Running'){
+	                        $q = "ALTER DATABASE [master] MODIFY FILE (NAME = master, FILENAME = '$($DataPath)\master.mdf')"
+		                    Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
+
+                            $q = "ALTER DATABASE [master] MODIFY FILE (NAME = mastlog, FILENAME = '$($logPath)\mastlog.ldf')"
+	                        Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
+                        }
+
+                        ################################################################
+
+                        ################################################################
+                        #Change the startup parameters 
+                        ################################################################
+                        $hklmRootNode = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server" 
+                            $props = Get-ItemProperty "$hklmRootNode\Instance Names\SQL" 
+                            $instances = $props.psobject.properties | ?{$_.Value -like 'MSSQL*'} | select Value 
+
+                            $instances | %{ $inst = $_.Value;}
+
+                            $regKey = "$hklmRootNode\$inst\MSSQLServer\Parameters" 
+                            $props = Get-ItemProperty $regKey 
+                            $params = $props.psobject.properties | ?{$_.Name -like 'SQLArg*'} | select Name, Value 
+                            $flagset=$false
+
+                            $c=0
+                            foreach ($param in $params) { 
+                                if($param.Value -match '-d') {
+                                    $param.value = "-d$datapath\master.mdf"
+                                } elseif($param.Value -match '-l') {
+                                    $param.value = "-l$logpath\mastlog.ldf"
+                                } elseif($param.Value -match '-e') {
+                                     $param.value = "-e$errorpath\ERRORLOG"
+                                } elseif($param.Value -match '-T') {
+                                     $flagset=$true
+                                } 
+                                Set-ItemProperty -Path $regKey -Name $param.Name -Value $param.value 
+
+                                $c+=1
+                             }
+                             if(!$flagset) {
+                                $newRegProp = "SQLArg"+($c) 
+                                Set-ItemProperty -Path $regKey -Name $newRegProp -Value $flagsToAdd 
+                             }
+                               
+                             $q = "EXEC msdb.dbo.sp_set_sqlagent_properties @errorlog_file=N'" +$ErrorPath + "\SQLAGENT.OUT'"
+                             Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
+                             
+                            ################################################################
+
+                            ################################################################
+                            # Stop SQL, move the files, start SQL 
+                            ################################################################
+                            #Stop
+                            $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                            if($sqlInstances.State = 'Running') {
+                            "$(Get-Date -Format g) Stopping SQL Server."
+                                Stop-Service -displayname "SQL Server (MSSQLSERVER)" -Force
+                            }
+                            
+                             $readylog = $(test-path -Path $("$($logPath)\mastlog.ldf"))
+                             $readyData = $(test-path -Path $("$($DataPath)\master.mdf"))
+
+                                  #Move
+                              if(!$readyData) {
+                                 Get-ChildItem -Path "C:\Program Files\Microsoft SQL Server\" -Recurse | Where-Object {$_.name -eq 'master.mdf'} | %{Move-Item -Path $_.FullName -Destination $datapath -force }
+                              }
+                              if(!$readyLog) {
+                                 Get-ChildItem -Path "C:\Program Files\Microsoft SQL Server\" -Recurse | Where-Object {$_.name -eq 'mastlog.ldf'} | %{Move-Item -Path $_.FullName -Destination $logPath -force }
+                              }
+                               
+                            #Start
+                            $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                            if($sqlInstances.State = 'Stopped') {                            
+                            "$(Get-Date -Format g) Starting SQL Server."
+                                Start-Service -displayname "SQL Server (MSSQLSERVER)" 
+                            }
+                                                                            
+                    } catch{
+                        [string]$errorMessage = $Error[0].Exception
+                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveMasterFiles: $errorMessage"
+                        } else {$errorMessage}
+                    }
+               }
+                
+            }
+            TestScript = { 
+            
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+
+                if($sqlInstances -ne $null){
+
+                    $DataPath = $($using:dataPath)
+                    $logPath = $($using:logPath)
+                    $ErrorPath = $($using:ErrorPath)
+
+                    $readylog = $(test-path -Path $("$($logPath)\mastlog.ldf"))
+                    $readyData = $(test-path -Path $("$($DataPath)\master.mdf"))
+                    
+                     $hklmRootNode = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server" 
+                        $props = Get-ItemProperty "$hklmRootNode\Instance Names\SQL" 
+                        $instances = $props.psobject.properties | ?{$_.Value -like 'MSSQL*'} | select Value 
+
+                        $instances | %{ $inst = $_.Value;}
+
+                        $regKey = "$hklmRootNode\$inst\MSSQLServer\Parameters" 
+                        $props = Get-ItemProperty $regKey 
+                        $params = $props.psobject.properties | ?{$_.Name -like 'SQLArg*'} | select Name, Value 
+
+                        $c=0
+                        foreach ($param in $params) { 
+                            if($param.Value -eq "-d$datapath\master.mdf") {
+                                $ReadyMastermdf = $true
+                            } elseif($param.Value -eq "-l$logpath\mastlog.ldf") {
+                                $ReadyMasterldf = $true 
+                            } elseif($param.Value -eq "-e$errorpath\ERRORLOG") {
+                                    $ReadyErrorLog = $true 
+                            } 
+                        }
+                    if($readyLog -and $readyData -and $readyMastermdf -and $readymasterldf -and $readyErrorlog){return $true} else {return $false}
+                
+                }
+
+                if($pass) {
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "MoveMasterFiles $pass"
+                }else {
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "MoveMasterFiles $pass"
+                }
+             return $pass
+            }
+            DependsOn = "[Script]ConfigureSQLAgent"
+        }
+
+        Script MoveModelFiles{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                $ret = $false
+
+                if($sqlInstances -ne $null){
+                   
+                    try { 
+                     
+                        $DataPath = $($using:dataPath)
+                        $logPath = $($using:logPath)
+
+                            ################################################################
+	                        # Move tempdb.mdf...
+                            ################################################################
+	                        $q = "ALTER DATABASE [model] MODIFY FILE (NAME = modeldev, FILENAME = '$($DataPath)\model.mdf')"
+				            Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
+
+                            $q = "ALTER DATABASE [model] MODIFY FILE (NAME = modellog, FILENAME = '$($logPath)\modellog.ldf')"
+	                        Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
+
+                            #Stop
+                            $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                            if($sqlInstances.State = 'Running') {
+                            "$(Get-Date -Format g) Stopping SQL Server."
+                                Stop-Service -displayname "SQL Server (MSSQLSERVER)" -Force
+                            }
+                               
+                                $readylog = $(test-path -Path $("$($logPath)\modellog.ldf"))
+                                $readyData = $(test-path -Path $("$($DataPath)\model.mdf"))
+
+                                #Move
+                                if(!$readyData) {
+                                    Get-ChildItem -Path "C:\Program Files\Microsoft SQL Server\" -Recurse | Where-Object {$_.name -eq 'model.mdf'} | %{Move-Item -Path $_.FullName -Destination $datapath -force}
+                                }
+                                if(!$readylog) {
+                                    Get-ChildItem -Path "C:\Program Files\Microsoft SQL Server\" -Recurse | Where-Object {$_.name -eq 'modellog.ldf'} | %{Move-Item -Path $_.FullName -Destination $logPath -force}
+                                }
+                                    
+                            #Start
+                            $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                            if($sqlInstances.State = 'Stopped') {                            
+                            "$(Get-Date -Format g) Starting SQL Server."
+                                Start-Service -displayname "SQL Server (MSSQLSERVER)" 
+                            }
+                                                                            
+                            } catch{
+                                [string]$errorMessage = $Error[0].Exception
+                                if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveModelFiles: $errorMessage"
+                                } else {$errorMessage}
+                            }
+                    }
+                
+            }
+            TestScript = { 
+            
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+
+                if($sqlInstances -ne $null){
+
+                    $DataPath = $($using:dataPath)
+                    $logPath = $($using:logPath)
+
+                    $readylog = $(test-path -Path $("$($logPath)\modellog.ldf"))
+                    $readyData = $(test-path -Path $("$($DataPath)\model.mdf"))
+                    
+                    if($readyLog -and $readyData){return $true} else {return $false}
+                }
+
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "MoveModelFiles $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "MoveModelFiles $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[Script]MoveMasterFiles"
+        }
+
+        Script MoveMSDBFiles{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                $ret = $false
+
+                if($sqlInstances -ne $null){
+                   
+                    try { 
+                     
+                        $DataPath = $($using:dataPath)
+                        $logPath = $($using:logPath)
+
+                            ################################################################
+	                        # Move tempdb.mdf...
+                            ################################################################
+	                        $q = "ALTER DATABASE [MSDB] MODIFY FILE (NAME = MSDBData, FILENAME = '$($DataPath)\MSDBData.mdf')"
+				            Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
+
+                            $q = "ALTER DATABASE [MSDB] MODIFY FILE (NAME = MSDBlog, FILENAME = '$($logPath)\MSDBlog.ldf')"
+	                        Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
+
+
+                            #Stop
+                            $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                            if($sqlInstances.State = 'Running') {
+                            "$(Get-Date -Format g) Stopping SQL Server."
+                                Stop-Service -displayname "SQL Server (MSSQLSERVER)" -Force
+                            }
+                                
+                               $readylog = $(test-path -Path $("$($logPath)\MSDBlog.ldf"))
+                               $readyData = $(test-path -Path $("$($DataPath)\MSDBData.mdf"))
+                                                               
+                                #Move
+                                if(!$readyData) {
+                                    Get-ChildItem -Path "C:\Program Files\Microsoft SQL Server\" -Recurse | Where-Object {$_.name -eq 'MSDBData.mdf'} | %{Move-Item -Path $_.FullName -Destination $datapath -force}
+                                 }
+                                if(!$readylog) {
+                                    Get-ChildItem -Path "C:\Program Files\Microsoft SQL Server\" -Recurse | Where-Object {$_.name -eq 'MSDBlog.ldf'} | %{Move-Item -Path $_.FullName -Destination $logPath -force}
+                                }
+                                                           
+                                    
+                            #Start
+                            $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                            if($sqlInstances.State = 'Stopped') {                            
+                            "$(Get-Date -Format g) Starting SQL Server."
+                                Start-Service -displayname "SQL Server (MSSQLSERVER)" 
+                            }
+                                              
+                            } catch{
+                                [string]$errorMessage = $Error[0].Exception
+                                if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveMSDBFiles: $errorMessage"
+                                } else {$errorMessage}
+                            }
+                    }
+                
+            }
+            TestScript = { 
+            
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+
+                if($sqlInstances -ne $null){
+
+                    $DataPath = $($using:dataPath)
+                    $logPath = $($using:logPath)
+
+                    $readylog = $(test-path -Path $("$($logPath)\MSDBlog.ldf"))
+                    $readyData = $(test-path -Path $("$($DataPath)\MSDBData.mdf"))
+                    
+                    if($readyLog -and $readyData){return $true} else {return $false}
+                }
+
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "MoveMSDBFiles $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "MoveMSDBFiles $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[Script]MoveModelFiles"
+        }
+                
         Script ConfigureModelDataFile{
             GetScript = {
                 @{
@@ -1214,16 +1548,12 @@ Configuration DeploySQLServer
 
                         $DBFG = $MyDatabase.FileGroups;
                         foreach ($DBF in $DBFG.Files) {
-                           if((50*1024) -ne $dbf.Size -or (5*1024) -ne $dbf.Growth) {
+                          
                                $DBF.MaxSize = -1
                                $dbf.Growth = (5*1024)
                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
                                $dbf.Size = (50*1024)
                                $dbf.Alter()
-
-                           } else {"$($DBF.Name) Size to 50MB, Filegrowth to 5MB"}
-                                                      
-
                         }
 
                        
@@ -1274,7 +1604,7 @@ Configuration DeploySQLServer
 
                return $pass
             }
-            DependsOn = "[Script]ConfigureSQLAgent"
+            DependsOn = "[Script]MoveMSDBFiles"
         }
 
         Script ConfigureModelLogFile{
@@ -1398,6 +1728,7 @@ Configuration DeploySQLServer
                         foreach ($DBF in $DBFG.Files) {
                            if((50*1024) -ne $dbf.Size) {
                                 $DBF.MaxSize = -1
+                                 $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
                                 $dbf.Size = (50*1024)
                                 $dbf.Growth = (5*1024)
                                 $dbf.Alter()
@@ -1486,16 +1817,13 @@ Configuration DeploySQLServer
                         $MyDatabase = $srv.Databases[$DatabaseName]
        
                         foreach ($DBF in $DBFG.LogFiles) {
-                           if((50*1024) -ne $dbf.Size -or (5*1024) -ne $dbf.Growth) {
-
+                         
                                $DBF.MaxSize = -1
                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
                                $dbf.Size = (20*1024)
+                               $dbf.Growth = (5*1024)
                                $dbf.Alter()
-
-                           } else {"$($DBF.Name) Size to 20MB,Filegrowth to 5MB"}
-                          
-
+                                                         
                         }
 
                        

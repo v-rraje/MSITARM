@@ -47,7 +47,7 @@
     "configurationFunction": "Deploy-WinServer.ps1\\DeployWinServer",
     "modulesUrl": "[concat(variables('BaseURL'),variables('deployWinZip'))]"
     },
-    "resources": [
+  "resources": [
     {
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "name": "[concat(parameters('vmName'),'/Microsoft.Powershell.DSC')]",
@@ -56,7 +56,7 @@
         "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "2.15",
+            "typeHandlerVersion": "2.18",
             "autoUpgradeMinorVersion": true,
             "protectedSettings": {},
             "settings": {
