@@ -55,7 +55,7 @@
         }
       }
     },
-  "variables": {
+    "variables": {
     
       "branch": "master",
       "folder":  "/301-multi-vm-domain-join-build-dsc/",
@@ -159,7 +159,7 @@
         "properties": {
           "publisher": "Microsoft.Powershell",
           "type": "DSC",
-          "typeHandlerVersion": "2.15",
+          "typeHandlerVersion": "2.18",
           "autoUpgradeMinorVersion": true,
           "protectedSettings": { },
           "settings": {
