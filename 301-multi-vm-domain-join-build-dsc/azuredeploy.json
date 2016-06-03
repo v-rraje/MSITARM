@@ -134,10 +134,7 @@
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "redmond.corp.microsoft.com",
-      "allowedValues": [
-        "redmond.corp.microsoft.com"
-      ],
+      "defaultValue": "",
       "metadata": {
         "description": "The FQDN of the AD domain, currently only Redmond domain is supported. "
       }

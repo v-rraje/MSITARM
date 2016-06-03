@@ -1548,12 +1548,16 @@ Configuration DeploySQLServer
 
                         $DBFG = $MyDatabase.FileGroups;
                         foreach ($DBF in $DBFG.Files) {
-                          
+                           if((50*1024) -ne $dbf.Size -or (5*1024) -ne $dbf.Growth) {
                                $DBF.MaxSize = -1
                                $dbf.Growth = (5*1024)
                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
                                $dbf.Size = (50*1024)
                                $dbf.Alter()
+
+                           } else {"$($DBF.Name) Size to 50MB, Filegrowth to 5MB"}
+                                                      
+
                         }
 
                        
@@ -1635,7 +1639,7 @@ Configuration DeploySQLServer
                         $MyDatabase = $srv.Databases[$DatabaseName]
                                                                       
                         foreach ($DBF in $MyDatabase.LogFiles) {
-                            if((20*1024) -ne $dbf.Size -or (5*1024) -ne $dbf.Growth) {
+                            
 
                                 $DBF.MaxSize = -1
                                 $dbf.Growth = (5*1024)
@@ -1643,7 +1647,6 @@ Configuration DeploySQLServer
                                 $dbf.Size = (20*1024)
                                 $dbf.Alter()
 
-                           } else {"$($DBF.Name) Size to 20MB, Filegrowth to 5MB, unlimited growth"}
                           
                         }
 
@@ -1816,13 +1819,13 @@ Configuration DeploySQLServer
 
                         $MyDatabase = $srv.Databases[$DatabaseName]
        
-                        foreach ($DBF in $DBFG.LogFiles) {
-                         
-                               $DBF.MaxSize = -1
-                               $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
-                               $dbf.Size = (20*1024)
-                               $dbf.Growth = (5*1024)
-                               $dbf.Alter()
+                        foreach ($DBF in $MyDatabase.LogFiles) {
+                                                       
+                                $DBF.MaxSize = -1
+                                $dbf.Growth = (5*1024)
+                                $DBF.GrowthType = [Microsoft.SqlServer.Management.Smo.FileGrowthType]::KB
+                                $dbf.Size = (20*1024)
+                                $dbf.Alter()
                                                          
                         }
 
@@ -1860,6 +1863,9 @@ Configuration DeploySQLServer
                             $pass= $false
                         } 
                         if((5*1024) -ne $dbf.Growth) {
+                            $pass= $false
+                        } 
+                        if(-1 -ne $dbf.maxsize) {
                             $pass= $false
                         } 
                     }
@@ -2346,14 +2352,6 @@ Configuration DeploySQLServer
 
                         if($fileCount -gt 8){ $fileCount = 8 }
                         $LogfileSize     = $(.25 * $($fileCount * $DatafileSize))
-
-                        if($FreeSpaceGB -ge  10 -and $FreeSpaceGB -lt 50 ){
-                            $fileSize     = $(1024*500)
-                            $fileGrowthMB = $(1024*50)
-                        }elseif($FreeSpaceGB -ge  50  ){
-                            $fileSize     = $(1024*1000)
-                            $fileGrowthMB = $(1024*100)
-                        }
 
                         $maxFileGrowthSizeMB = $TempDBSpaceAvailMB / $fileCount 
                         $maxFileGrowthSizeMB = [math]::truncate($maxFileGrowthSizeMB)

@@ -134,9 +134,6 @@
     "domainName": {
       "type": "string",
       "defaultValue": "",
-      "allowedValues": [
-        ""
-      ],
       "metadata": {
         "description": "The FQDN of the AD domain, currently only Redmond domain is supported. "
       }
@@ -178,6 +175,13 @@
       }
     },
     "localAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "local admins that can login to the VMs. csv list of domain\\user,domain\\group "
+      }
+    },
+    "SQLAdmins": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
