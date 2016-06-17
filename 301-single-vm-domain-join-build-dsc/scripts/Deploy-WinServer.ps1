@@ -1,4 +1,5 @@
-
+# Name: DeployWinServer
+#
 Configuration DeployWinServer
 {
   param (  

@@ -1,4 +1,5 @@
-
+# Name: DeploySQLServer
+#
 Configuration DeploySQLServer
 {
   param (  
@@ -744,8 +745,8 @@ Configuration DeploySQLServer
                         ############################################
                        
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $coreCount = $cpu.NumberOfCores
-
+                        $coreCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                  
                         if($($coreCount) -eq 1) { $maxDop=1 }
                         if($($coreCount) -ge 2 -and $($coreCount) -le 7) { $maxDop=2 }
                         if($($coreCount) -ge 8 -and $($coreCount) -le 16) { $maxDop=4 }
@@ -788,8 +789,8 @@ Configuration DeploySQLServer
                         $pass=$false
 
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $coreCount = $cpu.NumberOfCores
-
+                        $coreCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                   
                         if($($coreCount) -eq 1) { $maxDop=1 }
                         if($($coreCount) -ge 2 -and $($coreCount) -le 7) { $maxDop=2 }
                         if($($coreCount) -ge 8 -and $($coreCount) -le 16) { $maxDop=4 }
@@ -2099,7 +2100,11 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
 
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+                        $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        } 
 
                         $maxFileGrowthSizeMB = $TempDBSpaceAvailMB / $fileCount 
                         $maxFileGrowthSizeMB = [math]::truncate($maxFileGrowthSizeMB)
@@ -2114,7 +2119,6 @@ Configuration DeploySQLServer
 
                             $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog, FILENAME = '$($TempPath)\templog.ldf')"
 	                        Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
-
 
                             "$(Get-Date -Format g) Restarting SQL Server."
                                     $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
@@ -2193,13 +2197,8 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
 
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-    
                         $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
-                        if($fileCount -gt 8)
-                        {
-                            $fileCount = 8
-                        }  
-
+            
                         #maximum of 8 to start, the additional ones to be added by the server Owners
                         if($fileCount -gt 8){ $fileCount = 8 }
 
@@ -2255,10 +2254,10 @@ Configuration DeploySQLServer
                     
                     $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
                     $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
-                    if($fileCount -gt 8)
-                    {
-                        $fileCount = 8
-                    }  
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        }
 
                     $pass=$true
                     for ($i = 2; $i -le $fileCount; $i++) {
@@ -2313,7 +2312,7 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
                        
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+                        $fileCount =($cpu.NumberOfCores | Measure-Object -Sum).Sum
 
                         if($fileCount -gt 8){ $fileCount = 8 }
                        
@@ -2371,7 +2370,11 @@ Configuration DeploySQLServer
 
                     $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
                     $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
-                    $fileCount = $cpu.NumberOfCores
+                    $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                     if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        }
 
                     $maxFileGrowthSizeMB = $TempDBSpaceAvailMB / $fileCount 
                     $maxFileGrowthSizeMB = [math]::truncate($maxFileGrowthSizeMB)
@@ -2448,7 +2451,11 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
                         $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+                        $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        } 
 
                         $DatafileSize     = $(1024*1000)
                         $fileGrowthMB = $(1024*50)
@@ -2514,7 +2521,11 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
                         $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+                        $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        } 
 
                         if($fileCount -gt 8){ $fileCount = 8 }
                        

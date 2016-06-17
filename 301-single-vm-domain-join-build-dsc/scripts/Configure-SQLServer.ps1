@@ -1,4 +1,6 @@
-﻿[CmdletBinding()]
+﻿# Name: ConfigureSQLserver
+#
+[CmdletBinding()]
 param
     (
 [parameter(Mandatory=$true, Position=0)]

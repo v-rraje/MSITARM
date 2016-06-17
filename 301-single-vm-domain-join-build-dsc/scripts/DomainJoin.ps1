@@ -1,3 +1,5 @@
+# Name: DomainJoin
+#
 configuration DomainJoin 
 { 
       param (
