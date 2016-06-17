@@ -40,6 +40,34 @@
         "description": "Password for domain joining"
       }
     },
+    "SQLServerAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLServerPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLAgentAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLAgentPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
     "numberOfIIS": {
       "type": "int",
       "defaultValue": 2,
@@ -174,7 +202,13 @@
       "folder":  "/301-multi-vm-domain-join-build-dsc/",
       "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
 
-    "CreateVMUrl": "[concat(variables('BaseURL'), 'nested/azuredeploy.json')]",
+      "CreateVMUrl": "[concat(variables('BaseURL'), 'nested/azuredeploy.json')]",
+      
+      "vmExtensionName": "ConfigureSQLServer",
+      "customScriptFileToRun": "Configure-SQLServer.ps1",
+      "customScriptFileUri": "[concat(variables('baseURL'),variables('customScriptFileToRun'))]",
+      "arguments": "[concat(' -SQLServerAccount ', parameters('SQLServerAccount'), ' -SQLServerPassword ', parameters('SQLServerPassword'), ' -SQLAgentAccount ', parameters('SQLAgentAccount'), ' -SQLAgentPassword ', parameters('SQLAgentPassword'))]",
+      "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customScriptFileToRun'), ' ', variables('arguments'))]",
 
     "IIS": {
       "imagePublisher": "MicrosoftWindowsServer",
@@ -303,7 +337,7 @@
           }
         }
       }
-    }, 
+    },
     {
       "apiVersion": "2015-01-01",
       "name": "[concat(parameters('vmName'),'-CreateSQLsvr')]",
@@ -396,9 +430,34 @@
           "PullServerRegistrationKey": {
             "value": "[variables('AzureAutomation').RegistrationKey]"
           },
-           "PullServerRegistrationURI": {
+          "PullServerRegistrationURI": {
             "value": "[variables('AzureAutomation').registrationUrl]"
           }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),copyindex(1),'/', variables('vmExtensionName'))]",
+      "apiVersion": "2015-05-01-preview",
+      "copy": {
+          "name": "ConfigureMachineRoleLoop",
+          "count": "[parameters('numberOfSQL')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": "true",
+        "forceUpdateTag": "v.1.4",
+        "settings": {
+          "fileUris": [
+            "[variables('customScriptFileUri')]"
+          ],
+          "commandToExecute": "[variables('commandToExecute')]"
+        },
+        "protectedSettings": {          
         }
       }
     }
