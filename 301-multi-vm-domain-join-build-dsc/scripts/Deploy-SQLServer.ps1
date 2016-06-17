@@ -9,11 +9,22 @@ Configuration DeploySQLServer
    [Parameter(Mandatory)]
    [string] $BackupPath="E:\MSSqlServer\MSSQL\DATA",
    [Parameter(Mandatory)]
-   [string] $TempDBPath="T:\MSSqlServer\MSSQL\DATA"
+   [string] $TempDBPath="T:\MSSqlServer\MSSQL\DATA",
+   [Parameter(Mandatory)]
+   [string] $baseurl="https://raw.githubusercontent.com/Microsoft/MSITARM/"
   )
 
   Node localhost
   {
+
+    
+
+    $InstanceName =Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server' -Name InstalledInstances | Select-Object -ExpandProperty InstalledInstances | ?{$_ -eq 'MSSQLSERVER'}
+    $InstanceFullName = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL' -Name $InstanceName | Select-Object -ExpandProperty $InstanceName;
+    $DataPath   = $DataPath.replace('MSSqlServer',$InstanceFullName)
+    $LogPath    = $LogPath.replace('MSSqlServer',$InstanceFullName)
+    $BackupPath = $BackupPath.replace('MSSqlServer',$InstanceFullName)
+    $TempDBPath = $TempDBPath.replace('MSSqlServer',$InstanceFullName)
     $ErrorPath = $(split-path $("$dataPath") -Parent)+"\Log"
 
   	    Script ConfigureEventLog{
@@ -43,10 +54,100 @@ Configuration DeploySQLServer
 
         }
 
+        File StartupPath {
+            Type = 'Directory'
+            DestinationPath = "C:\SQLStartup"
+            Ensure = "Present"
+            DependsOn = "[Script]ConfigureEventLog"
+        }
+        Script ConfigureStartupPath{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                   
+                    try { 
+ 
+                        $Root = "C:\SQLStartup"
+
+                        if($(test-path -path $root) -eq $true) {
+                        
+                            $ACL = Get-Acl $Root
+ 
+                            $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+
+                            $propagation = [system.security.accesscontrol.PropagationFlags]"None" 
+
+                            $acl.SetAccessRuleProtection($True, $False)
+
+                            #Adding the Rule
+                                                                                           
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("CREATOR OWNER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT AUTHORITY\SYSTEM", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Administrators", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Users", "ReadAndExecute", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                            
+                            #Setting the Change
+                            Set-Acl $Root $acl
+                      }                         
+                       
+                    } catch{
+                       [string]$errorMessage = $Error[0].Exception
+                       if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
+                       }
+                    }
+                }           
+            TestScript = { 
+
+                $pass = $true
+
+                $Root = "C:\SQLStartup"
+
+                if($(test-path -path $root) -eq $true) {
+                    $ACL = Get-Acl $Root
+                                   
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Users'}}).FileSystemRights -ne 'ReadAndExecute'){
+                        $pass= $false
+                    }                      
+
+                } else {
+                    $pass = $false
+                }
+
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureDataPath $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureDataPath $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[File]StartupPath"
+        }
+
         File SQLDataPath {
             Type = 'Directory'
             DestinationPath = $DataPath
             Ensure = "Present"
+            DependsOn = "[Script]ConfigureStartupPath"
         }
         Script ConfigureDataPath{
             GetScript = {
@@ -1203,7 +1304,7 @@ Configuration DeploySQLServer
                         $DataPath = $($using:dataPath)
                         $logPath = $($using:logPath)
                         $ErrorPath = $($using:ErrorPath)
-                	    $flagsToAdd = ";-T1118"
+                	    $flagsToAdd = "-T1118"
 
                         ################################################################
 	                    # Alter DB...
@@ -2092,7 +2193,12 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
 
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+    
+                        $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        }  
 
                         #maximum of 8 to start, the additional ones to be added by the server Owners
                         if($fileCount -gt 8){ $fileCount = 8 }
@@ -2148,7 +2254,11 @@ Configuration DeploySQLServer
                     $TempPath = $($using:TempDbPath)
                     
                     $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                    $fileCount = $cpu.NumberOfCores
+                    $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                    if($fileCount -gt 8)
+                    {
+                        $fileCount = 8
+                    }  
 
                     $pass=$true
                     for ($i = 2; $i -le $fileCount; $i++) {
@@ -2642,7 +2752,40 @@ Configuration DeploySQLServer
             DependsOn = "[Script]ConfigureMasterDataFile"
         }
 
-      
+        Script ConfigureStartupJob {
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                if($(test-path -path C:\SQLStartup) -eq $true) {
+               
+                    $WebClient = New-Object System.Net.WebClient
+                    $WebClient.DownloadFile($($Using:baseURL) + "scripts/SQL-Startup.ps1","C:\SQLStartup\SQL-Startup.ps1")
+
+                    if($(test-path -path C:\SQLStartup\SQL-Startup.ps1) -eq $true) {
+                        C:\SQLStartup\SQL-Startup.ps1 $($using:TempDBPath)
+                    }
+                }
+            }
+            TestScript = { 
+                $pass=$false
+                if($(test-path -path "C:\SQLStartup\SQL-Startup.ps1") -eq $true) {
+
+                    if ((Get-ScheduledTask -TaskPath '\' | Where-Object { $_.TaskName -eq 'SqlTempdriveAndStartup'; }) -eq $null) {
+                        $pass=$false
+                    }else {
+                        $pass=$true
+                    }
+
+                } else {
+                    $pass=$false
+                }
+
+                return $Pass
+            }
+            DependsOn = "[Script]ConfigureMasterLogFile"
+        }
 
 }
 

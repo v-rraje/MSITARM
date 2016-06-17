@@ -49,14 +49,17 @@ configuration DomainJoin
 
                             }
 
-                             $gemaltoDriver = $(ChildItem -Recurse -Force "C:\Program Files\WindowsPowerShell\Modules\" -ErrorAction SilentlyContinue | Where-Object { ($_.PSIsContainer -eq $false) -and  ( $_.Name -like "Gemalto.MiniDriver.NET.inf") } | Select-Object FullName) | select -first 1
-
-                             if($gemaltoDriver){
-                                 $f = '"' + $($gemaltoDriver.FullName) + '"'
-                                 iex "rundll32.exe advpack.dll,LaunchINFSectionEx $f"
-                             }
+                            
                     }catch{}
                 }
+                try {
+                    $gemaltoDriver = $(ChildItem -Recurse -Force "C:\Program Files\WindowsPowerShell\Modules\" -ErrorAction SilentlyContinue | Where-Object { ($_.PSIsContainer -eq $false) -and  ( $_.Name -like "Gemalto.MiniDriver.NET.inf") } | Select-Object FullName) | select -first 1
+
+                    if($gemaltoDriver){
+                        $f = '"' + $($gemaltoDriver.FullName) + '"'
+                        iex "rundll32.exe advpack.dll,LaunchINFSectionEx $f"
+                    }
+                }catch {}
 
         ############################################
         # Create Admin jobs and Janitors
