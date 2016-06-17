@@ -17,7 +17,6 @@
       },
      "DiskConfig": {
         "type": "string",
-        "defaultValue": "",
         "metadata": {
           "description": "Azure VM Role, SQLStd, SQLPrem, IIS, Win"
         }

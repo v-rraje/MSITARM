@@ -1,4 +1,6 @@
-﻿configuration FormatDataDisks 
+﻿# Name: FormatDataDisks
+#
+configuration FormatDataDisks 
 { 
       param (
          $Disks

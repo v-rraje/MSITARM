@@ -10,9 +10,9 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A2",
+      "defaultValue": "Standard_A4",
       "metadata": {
-        "description": "Standard_A2"
+        "description": "Standard_A4"
       }
     },
     "DiskConfig": {

@@ -1,4 +1,5 @@
-
+# Name: DeploySQLServer
+#
 Configuration DeploySQLServer
 {
   param (  
