@@ -4,7 +4,6 @@
   "parameters": {
     "vmName": {
       "type": "string",
-      "defaultValue": "vmname",
       "minLength": 1,
       "metadata": {
         "description": "vmName for the Virtual Machine."

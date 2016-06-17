@@ -10,7 +10,6 @@
         },
       "DiskConfig": {
           "type": "string",
-          "defaultValue": "Win",
           "metadata": {
             "description": "IIS/SQLStd, SQLPrem/Win"
           }
