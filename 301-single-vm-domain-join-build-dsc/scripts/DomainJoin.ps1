@@ -256,11 +256,7 @@ configuration DomainJoin
                         $q = "if Exists(select 1 from sys.syslogins where name='[BUILTIN\Administrators]') drop login [BUILTIN\Administrators]"
 				        Invoke-Sqlcmd -Database master -Query $q
                                                 
-                        $fw=New-object –comObject HNetCfg.FwPolicy2
-                        foreach($z in (1..4)) {
-                            $CurrentProfiles=$z
-                            $fw.EnableRuleGroup($CurrentProfiles, "SQL Server Port", $true)
-                        }
+                        New-NetFirewallRule -DisplayName "MSSQL ENGINE TCP" -Direction Inbound -LocalPort 1433-1434 -Protocol TCP -Action Allow
 
                     } catch {
                         [string]$errorMessage = $Error[0].Exception
