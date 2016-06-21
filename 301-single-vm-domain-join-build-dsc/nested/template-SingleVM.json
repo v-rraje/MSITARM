@@ -250,7 +250,7 @@
         "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
         "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA",
         "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA",
-        "backupPath": "E:\\MSSqlServer\\MSSQL\\Backup"       
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\Bak"       
       },
       "dataDisks": {
         "1": {
@@ -277,7 +277,7 @@
         "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
         "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA",
         "TempDbPath": "T:\\MSSqlServer\\MSSQL\\DATA",
-        "backupPath": "E:\\MSSqlServer\\MSSQL\\Backup"
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\Bak"
       },
       "dataDisks": {
         "1": {

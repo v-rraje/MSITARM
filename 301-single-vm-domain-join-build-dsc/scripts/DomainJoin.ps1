@@ -255,7 +255,12 @@ configuration DomainJoin
                         ########################## -[BUILTIN\Administrators] #####################################
                         $q = "if Exists(select 1 from sys.syslogins where name='[BUILTIN\Administrators]') drop login [BUILTIN\Administrators]"
 				        Invoke-Sqlcmd -Database master -Query $q
-                        
+                                                
+                        $fw=New-object –comObject HNetCfg.FwPolicy2
+                        foreach($z in (1..4)) {
+                            $CurrentProfiles=$z
+                            $fw.EnableRuleGroup($CurrentProfiles, "SQL Server Port", $true)
+                        }
 
                     } catch {
                         [string]$errorMessage = $Error[0].Exception
