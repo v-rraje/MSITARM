@@ -167,9 +167,9 @@ param
 
   write-host "$SQLServerAccount"
 
-  $ret1=  Add-LoginToLocalPrivilege $SQLServerAccount "SeLockMemoryPrivilege"
+  $ret1=  Add-LoginToLocalPrivilege "NT Service\Mssqlserver" "SeLockMemoryPrivilege"
 
-  $ret2=  Add-LoginToLocalPrivilege $SQLServerAccount "SeManageVolumePrivilege"
+  $ret2=  Add-LoginToLocalPrivilege "NT Service\Mssqlserver" "SeManageVolumePrivilege"
 
     $ServerN = $env:COMPUTERNAME
     $Service = "MSSQLServer"
@@ -207,7 +207,4 @@ param
             {write-host "$ServerN -> Service Started Successfully"} 
         }
 
-
-
-    
 

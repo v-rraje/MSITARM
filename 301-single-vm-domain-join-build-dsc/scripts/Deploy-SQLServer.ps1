@@ -8,7 +8,7 @@ Configuration DeploySQLServer
    [Parameter(Mandatory)]
    [string] $LogPath="O:\MSSqlServer\MSSQL\DATA",
    [Parameter(Mandatory)]
-   [string] $BackupPath="E:\MSSqlServer\MSSQL\DATA",
+   [string] $BackupPath="E:\MSSqlServer\MSSQL\bak",
    [Parameter(Mandatory)]
    [string] $TempDBPath="T:\MSSqlServer\MSSQL\DATA",
    [Parameter(Mandatory)]
@@ -843,6 +843,12 @@ Configuration DeploySQLServer
                        
                         $srv.BackupDirectory = $BackupDir
                         $srv.Alter()
+
+                        ###########################################
+                        #  Set the backup compression to true
+                        ###########################################
+                        $srv.Configuration.DefaultBackupCompression.ConfigValue = $true
+                        $srv.Configuration.Alter()
 
                         ###########################################
                         #  Set the data location to $disks.SQLServer.backupPath

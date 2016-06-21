@@ -255,7 +255,8 @@ configuration DomainJoin
                         ########################## -[BUILTIN\Administrators] #####################################
                         $q = "if Exists(select 1 from sys.syslogins where name='[BUILTIN\Administrators]') drop login [BUILTIN\Administrators]"
 				        Invoke-Sqlcmd -Database master -Query $q
-                        
+                                                
+                        New-NetFirewallRule -DisplayName "MSSQL ENGINE TCP" -Direction Inbound -LocalPort 1433-1434 -Protocol TCP -Action Allow
 
                     } catch {
                         [string]$errorMessage = $Error[0].Exception
