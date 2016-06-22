@@ -1313,6 +1313,7 @@ Configuration DeploySQLServer
                         $ErrorPath = $($using:ErrorPath)
                 	    $flagsToAdd = "-T1118"
 
+                        if($(Test-Path -Path $dataPath -ErrorAction SilentlyContinue) -eq $true) {
                         ################################################################
 	                    # Alter DB...
                         ################################################################
@@ -1394,14 +1395,15 @@ Configuration DeploySQLServer
                             "$(Get-Date -Format g) Starting SQL Server."
                                 Start-Service -displayname "SQL Server (MSSQLSERVER)" 
                             }
-                                                                            
+                       }                                                     
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
                             Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveMasterFiles: $errorMessage"
                         } else {$errorMessage}
                     }
-               }
+                }
+               
                 
             }
             TestScript = { 
@@ -1468,6 +1470,7 @@ Configuration DeploySQLServer
                         $DataPath = $($using:dataPath)
                         $logPath = $($using:logPath)
 
+                        if($(Test-Path -Path $dataPath -ErrorAction SilentlyContinue) -eq $true) {
                             ################################################################
 	                        # Move tempdb.mdf...
                             ################################################################
@@ -1501,14 +1504,15 @@ Configuration DeploySQLServer
                             "$(Get-Date -Format g) Starting SQL Server."
                                 Start-Service -displayname "SQL Server (MSSQLSERVER)" 
                             }
-                                                                            
-                            } catch{
-                                [string]$errorMessage = $Error[0].Exception
-                                if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveModelFiles: $errorMessage"
-                                } else {$errorMessage}
-                            }
-                    }
+                          }
+                                                                             
+                        } catch{
+                            [string]$errorMessage = $Error[0].Exception
+                            if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveModelFiles: $errorMessage"
+                            } else {$errorMessage}
+                        }
+                }
                 
             }
             TestScript = { 
@@ -1554,6 +1558,7 @@ Configuration DeploySQLServer
                         $DataPath = $($using:dataPath)
                         $logPath = $($using:logPath)
 
+                        if($(Test-Path -Path $dataPath -ErrorAction SilentlyContinue) -eq $true) {
                             ################################################################
 	                        # Move tempdb.mdf...
                             ################################################################
@@ -1589,14 +1594,15 @@ Configuration DeploySQLServer
                             "$(Get-Date -Format g) Starting SQL Server."
                                 Start-Service -displayname "SQL Server (MSSQLSERVER)" 
                             }
-                                              
-                            } catch{
-                                [string]$errorMessage = $Error[0].Exception
-                                if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveMSDBFiles: $errorMessage"
-                                } else {$errorMessage}
-                            }
-                    }
+                          }
+                                             
+                        } catch{
+                            [string]$errorMessage = $Error[0].Exception
+                            if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveMSDBFiles: $errorMessage"
+                            } else {$errorMessage}
+                        }
+                }
                 
             }
             TestScript = { 
