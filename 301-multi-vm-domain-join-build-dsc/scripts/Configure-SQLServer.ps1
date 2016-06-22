@@ -6,13 +6,13 @@ param
 [parameter(Mandatory=$true, Position=0)]
 [string] $SQLServerAccount,
 
-[parameter(Mandatory=$true, Position=1)]
+[parameter(Mandatory=$false, Position=1)]
 [string] $SQLServerPassword,
 
 [parameter(Mandatory=$true, Position=2)]
 [string] $SQLAgentAccount,
 
-[parameter(Mandatory=$true, Position=3)]
+[parameter(Mandatory=$false, Position=3)]
 [string] $SQLAgentPassword,
 
 [parameter(Mandatory=$true, Position=4)]
@@ -175,12 +175,67 @@ param
         }
     }
 
-  write-host "$SQLServerAccount"
+
+  #################Policy Changes####################################
 
   $ret1=  Add-LoginToLocalPrivilege "NT Service\Mssqlserver" "SeLockMemoryPrivilege"
 
   $ret2=  Add-LoginToLocalPrivilege "NT Service\Mssqlserver" "SeManageVolumePrivilege"
     
+  ###############################################################
+  ###############################################################
+
+
+  ###############################################################
+  ###############################################################
+
+
+  ###############################################################
+  #remove Execute Perms on Extended Procedures from public user/role
+  ###############################################################
+    $WebClient = New-Object System.Net.WebClient
+    $WebClient.DownloadFile($($baseURL) + "scripts/PostConfiguration.sql","C:\SQLStartup\PostConfiguration.sql")
+
+    if($(test-path -path 'C:\SQLStartup\PostConfiguration.sql') -eq $true) {
+        
+        $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+   
+        if($sqlInstances -ne $null){
+
+                    try {  
+
+                   
+                        ############################################                     
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                        ############################################
+
+                        $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
+
+                        $srvConn.connect();
+                        $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+                        
+                        $q =  $(get-content -path "C:\SQLStartup\PostConfiguration.sql") -join [Environment]::NewLine
+
+                        # When using GO, we must set it up as a StringCollection, not a List or Array
+                        $Batch = New-Object -TypeName:Collections.Specialized.StringCollection
+                        $Batch.AddRange($q)
+                        
+                        $db = $srv.Databases["master"] 
+                        $db.ExecuteWithResults($Batch)
+                                                         
+                    } catch{
+                        [string]$errorMessage = $Error[0].Exception
+                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
+                        }else {$error}
+                    }
+                }
+    }
+  ###############################################################
+  ###############################################################
+
     $ServerN = $env:COMPUTERNAME
     $Service = "SQL Server (MSSQLServer)"
     
@@ -207,46 +262,4 @@ param
 
     }
     
-    #remove Execute Perms on Extended Procedures from public user/role
     
-    $WebClient = New-Object System.Net.WebClient
-    $WebClient.DownloadFile($($baseURL) + "scripts/PostConfiguration.sql","C:\SQLStartup\PostConfiguration.sql")
-
-    if($(test-path -path 'C:\SQLStartup\PostConfiguration.sql') -eq $true) {
-        
-        $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
-   
-        if($sqlInstances -ne $null){
-
-                    try {  
-
-                        ############################################                     
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
-                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
-                        ############################################
-
-                        $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
-                        $srvConn.ConnectAsUsername = $SQLAdmin
-                        $srvConn.ConnectAsUserPassword = $SQLAdminPwd
-
-                        $srvConn.connect();
-                        $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
-                        
-                        $q =  $(get-content -path "C:\SQLStartup\PostConfiguration.sql") -join [Environment]::NewLine
-
-                        # When using GO, we must set it up as a StringCollection, not a List or Array
-                        $Batch = New-Object -TypeName:Collections.Specialized.StringCollection
-                        $Batch.AddRange($q)
-                        
-                        $db = $srv.Databases["master"] 
-                        $db.ExecuteWithResults($Batch)
-                                    
-                    } catch{
-                        [string]$errorMessage = $Error[0].Exception
-                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
-                        }else {$error}
-                    }
-                }
-    }
