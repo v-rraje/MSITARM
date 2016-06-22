@@ -194,7 +194,7 @@ param
     if($SQLAgentAccount -and $SQLAgentPassword) {
 
       $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
-        $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
+        $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
         $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
 
          Restart-Service -displayname $Service -Force
@@ -204,9 +204,37 @@ param
     #remove Execute Perms on Extended Procedures from public user/role
     
     $WebClient = New-Object System.Net.WebClient
-    $WebClient.DownloadFile($($Using:baseURL) + "scripts/PostConfiguration.sql","C:\SQLStartup\PostConfiguration.sql")
+    $WebClient.DownloadFile($($baseURL) + "scripts/PostConfiguration.sql","C:\SQLStartup\PostConfiguration.sql")
 
-    if($(test-path -path 'PostConfiguration.sql') -eq $true) {
+    if($(test-path -path 'C:\SQLStartup\PostConfiguration.sql') -eq $true) {
         
-        Invoke-Sqlcmd -InputFile "C:\SQLStartup\PostConfiguration.sql" 
+        $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+   
+        if($sqlInstances -ne $null){
+
+                    try {  
+
+                        ############################################                     
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                        $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                        ############################################
+
+                        $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
+ 
+                        $srvConn.connect();
+                        
+                        $q = [string] $(get-content -path "C:\SQLStartup\PostConfiguration.sql")
+       
+                        $db = $srvConn.Databases["master"] 
+                        $db.ExecuteNonQuery($q) 
+
+            
+                    } catch{
+                        [string]$errorMessage = $Error[0].Exception
+                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-output $errorMessage
+                        }else {$error}
+                    }
+                }
     }
