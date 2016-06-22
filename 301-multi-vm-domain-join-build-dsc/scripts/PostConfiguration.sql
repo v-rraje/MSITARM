@@ -8,8 +8,6 @@ Murli Koushik
 
 USE MASTER
 GO
-USE MASTER
-GO
 
 SET NOCOUNT ON ;
 
