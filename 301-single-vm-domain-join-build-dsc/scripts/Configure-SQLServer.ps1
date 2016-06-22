@@ -223,17 +223,17 @@ param
                         $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
  
                         $srvConn.connect();
-                        
+                        $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+
                         $q = [string] $(get-content -path "C:\SQLStartup\PostConfiguration.sql")
        
-                        $db = $srvConn.Databases["master"] 
+                        $db = $srv.Databases["master"] 
                         $db.ExecuteNonQuery($q) 
-
-            
+                                    
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                            Write-output $errorMessage
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
                         }else {$error}
                     }
                 }
