@@ -13,10 +13,14 @@ param
 [string] $SQLAgentAccount,
 
 [parameter(Mandatory=$false, Position=3)]
-[string] $SQLAgentPassword
+[string] $SQLAgentPassword,
+ 
+[Parameter(Mandatory)]
+[string] $baseurl="http://cloudmsarmprod.blob.core.windows.net/"
         
 )
- 
+    [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
+
     function Add-LoginToLocalPrivilege {
 
         #Specify the default parameterset
@@ -170,41 +174,39 @@ param
   $ret1=  Add-LoginToLocalPrivilege "NT Service\Mssqlserver" "SeLockMemoryPrivilege"
 
   $ret2=  Add-LoginToLocalPrivilege "NT Service\Mssqlserver" "SeManageVolumePrivilege"
-
+    
     $ServerN = $env:COMPUTERNAME
-    $Service = "MSSQLServer"
-
+    $Service = "SQL Server (MSSQLServer)"
+    
     if($SQLServerAccount -and $SQLServerPassword) {
+            
+        $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+        $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
+        $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
 
-        $svcD=gwmi win32_service -computername $ServerN -filter "name='$service'"
-        $StopStatus = $svcD.StopService() 
+         Restart-Service -displayname $Service -Force
 
-        If ($StopStatus.ReturnValue -eq "0") # validating status - http://msdn.microsoft.com/en-us/library/aa393673(v=vs.85).aspx 
-            {write-host "$ServerN -> Service Stopped Successfully"} 
-            $ChangeStatus = $svcD.change($null,$null,$null,$null,$null,$null,$SQLServerAccount,$SQLServerPassword,$null,$null,$null) 
-        If ($ChangeStatus.ReturnValue -eq "0")  
-            {write-host "$ServerN -> Sucessfully Changed User Name"} 
-        $StartStatus = $svcD.StartService() 
-        If ($ChangeStatus.ReturnValue -eq "0")  
-            {write-host "$ServerN -> Service Started Successfully"} 
+    }
 
-     }
 
-    $Service = "SQLSERVERAGENT"
+    $Service = "SQL Server Agent (MSSQLServer)"
 
     if($SQLAgentAccount -and $SQLAgentPassword) {
 
-        $svcD=gwmi win32_service -computername $ServerN -filter "name='$service'" -Credential $cred
- 
-        $StopStatus = $svcD.StopService() 
-        If ($StopStatus.ReturnValue -eq "0") # validating status - http://msdn.microsoft.com/en-us/library/aa393673(v=vs.85).aspx 
-            {write-host "$ServerN -> Service Stopped Successfully"} 
-        $ChangeStatus = $svcD.change($null,$null,$null,$null,$null,$null,$SQLAgentAccount,$SQLAgentPassword,$null,$null,$null) 
-        If ($ChangeStatus.ReturnValue -eq "0")  
-            {write-host "$ServerN -> Sucessfully Changed User Name"} 
-        $StartStatus = $svcD.StartService() 
-        If ($ChangeStatus.ReturnValue -eq "0")  
-            {write-host "$ServerN -> Service Started Successfully"} 
-        }
+      $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+        $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
+        $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
 
+         Restart-Service -displayname $Service -Force
 
+    }
+    
+    #remove Execute Perms on Extended Procedures from public user/role
+    
+    $WebClient = New-Object System.Net.WebClient
+    $WebClient.DownloadFile($($Using:baseURL) + "scripts/PostConfiguration.sql","C:\SQLStartup\PostConfiguration.sql")
+
+    if($(test-path -path 'PostConfiguration.sql') -eq $true) {
+        
+        Invoke-Sqlcmd -InputFile "C:\SQLStartup\PostConfiguration.sql" 
+    }
