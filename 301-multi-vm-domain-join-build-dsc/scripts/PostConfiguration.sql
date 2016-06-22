@@ -6,9 +6,6 @@ Date: June 21, 2016
 Murli Koushik
 */
 
-USE MASTER
-GO
-
 SET NOCOUNT ON ;
 
 IF EXISTS ( SELECT 1 FROM TEMPDB.DBO.SYSOBJECTS WHERE NAME LIKE '#TEMPTABLE%' )
@@ -24,7 +21,6 @@ FROM   sys.database_permissions -- ORDER BY OBJECT_NAME(major_id)
 WHERE  OBJECT_NAME(major_ID) LIKE 'xp%'
 AND    USER_NAME(grantee_principal_id) LIKE 'PUBLIC'
 ORDER  BY OBJECT_NAME(major_id)
-GO
 
 -- SELECT * FROM #TEMPTABLE ;
 

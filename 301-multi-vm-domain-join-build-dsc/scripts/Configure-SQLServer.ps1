@@ -6,15 +6,21 @@ param
 [parameter(Mandatory=$true, Position=0)]
 [string] $SQLServerAccount,
 
-[parameter(Mandatory=$false, Position=1)]
+[parameter(Mandatory=$true, Position=1)]
 [string] $SQLServerPassword,
 
 [parameter(Mandatory=$true, Position=2)]
 [string] $SQLAgentAccount,
 
-[parameter(Mandatory=$false, Position=3)]
+[parameter(Mandatory=$true, Position=3)]
 [string] $SQLAgentPassword,
- 
+
+[parameter(Mandatory=$true, Position=4)]
+[string] $SQLAdmin,
+
+[parameter(Mandatory=$true, Position=5)]
+[string] $SQLAdminPwd,
+
 [Parameter(Mandatory)]
 [string] $baseurl="http://cloudmsarmprod.blob.core.windows.net/"
         
@@ -221,14 +227,20 @@ param
                         ############################################
 
                         $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
- 
+                        $srvConn.ConnectAsUsername = $SQLAdmin
+                        $srvConn.ConnectAsUserPassword = $SQLAdminPwd
+
                         $srvConn.connect();
                         $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+                        
+                        $q =  $(get-content -path "C:\SQLStartup\PostConfiguration.sql") -join [Environment]::NewLine
 
-                        $q = [string] $(get-content -path "C:\SQLStartup\PostConfiguration.sql")
-       
+                        # When using GO, we must set it up as a StringCollection, not a List or Array
+                        $Batch = New-Object -TypeName:Collections.Specialized.StringCollection
+                        $Batch.AddRange($q)
+                        
                         $db = $srv.Databases["master"] 
-                        $db.ExecuteNonQuery($q) 
+                        $db.ExecuteWithResults($Batch)
                                     
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
