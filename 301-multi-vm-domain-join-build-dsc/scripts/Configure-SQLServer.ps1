@@ -27,11 +27,10 @@ param
 )
     [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
  
-    $u=whoami
-    write-host "runas=$u"
-
     $sysinfo = Get-WmiObject -Class Win32_ComputerSystem
     $server = $(“{0}.{1}” -f $sysinfo.Name, $sysinfo.Domain)
+
+    #################Private functions####################################
 
     function Add-LoginToLocalPrivilege {
 
@@ -180,7 +179,9 @@ param
             Remove-Item $TemporaryFolderPath\UserRightsAsTheyExist.inf -Force -WhatIf:$false
         }
     }
-
+       
+  ###############################################################
+  ###############################################################
 
   #################Policy Changes####################################
 
@@ -188,10 +189,6 @@ param
 
   $ret2=  Add-LoginToLocalPrivilege "NT Service\Mssqlserver" "SeManageVolumePrivilege"
     
-  ###############################################################
-  ###############################################################
-
-
   ###############################################################
   ###############################################################
 
@@ -255,9 +252,13 @@ param
             }
         }
     }
+ 
   ###############################################################
   ###############################################################
 
+  ###############################################################
+  # update the services
+  ###############################################################
     $ServerN = $env:COMPUTERNAME
     $Service = "SQL Server (MSSQLServer)"
     
@@ -285,3 +286,5 @@ param
     }
     
     
+  ###############################################################
+  ###############################################################
