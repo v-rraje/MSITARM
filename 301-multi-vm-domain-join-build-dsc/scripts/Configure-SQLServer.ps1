@@ -207,12 +207,14 @@ param
         $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
    
         if($sqlInstances -ne $null){
-            write-host "Add SQL account $sqlAdmin on $server"
+            write-host "Add SQL account $SQLServerAccount on $server"
+
             try {  
             $secpasswd = ConvertTo-SecureString $SQLAdminPwd -AsPlainText -Force
             $credential = New-Object System.Management.Automation.PSCredential ($SQLAdmin, $secpasswd)
                                     
              $Scriptblock={         
+                $SQLServerAccount=$args[0]
                 ############################################                     
                 $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
                 $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
@@ -232,9 +234,11 @@ param
                     #  Next two lines to give the new login a server role, optional
                     $login.AddToRole('sysadmin')
                     $login.Alter()         
+
+                    write-host "Added SQL account $SQLServerAccount"
                 }
                 
-               Invoke-Command -script  $Scriptblock  -ComputerName $($server) -Credential $Credential
+               Invoke-Command -script  $Scriptblock  -ComputerName $server -Credential $Credential -ArgumentList $SQLServerAccount
 
              write-host "Extended Sprocs on $server"
 
