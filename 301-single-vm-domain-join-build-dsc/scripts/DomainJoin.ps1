@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 # Name: DomainJoin
 #
+=======
+>>>>>>> origin/master
 configuration DomainJoin 
 { 
       param (
@@ -51,6 +54,7 @@ configuration DomainJoin
 
                             }
 
+<<<<<<< HEAD
                             
                     }catch{}
                 }
@@ -62,6 +66,16 @@ configuration DomainJoin
                         iex "rundll32.exe advpack.dll,LaunchINFSectionEx $f"
                     }
                 }catch {}
+=======
+                             $gemaltoDriver = $(ChildItem -Recurse -Force "C:\Program Files\WindowsPowerShell\Modules\" -ErrorAction SilentlyContinue | Where-Object { ($_.PSIsContainer -eq $false) -and  ( $_.Name -like "Gemalto.MiniDriver.NET.inf") } | Select-Object FullName) | select -first 1
+
+                             if($gemaltoDriver){
+                                 $f = '"' + $($gemaltoDriver.FullName) + '"'
+                                 iex "rundll32.exe advpack.dll,LaunchINFSectionEx $f"
+                             }
+                    }catch{}
+                }
+>>>>>>> origin/master
 
         ############################################
         # Create Admin jobs and Janitors
@@ -255,8 +269,12 @@ configuration DomainJoin
                         ########################## -[BUILTIN\Administrators] #####################################
                         $q = "if Exists(select 1 from sys.syslogins where name='[BUILTIN\Administrators]') drop login [BUILTIN\Administrators]"
 				        Invoke-Sqlcmd -Database master -Query $q
+<<<<<<< HEAD
                                                 
                         New-NetFirewallRule -DisplayName "MSSQL ENGINE TCP" -Direction Inbound -LocalPort 1433 -Protocol TCP -Action Allow
+=======
+                        
+>>>>>>> origin/master
 
                     } catch {
                         [string]$errorMessage = $Error[0].Exception
