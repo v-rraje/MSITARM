@@ -55,7 +55,6 @@ Configuration DeploySQLServer
 
         }
 
-<<<<<<< HEAD
         File StartupPath {
             Type = 'Directory'
             DestinationPath = "C:\SQLStartup"
@@ -145,16 +144,11 @@ Configuration DeploySQLServer
             DependsOn = "[File]StartupPath"
         }
 
-=======
->>>>>>> origin/master
         File SQLDataPath {
             Type = 'Directory'
             DestinationPath = $DataPath
             Ensure = "Present"
-<<<<<<< HEAD
             DependsOn = "[Script]ConfigureStartupPath"
-=======
->>>>>>> origin/master
         }
         Script ConfigureDataPath{
             GetScript = {
@@ -223,7 +217,6 @@ Configuration DeploySQLServer
                     }
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -ne 'NT SERVICE\SQLSERVERAGENT'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
-<<<<<<< HEAD
                     } 
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
@@ -234,18 +227,6 @@ Configuration DeploySQLServer
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
                     } 
-=======
-                    } 
-                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
-                        $pass= $false
-                    } 
-                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
-                        $pass= $false
-                    } 
-                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
-                        $pass= $false
-                    } 
->>>>>>> origin/master
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Users'}}).FileSystemRights -ne 'ReadAndExecute'){
                         $pass= $false
                     }                      
@@ -435,7 +416,6 @@ Configuration DeploySQLServer
                     }
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -ne 'NT SERVICE\SQLSERVERAGENT'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
-<<<<<<< HEAD
                     } 
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
@@ -443,15 +423,6 @@ Configuration DeploySQLServer
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
                     } 
-=======
-                    } 
-                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
-                        $pass= $false
-                    } 
-                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
-                        $pass= $false
-                    } 
->>>>>>> origin/master
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
                     }
@@ -546,7 +517,6 @@ Configuration DeploySQLServer
                     }
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -ne 'NT SERVICE\SQLSERVERAGENT'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
-<<<<<<< HEAD
                     } 
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
@@ -554,15 +524,6 @@ Configuration DeploySQLServer
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
                     } 
-=======
-                    } 
-                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
-                        $pass= $false
-                    } 
-                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
-                        $pass= $false
-                    } 
->>>>>>> origin/master
                     if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
                         $pass= $false
                     }
