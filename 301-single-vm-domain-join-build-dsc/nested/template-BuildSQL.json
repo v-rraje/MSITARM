@@ -10,7 +10,6 @@
         },
       "DiskConfig": {
           "type": "string",
-          "defaultValue": "Win",
           "metadata": {
             "description": "IIS/SQLStd, SQLPrem/Win"
           }
@@ -73,7 +72,7 @@
         "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
         "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA",
         "TempDbPath": "D:\\MSSqlServer\\MSSQL\\DATA",
-        "backupPath": "E:\\MSSqlServer\\MSSQL\\Backup"       
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\bak"       
       },
       "dataDisks": {
         "1": {
@@ -100,7 +99,7 @@
         "DataPath": "H:\\MSSqlServer\\MSSQL\\DATA",
         "LogPath": "O:\\MSSqlServer\\MSSQL\\DATA",
         "TempDbPath": "T:\\MSSqlServer\\MSSQL\\DATA",
-        "backupPath": "E:\\MSSqlServer\\MSSQL\\Backup"
+        "backupPath": "E:\\MSSqlServer\\MSSQL\\bak"
       },
       "dataDisks": {
         "1": {
@@ -170,7 +169,8 @@
                     "DataPath": "[variables('DiskSKU').SQLServer.DataPath]",
                     "LogPath": "[variables('DiskSKU').SQLServer.LogPath]",
                     "BackupPath": "[variables('DiskSKU').SQLServer.BackupPath]",
-                    "TempDBPath": "[variables('DiskSKU').SQLServer.TempDBPath]"
+                    "TempDBPath": "[variables('DiskSKU').SQLServer.TempDBPath]",
+                    "BaseURL": "[variables('BaseURL')]"
                 }
             
           }
