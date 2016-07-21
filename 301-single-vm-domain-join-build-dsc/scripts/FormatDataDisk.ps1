@@ -34,9 +34,9 @@ configuration FormatDataDisks
                             if($DiskExists) {      
                             
                                 if($DiskExists.PartitionStyle -eq 'Raw') {
-                                        $DiskExists |  Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -DriveLetter $($disk.DiskName) -UseMaximumSize | Format-Volume -NewFileSystemLabel $($disk.DiskLabel) -FileSystem NTFS -Confirm:$false     
+                                        $DiskExists |  Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -DriveLetter $($disk.DiskName) -UseMaximumSize | Format-Volume -NewFileSystemLabel $($disk.DiskLabel) -FileSystem NTFS -AllocationUnitSize 65536 -Confirm:$false     
                                     } else {
-                                        $DiskExists |  New-Partition -DriveLetter $($disk.DiskName) -UseMaximumSize | Format-Volume -NewFileSystemLabel $($disk.DiskLabel) -FileSystem NTFS -Confirm:$false    
+                                        $DiskExists |  New-Partition -DriveLetter $($disk.DiskName) -UseMaximumSize | Format-Volume -NewFileSystemLabel $($disk.DiskLabel) -FileSystem NTFS -AllocationUnitSize 65536 -Confirm:$false    
                                     } 
                           
                             } else {
