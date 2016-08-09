@@ -246,7 +246,7 @@
     "apiVersion": "2015-01-01",
 
     "branch": "develop",
-    "folder": "/multi-vm-domain-join-ILB-build-dsc/",
+    "folder": "/301-multi-vm-domain-join-ILB-build-dsc/",
     "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
     
     "domainJoinzip": "scripts/DomainJoin.ps1.zip",

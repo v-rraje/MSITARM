@@ -477,6 +477,7 @@
             "properties": {
               "protocol": "Http",
               "port": 59999,
+              "requestPath": "/Probetest/testpage.aspx",
               "intervalInSeconds": 15,
               "numberOfProbes": 2
             },
