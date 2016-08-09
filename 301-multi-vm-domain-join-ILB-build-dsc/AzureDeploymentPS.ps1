@@ -1,28 +1,37 @@
       # Login to Azure Subscription
-      Login-AzureRmAccount
+
+      $subscriptionId = 'ef108bd8-8365-4b10-bd33-a9115e60ffb4se'
+      # sign in
+Write-Host 'Logging in...'
+try{
+$context = Get-AzureRmContext -ErrorAction silentlycontinue
+}
+catch{}
+if($context -eq $null)
+{
+	Add-AzureRmAccount;
+}
+# select subscription
+Write-Host "Selecting subscription '$subscriptionId'";
+Select-AzureRmSubscription -SubscriptionID $subscriptionId;
+
+
       $templatePath = $PSScriptRoot
-      $TemplateFile = $templatePath + "\azuredeploy.multivm.json" 
-      $TemplateParameterFile = $templatePath + "\azuredeploy.parameters.multivm.json" 
+      $TemplateFile = $templatePath + "\azuredeploy.json" 
+      $TemplateParameterFile = $templatePath + "\azuredeploy.parameters.json" 
       # Provide location for Deployment. IT should be West US
-      $Location = "West US"
+      $Location = "East US 2"
       $AvSet = "TestAvSet"
       # Provide resource group name. It should be starting from ICTO number e.g. 2357-Alfred-UAT
-      $resourceGroupName = "2357-Test-10"
+      $resourceGroupName = "tdrapp13"
       
       # Provide storage account details. e.g. 2357alfreduatsa
-      $destStorageAccount = "2357test110"
+      $destStorageAccount = "tdr558"
       
       # Provide the VMName. E.G. alfrediaasuat
-      $vmName = 'AzGITAlfred0'
+      $vmName = 'tdrewe'
 
-      
-      if (!$cred) { $cred = (Get-Credential).GetNetworkCredential() }
-      # Login to Azure Portal
-      Login-AzureRmAccount -Credential $cred
 
-      # Select the subscription id. Please do not change this
-      $subscriptionId = "<<subscription ID here>>"
-      Select-AzureRmSubscription -SubscriptionID $subscriptionId;
 
       # Create requested resource group
     $exists = Get-AzureRmResourceGroup -Location $Location | Where-Object {$_.ResourceGroupName -eq $resourceGroupName}
