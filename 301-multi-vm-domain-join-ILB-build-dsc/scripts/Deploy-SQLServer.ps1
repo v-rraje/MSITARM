@@ -1,4 +1,5 @@
-
+# Name: DeploySQLServer
+#
 Configuration DeploySQLServer
 {
   param (  
@@ -7,13 +8,24 @@ Configuration DeploySQLServer
    [Parameter(Mandatory)]
    [string] $LogPath="O:\MSSqlServer\MSSQL\DATA",
    [Parameter(Mandatory)]
-   [string] $BackupPath="E:\MSSqlServer\MSSQL\DATA",
+   [string] $BackupPath="E:\MSSqlServer\MSSQL\bak",
    [Parameter(Mandatory)]
-   [string] $TempDBPath="T:\MSSqlServer\MSSQL\DATA"
+   [string] $TempDBPath="T:\MSSqlServer\MSSQL\DATA",
+   [Parameter(Mandatory)]
+   [string] $baseurl="https://raw.githubusercontent.com/Microsoft/MSITARM/"
   )
 
   Node localhost
   {
+
+    
+
+    $InstanceName =Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server' -Name InstalledInstances | Select-Object -ExpandProperty InstalledInstances | ?{$_ -eq 'MSSQLSERVER'}
+    $InstanceFullName = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL' -Name $InstanceName | Select-Object -ExpandProperty $InstanceName;
+    $DataPath   = $DataPath.replace('MSSqlServer',$InstanceFullName)
+    $LogPath    = $LogPath.replace('MSSqlServer',$InstanceFullName)
+    $BackupPath = $BackupPath.replace('MSSqlServer',$InstanceFullName)
+    $TempDBPath = $TempDBPath.replace('MSSqlServer',$InstanceFullName)
     $ErrorPath = $(split-path $("$dataPath") -Parent)+"\Log"
 
   	    Script ConfigureEventLog{
@@ -43,10 +55,100 @@ Configuration DeploySQLServer
 
         }
 
+        File StartupPath {
+            Type = 'Directory'
+            DestinationPath = "C:\SQLStartup"
+            Ensure = "Present"
+            DependsOn = "[Script]ConfigureEventLog"
+        }
+        Script ConfigureStartupPath{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                   
+                    try { 
+ 
+                        $Root = "C:\SQLStartup"
+
+                        if($(test-path -path $root) -eq $true) {
+                        
+                            $ACL = Get-Acl $Root
+ 
+                            $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+
+                            $propagation = [system.security.accesscontrol.PropagationFlags]"None" 
+
+                            $acl.SetAccessRuleProtection($True, $False)
+
+                            #Adding the Rule
+                                                                                           
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("CREATOR OWNER", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                                                        
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("NT AUTHORITY\SYSTEM", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Administrators", "FullControl", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+
+                            $accessrule = New-Object system.security.AccessControl.FileSystemAccessRule("BUILTIN\Users", "ReadAndExecute", $inherit, $propagation, "Allow")
+                            $acl.AddAccessRule($accessrule)
+                            
+                            #Setting the Change
+                            Set-Acl $Root $acl
+                      }                         
+                       
+                    } catch{
+                       [string]$errorMessage = $Error[0].Exception
+                       if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
+                       }
+                    }
+                }           
+            TestScript = { 
+
+                $pass = $true
+
+                $Root = "C:\SQLStartup"
+
+                if($(test-path -path $root) -eq $true) {
+                    $ACL = Get-Acl $Root
+                                   
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'CREATOR OWNER'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'NT AUTHORITY\SYSTEM'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Administrators'}}).FileSystemRights -ne 'FullControl'){
+                        $pass= $false
+                    } 
+                    if($($ACL | %{ $_.access | ?{$_.IdentityReference -eq 'BUILTIN\Users'}}).FileSystemRights -ne 'ReadAndExecute'){
+                        $pass= $false
+                    }                      
+
+                } else {
+                    $pass = $false
+                }
+
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureDataPath $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureDataPath $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[File]StartupPath"
+        }
+
         File SQLDataPath {
             Type = 'Directory'
             DestinationPath = $DataPath
             Ensure = "Present"
+            DependsOn = "[Script]ConfigureStartupPath"
         }
         Script ConfigureDataPath{
             GetScript = {
@@ -643,8 +745,8 @@ Configuration DeploySQLServer
                         ############################################
                        
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $coreCount = $cpu.NumberOfCores
-
+                        $coreCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                  
                         if($($coreCount) -eq 1) { $maxDop=1 }
                         if($($coreCount) -ge 2 -and $($coreCount) -le 7) { $maxDop=2 }
                         if($($coreCount) -ge 8 -and $($coreCount) -le 16) { $maxDop=4 }
@@ -687,8 +789,8 @@ Configuration DeploySQLServer
                         $pass=$false
 
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $coreCount = $cpu.NumberOfCores
-
+                        $coreCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                   
                         if($($coreCount) -eq 1) { $maxDop=1 }
                         if($($coreCount) -ge 2 -and $($coreCount) -le 7) { $maxDop=2 }
                         if($($coreCount) -ge 8 -and $($coreCount) -le 16) { $maxDop=4 }
@@ -741,6 +843,12 @@ Configuration DeploySQLServer
                        
                         $srv.BackupDirectory = $BackupDir
                         $srv.Alter()
+
+                        ###########################################
+                        #  Set the backup compression to true
+                        ###########################################
+                        $srv.Configuration.DefaultBackupCompression.ConfigValue = $true
+                        $srv.Configuration.Alter()
 
                         ###########################################
                         #  Set the data location to $disks.SQLServer.backupPath
@@ -1203,8 +1311,9 @@ Configuration DeploySQLServer
                         $DataPath = $($using:dataPath)
                         $logPath = $($using:logPath)
                         $ErrorPath = $($using:ErrorPath)
-                	    $flagsToAdd = ";-T1118"
+                	    $flagsToAdd = "-T1118"
 
+                        if($(Test-Path -Path $dataPath -ErrorAction SilentlyContinue) -eq $true) {
                         ################################################################
 	                    # Alter DB...
                         ################################################################
@@ -1286,14 +1395,15 @@ Configuration DeploySQLServer
                             "$(Get-Date -Format g) Starting SQL Server."
                                 Start-Service -displayname "SQL Server (MSSQLSERVER)" 
                             }
-                                                                            
+                       }                                                     
                     } catch{
                         [string]$errorMessage = $Error[0].Exception
                         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
                             Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveMasterFiles: $errorMessage"
                         } else {$errorMessage}
                     }
-               }
+                }
+               
                 
             }
             TestScript = { 
@@ -1360,6 +1470,7 @@ Configuration DeploySQLServer
                         $DataPath = $($using:dataPath)
                         $logPath = $($using:logPath)
 
+                        if($(Test-Path -Path $dataPath -ErrorAction SilentlyContinue) -eq $true) {
                             ################################################################
 	                        # Move tempdb.mdf...
                             ################################################################
@@ -1393,14 +1504,15 @@ Configuration DeploySQLServer
                             "$(Get-Date -Format g) Starting SQL Server."
                                 Start-Service -displayname "SQL Server (MSSQLSERVER)" 
                             }
-                                                                            
-                            } catch{
-                                [string]$errorMessage = $Error[0].Exception
-                                if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveModelFiles: $errorMessage"
-                                } else {$errorMessage}
-                            }
-                    }
+                          }
+                                                                             
+                        } catch{
+                            [string]$errorMessage = $Error[0].Exception
+                            if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveModelFiles: $errorMessage"
+                            } else {$errorMessage}
+                        }
+                }
                 
             }
             TestScript = { 
@@ -1446,6 +1558,7 @@ Configuration DeploySQLServer
                         $DataPath = $($using:dataPath)
                         $logPath = $($using:logPath)
 
+                        if($(Test-Path -Path $dataPath -ErrorAction SilentlyContinue) -eq $true) {
                             ################################################################
 	                        # Move tempdb.mdf...
                             ################################################################
@@ -1481,14 +1594,15 @@ Configuration DeploySQLServer
                             "$(Get-Date -Format g) Starting SQL Server."
                                 Start-Service -displayname "SQL Server (MSSQLSERVER)" 
                             }
-                                              
-                            } catch{
-                                [string]$errorMessage = $Error[0].Exception
-                                if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveMSDBFiles: $errorMessage"
-                                } else {$errorMessage}
-                            }
-                    }
+                          }
+                                             
+                        } catch{
+                            [string]$errorMessage = $Error[0].Exception
+                            if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "MoveMSDBFiles: $errorMessage"
+                            } else {$errorMessage}
+                        }
+                }
                 
             }
             TestScript = { 
@@ -1998,7 +2112,11 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
 
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+                        $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        } 
 
                         $maxFileGrowthSizeMB = $TempDBSpaceAvailMB / $fileCount 
                         $maxFileGrowthSizeMB = [math]::truncate($maxFileGrowthSizeMB)
@@ -2013,7 +2131,6 @@ Configuration DeploySQLServer
 
                             $q = "ALTER DATABASE [tempdb] MODIFY FILE (NAME = templog, FILENAME = '$($TempPath)\templog.ldf')"
 	                        Invoke-Sqlcmd -Database master -Query $q  -QueryTimeout 10000 -ErrorAction SilentlyContinue
-
 
                             "$(Get-Date -Format g) Restarting SQL Server."
                                     $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "SQLServerAgent*" -and $_.PathName -match "SQLAGENT.exe" } 
@@ -2092,8 +2209,8 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
 
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
-
+                        $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+            
                         #maximum of 8 to start, the additional ones to be added by the server Owners
                         if($fileCount -gt 8){ $fileCount = 8 }
 
@@ -2148,7 +2265,11 @@ Configuration DeploySQLServer
                     $TempPath = $($using:TempDbPath)
                     
                     $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                    $fileCount = $cpu.NumberOfCores
+                    $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        }
 
                     $pass=$true
                     for ($i = 2; $i -le $fileCount; $i++) {
@@ -2203,7 +2324,7 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
                        
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+                        $fileCount =($cpu.NumberOfCores | Measure-Object -Sum).Sum
 
                         if($fileCount -gt 8){ $fileCount = 8 }
                        
@@ -2261,7 +2382,11 @@ Configuration DeploySQLServer
 
                     $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
                     $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
-                    $fileCount = $cpu.NumberOfCores
+                    $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                     if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        }
 
                     $maxFileGrowthSizeMB = $TempDBSpaceAvailMB / $fileCount 
                     $maxFileGrowthSizeMB = [math]::truncate($maxFileGrowthSizeMB)
@@ -2338,7 +2463,11 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
                         $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+                        $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        } 
 
                         $DatafileSize     = $(1024*1000)
                         $fileGrowthMB = $(1024*50)
@@ -2404,7 +2533,11 @@ Configuration DeploySQLServer
 	                    $TempDBSpaceAvailMB = $TempDBSpaceAvailGB * 1024
                         $FreeSpaceGB = (Get-WmiObject -Class win32_volume -Filter "DriveLetter = '$TempDrive'").FreeSpace / 1024 / 1024 / 1024
                         $cpu =  Get-WmiObject -class win32_processor -Property 'numberofcores'
-                        $fileCount = $cpu.NumberOfCores
+                        $fileCount = ($cpu.NumberOfCores | Measure-Object -Sum).Sum
+                        if($fileCount -gt 8)
+                        {
+                            $fileCount = 8
+                        } 
 
                         if($fileCount -gt 8){ $fileCount = 8 }
                        
@@ -2642,7 +2775,40 @@ Configuration DeploySQLServer
             DependsOn = "[Script]ConfigureMasterDataFile"
         }
 
-      
+        Script ConfigureStartupJob {
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                if($(test-path -path C:\SQLStartup) -eq $true) {
+               
+                    $WebClient = New-Object System.Net.WebClient
+                    $WebClient.DownloadFile($($Using:baseURL) + "scripts/SQL-Startup.ps1","C:\SQLStartup\SQL-Startup.ps1")
+
+                    if($(test-path -path C:\SQLStartup\SQL-Startup.ps1) -eq $true) {
+                        C:\SQLStartup\SQL-Startup.ps1 $($using:TempDBPath)
+                    }
+                }
+            }
+            TestScript = { 
+                $pass=$false
+                if($(test-path -path "C:\SQLStartup\SQL-Startup.ps1") -eq $true) {
+
+                    if ((Get-ScheduledTask -TaskPath '\' | Where-Object { $_.TaskName -eq 'SqlTempdriveAndStartup'; }) -eq $null) {
+                        $pass=$false
+                    }else {
+                        $pass=$true
+                    }
+
+                } else {
+                    $pass=$false
+                }
+
+                return $Pass
+            }
+            DependsOn = "[Script]ConfigureMasterLogFile"
+        }
 
 }
 

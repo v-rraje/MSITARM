@@ -56,6 +56,48 @@
         "description": "Password for domain joining"
       }
     },
+    "SQLServerAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLServerPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLAgentAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLAgentPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "localAdmins": {
+      "type": "string",
+      "defaultValue": "Redmond\\SQLSvcAccounts",
+      "metadata": {
+        "description": "local admins that can login to the VMs. csv list of domain\\user"
+      }
+    },
+    "SQLAdmins": {
+      "type": "string",
+      "defaultValue": "Redmond\\SQLSvcAccounts",
+      "metadata": {
+        "description": "SQL SYS admins that can login to the Default SQL Instance instaqlled on the VM. csv list of domain\\user"
+      }
+    },
     "vmSize": {
       "type": "string",
       "defaultValue": "",
@@ -63,7 +105,6 @@
         "description": "Size for the Virtual Machine."
       }
     },
-
     "imagePublisher": {
       "type": "string",
       "defaultValue": "",
@@ -248,7 +289,7 @@
     "branch": "develop",
     "folder": "/301-multi-vm-domain-join-ILB-build-dsc/",
     "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
-    
+
     "domainJoinzip": "scripts/DomainJoin.ps1.zip",
     "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
     "formatDiskstemplate": "nested/template-DataDisks.json",
@@ -257,11 +298,19 @@
     "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
     "Role": "[substring(parameters('DiskConfig'),0,3)]",
     "moduleURL": "[concat(variables('BaseURL'),variables('formatDiskszip'))]",
+
     "CreateVMUrl": "[concat(variables('BaseURL'),variables('createVMtemplate'))]",
     "FormatDisksUrl": "[concat(variables('BaseURL'),variables('formatDiskstemplate'))]",
     "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),variables('configurePullTemplate'))]",
 
     "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
+
+    "vmExtensionName": "ConfigureSQLServer",
+    "customScriptFileToRun": "Configure-SQLServer.ps1",
+    "customScriptFileUri": "[concat(variables('baseURL'),'scripts/',variables('customScriptFileToRun'))]",
+    "arguments": "[concat(' -SQLServerAccount ', parameters('SQLServerAccount'), ' -SQLServerPassword ', parameters('SQLServerPassword'), ' -SQLAgentAccount ', parameters('SQLAgentAccount'), ' -SQLAgentPassword ', parameters('SQLAgentPassword'), ' -SQLAdmin ', parameters('domainJoinUserName'), ' -SQLAdminPwd ', parameters('domainJoinPassword'), ' -BaseURL ', variables('baseURL'))]",
+    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customScriptFileToRun'), ' ', variables('arguments'))]",
+
 
     "AzureAutomation": {
       "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
@@ -273,7 +322,7 @@
     }
   },
   "resources": [
-     {
+    {
       "apiVersion": "2015-01-01",
       "name": "[concat(parameters('vmName'),'-CreateVM')]",
       "type": "Microsoft.Resources/deployments",
@@ -295,6 +344,12 @@
           },
           "domainJoinPassword": {
             "value": "[parameters('domainJoinPassword')]"
+          },
+          "localAdmins": {
+            "value": "[parameters('localAdmins')]"
+          },
+          "SQLAdmins": {
+            "value": "[parameters('SQLAdmins')]"
           },
           "vmName": {
             "value": "[parameters('vmName')]"
@@ -401,7 +456,35 @@
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/',parameters('vmName'), '-CreateVM')]"        
+        "[concat('Microsoft.Resources/deployments/',parameters('vmName'), '-CreateVM')]"
+      ]
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(parameters('vmName'),copyindex(1),'/', variables('vmExtensionName'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "copy": {
+        "name": "virtualMachinesextensionLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": "true",
+        "forceUpdateTag": "v.1.4",
+        "settings": {
+          "fileUris": [
+            "[variables('customScriptFileUri')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[variables('commandToExecute')]"
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/',parameters('vmName'),copyindex(1), '-BuildMachineRole-',variables('Role'))]"
       ]
     },
     {
@@ -438,7 +521,7 @@
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/',parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('vmName'),copyindex(1)), variables('vmExtensionName'))]"
       ]
     }
   ]
