@@ -21,7 +21,7 @@
 
     "numberOfInstances": {
       "type": "int",
-      "defaultValue": 1,
+      "defaultValue": 2,
       "metadata": {
         "Description": "Number of Azure VM to create."
       }
@@ -107,14 +107,17 @@
     },
     "imagePublisher": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "MicrosoftSQLServer",
+	  "allowedValues": [
+        "MicrosoftSQLServer"
+      ],
       "metadata": {
-        "description": "OS Image Publisher. https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-cli-ps-findimage/"
+        "description": "See Azure for available ImagePublisher for your Location. Sample Code: <p><a target=new href=https://msitwiki/get-imagepublisher-imageoffer-imagesku-for-arm-templates/>Get-AzureRMVMImagePublisher</a></p> Example: <p>MicrosoftSQLServer or MicrosoftWindowsServer</p>"
       }
     },
     "imageOffer": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "SQL2014SP1-WS2012R2",
       "metadata": {
         "description": "Allowed Windows values: WindowsServer. Allowed SQL Values: SQL2012SP2-WS2012, SQL2012SP2-WS2012R2,SQL2014-WS2012R2, SQL2014SP1-WS2012R2, SQL2016CTP3-WS2012R2, SQL2016CTP3.1-WS2012R2, SQL2016CTP3.2-WS2012R2, SQL2016RC3-WS2012R2v2."
       }
@@ -122,9 +125,15 @@
     "sku": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "",
+      "defaultValue": "Enterprise",
+      "allowedValues": [
+        "Enterprise",
+        "Web",
+        "Standard",
+        "Express"
+      ],
       "metadata": {
-        "description": "Allowed SQL values: Enterprise, Standard, Web, Express."
+        "description": "See Azure for available ImageSKU for your Location. Sample Code: <p><a target=new href=https://msitwiki/get-imagepublisher-imageoffer-imagesku-for-arm-templates/>Get-AzureRmVMImageSku</a></p> Example: <p>Enterprise, Standard, Web, Express.<p>"
       }
     },
     "DiskConfig": {
@@ -134,9 +143,6 @@
     "DiskCount": {
       "type": "string",
       "allowedValues": [
-        "0",
-        "1",
-        "2",
         "3",
         "4",
         "5",
@@ -152,7 +158,7 @@
         "15",
         "16"
       ],
-      "defaultValue": "1",
+      "defaultValue": "3",
       "metadata": {
         "description": "Number of Disks for vm."
       }
@@ -209,7 +215,7 @@
     "env": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "dev",
+      "defaultValue": "Prod",
       "allowedValues": [
         "dev",
         "test",
@@ -224,20 +230,6 @@
       "defaultValue": "1/1/15",
       "metadata": {
         "description": "Snooze date"
-      }
-    },
-    "localAdmins": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "local admins that can login to the VMs. csv list of domain\\user"
-      }
-    },
-    "SQLAdmins": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "SQL SYS admins that can login to the Debasefault SQL Instance instaqlled on the VM. csv list of domain\\user"
       }
     },
     "virtualNetwork": {
