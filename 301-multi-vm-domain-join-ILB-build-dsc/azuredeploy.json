@@ -86,14 +86,14 @@
     },
     "localAdmins": {
       "type": "string",
-      "defaultValue": "Redmond\\SQLSvcAccounts",
+      "defaultValue": "",
       "metadata": {
         "description": "local admins that can login to the VMs. csv list of domain\\user"
       }
     },
     "SQLAdmins": {
       "type": "string",
-      "defaultValue": "Redmond\\SQLSvcAccounts",
+      "defaultValue": "",
       "metadata": {
         "description": "SQL SYS admins that can login to the Default SQL Instance instaqlled on the VM. csv list of domain\\user"
       }
