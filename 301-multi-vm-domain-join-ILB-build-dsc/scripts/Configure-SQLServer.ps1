@@ -25,7 +25,7 @@ param
 [string] $baseurl="http://cloudmsarmprod.blob.core.windows.net/"
         
 )
-    [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
+    $null = [reflection.assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
  
     $sysinfo = Get-WmiObject -Class Win32_ComputerSystem
     $server = $(“{0}.{1}” -f $sysinfo.Name, $sysinfo.Domain)
@@ -113,7 +113,7 @@ param
                 #output line, with all old + new accounts to re-import
                 $line | Out-File $TemporaryFolderPath\ApplyUserRights.inf -Append -WhatIf:$false
 
-                Write-host "Added $DomainAccount to $Privilege"                            
+                Write-verbose "Added $DomainAccount to $Privilege"                            
                 $isFound = $true
             }
         }
@@ -196,33 +196,53 @@ param
   ###############################################################
   #remove Execute Perms on Extended Procedures from public user/role
   ###############################################################
-    $WebClient = New-Object System.Net.WebClient
-    $WebClient.DownloadFile($($baseURL) + "scripts/PostConfiguration.sql","C:\SQLStartup\PostConfiguration.sql")
+  
+  try {
 
-    if($(test-path -path 'C:\SQLStartup\PostConfiguration.sql') -eq $true) {
+    $cnt = 1
+    $downloaded=$false
+    do {
+        try{
+        write-verbose "dowload PostConfiguration.sql from $baseurl to C:\SQLStartup\"
+
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($($baseURL) + "scripts/PostConfiguration.sql","C:\SQLStartup\PostConfiguration.sql")
+        $downloaded = $true
+        if($(test-path -path 'C:\SQLStartup\PostConfiguration.sql') -eq $true) {break;}
+
+        }catch{
+            Write-Host "Error : $_.Exception.Message"
+            continue;
+        }
+        $cnt +=1;
+
+    } until ($cnt -ge 3 -or $downloaded)
+
+
+        if($(test-path -path 'C:\SQLStartup\PostConfiguration.sql') -eq $true) {
         
-        $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+            $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
    
-        if($sqlInstances -ne $null){
-            write-host "Add SQL account $SQLServerAccount on $server"
+            if($sqlInstances -ne $null){
 
-            try {  
-            $secpasswd = ConvertTo-SecureString $SQLAdminPwd -AsPlainText -Force
-            $credential = New-Object System.Management.Automation.PSCredential ($SQLAdmin, $secpasswd)
+                write-verbose "Add SQL account $SQLServerAccount on $server"
+ 
+                $secpasswd = ConvertTo-SecureString $SQLAdminPwd -AsPlainText -Force
+                $credential = New-Object System.Management.Automation.PSCredential ($SQLAdmin, $secpasswd)
                                     
-             $Scriptblock={         
+                $Scriptblock={         
                 $SQLServerAccount=$args[0]
                 ############################################                     
                 $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
                 $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
                 $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
                 ############################################
-
+                try {
                 $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
 
                 $srvConn.connect();
                 $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
-                                                    
+                                                  
                     $login = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Login -ArgumentList $Srv, $SQLServerAccount
                     $login.LoginType = 'WindowsUser'
                     $login.PasswordExpirationEnabled = $false
@@ -232,26 +252,33 @@ param
                     $login.AddToRole('sysadmin')
                     $login.Alter()         
 
-                    write-host "Added SQL account $SQLServerAccount"
+                    write-verbose "Added SQL account $SQLServerAccount"
+
+                    }catch {}
                 }
                 
-               Invoke-Command -script  $Scriptblock  -ComputerName $server -Credential $Credential -ArgumentList $SQLServerAccount
+                Invoke-Command -script  $Scriptblock  -ComputerName $server -Credential $Credential -ArgumentList $SQLServerAccount
 
-             write-host "Extended Sprocs on $server"
+                 write-verbose "Extended Sprocs on $server"
 
-             #$q =  $(get-content -path "C:\SQLStartup\PostConfiguration.sql") -join [Environment]::NewLine
-             $scriptblock = {Invoke-SQLCmd -ServerInstance $($env:computername) -Database 'master' -ConnectionTimeout 300 -QueryTimeout 600 -inputfile "C:\SQLStartup\PostConfiguration.sql" }
+                 #$q =  $(get-content -path "C:\SQLStartup\PostConfiguration.sql") -join [Environment]::NewLine
+                 $scriptblock = {Invoke-SQLCmd -ServerInstance $($env:computername) -Database 'master' -ConnectionTimeout 300 -QueryTimeout 600 -inputfile "C:\SQLStartup\PostConfiguration.sql" }
              
-             Invoke-Command -script  $scriptblock -ComputerName $server -Credential $Credential
-                                                            
-            } catch{
-                [string]$errorMessage = $Error[0].Exception
-                if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
-                }else {$error}
-            }
+                 Invoke-Command -script  $scriptblock -ComputerName $server -Credential $Credential
+              
+                } else { write-error "PostConfiguration.sql not found"}
+
+         } else { write-error "win32_service::MSSQLServer not found"}
+
+        } catch{
+            [string]$errorMessage = $_.Exception.Message
+            if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
+            }else {$error}
+
+            write-error $errorMessage
         }
-    }
+    
  
   ###############################################################
   ###############################################################
@@ -259,32 +286,70 @@ param
   ###############################################################
   # update the services
   ###############################################################
-    $ServerN = $env:COMPUTERNAME
-    $Service = "SQL Server (MSSQLServer)"
+  try {
+
+        $ServerN = $env:COMPUTERNAME
+        $Service = "SQL Server (MSSQLServer)"
     
-    if($SQLServerAccount -and $SQLServerPassword) {
+        if($SQLServerAccount -and $SQLServerPassword) {
             
-        $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
-        $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
-        $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
+            $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+            $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
+            $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
 
-         Restart-Service -displayname $Service -Force
+             $ret = Restart-Service -displayname $Service -Force  -WarningAction Ignore
+             
 
-    }
+        }
+        
+        $Service = "SQL Server Agent (MSSQLServer)"
 
+        if($SQLAgentAccount -and $SQLAgentPassword) {
 
-    $Service = "SQL Server Agent (MSSQLServer)"
+          $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+            $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
+            $svc.SetServiceAccount($SQLAgentAccount,$SQLAgentPassword)
 
-    if($SQLAgentAccount -and $SQLAgentPassword) {
+             $ret =  Restart-Service -displayname $Service -Force -WarningAction Ignore
+            
+        }
 
-      $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
-        $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
-        $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
+     } catch{
+            [string]$errorMessage = $_.Exception.Message
+            if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
+            }else {$error}
 
-         Restart-Service -displayname $Service -Force
-
-    }
+            write-error $errorMessage
+        }
     
     
   ###############################################################
   ###############################################################
+
+  $status="Started"
+  ## Audit Section
+  if($ret1) {write-host "[Pass] NT Service\Mssqlserver to SeLockMemoryPrivilege" } else {write-host "[Failed] NT Service\Mssqlserver to SeLockMemoryPrivilege"; $status="Failed"}
+
+  if($ret1) {write-host "[Pass] NT Service\Mssqlserver to SeManageVolumePrivilege" } else {write-host "[Failed] NT Service\Mssqlserver to SeManageVolumePrivilege"; $status="Failed"}
+
+  $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+  
+  $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
+  if($svc.ServiceAccount -ne  $SQLServerAccount) {
+    write-host "[Failed] SQL Service Account not set to $SQLServerAccount"; $status="Failed"
+  } else {write-host "[pass] SQL Service Account set to $SQLServerAccount"}
+
+  $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
+  if($svc.ServiceAccount -ne  $SQLAgentAccount) {
+    write-host "[Failed] SQL Agent Account not set to $SQLAgentAccount"; $status="Failed"
+  }else {write-host "[Pass] SQL Agent Account set to $SQLAgentAccount"}
+              
+
+  if($status -eq "Failed") {
+    write-error "[Failed] Deployment failed."
+  } else {
+    write-host "[Passed] Deployment passed."
+  }
+
+
