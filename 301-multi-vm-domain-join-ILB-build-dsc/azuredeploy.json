@@ -18,7 +18,14 @@
         "description": "Name for the AvailabilitySet."
       }
     },
-
+    "loadBalancerName": {
+      "type": "string",
+      "defaultValue": "SQLAOILB",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
     "numberOfInstances": {
       "type": "int",
       "defaultValue": 2,
@@ -28,7 +35,7 @@
     },
     "localAdminUserName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "itvsc0",
       "minLength": 1,
       "metadata": {
         "description": "Local Username for the Virtual Machine."
@@ -100,7 +107,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "Standard_D3_v2",
       "metadata": {
         "description": "Size for the Virtual Machine."
       }
@@ -108,7 +115,7 @@
     "imagePublisher": {
       "type": "string",
       "defaultValue": "MicrosoftSQLServer",
-	  "allowedValues": [
+      "allowedValues": [
         "MicrosoftSQLServer"
       ],
       "metadata": {
@@ -193,7 +200,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "The FQDN of the AD domain, currently only Redmond domain is supported. "
+        "description": "The FQDN of the AD domain. "
       }
     },
     "appID": {
@@ -215,7 +222,7 @@
     "env": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "Prod",
+      "defaultValue": "dev",
       "allowedValues": [
         "dev",
         "test",
@@ -349,6 +356,9 @@
           "AvailabilitySet": {
             "value": "[parameters('AvailabilitySet')]"
           },
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
           "DiskConfig": {
             "value": "[parameters('DiskConfig')]"
           },
@@ -393,12 +403,6 @@
           },
           "snoozeDate": {
             "value": "[parameters('snoozeDate')]"
-          },
-          "localAdmins": {
-            "value": "[parameters('localAdmins')]"
-          },
-          "SQLAdmins": {
-            "value": "[parameters('SQLAdmins')]"
           },
           "virtualNetwork": {
             "value": "[parameters('virtualNetwork')]"

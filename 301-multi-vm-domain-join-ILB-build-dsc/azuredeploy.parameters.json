@@ -6,7 +6,7 @@
       "value": "dev"
     },
     "domainName": {
-      "value": "redmond.corp.microsoft.com"
+      "value": ""
     },
     "env": {
       "value": "dev"
@@ -30,7 +30,7 @@
       "value": "Standard_LRS"
     },
     "virtualNetwork": {
-      "value": "OtherPlanToPerform-CORP-USW-VNET-1"
+      "value": ""
     },
     "vnetResourceGroup": {
       "value": "ERNetwork"
@@ -48,13 +48,13 @@
       "value": "1"
     },
     "ouPath": {
-      "value": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com"
+      "value": ""
     },
     "PullServerRegistrationKey": {
-      "value": "DtOvyfhxbRkS+kXw9PerJP4RQx48HxCcvKruEyd/vfz2gKplxr+UtJDpsdBjltyDhhMa5As4OGKFb3M+p5vlbQ=="
+      "value": ""
     },
     "PullServerRegistrationURI": {
-      "value": "https://eus2-agentservice-prod-1.azure-automation.net/accounts/d9886cc8-9990-4461-972b-155d710f1ace"
+      "value": ""
     }
   }
 }
