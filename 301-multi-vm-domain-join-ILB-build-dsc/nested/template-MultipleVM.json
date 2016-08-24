@@ -18,6 +18,14 @@
         "description": "Name for the AvailabilitySet."
       }
     },
+    "loadBalancerName": {
+      "type": "string",
+      "defaultValue": "SQLAOILB",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
     "numberOfInstances": {
       "type": "int",
       "defaultValue": 1,
@@ -256,7 +264,7 @@
     "sku": "[parameters('sku')]",
     "nicName": "[parameters('vmName')]",
 
-    "loadBalancerName": "[concat(resourceGroup().name,'SQLAOILB')]",
+    "loadBalancerName": "[parameters('loadBalancerName')]",
 
     "lbId": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
     "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'),'osDisk')]",
