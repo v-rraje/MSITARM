@@ -18,20 +18,6 @@
         "description": "Local Username for the Virtual Machine."
       }
     },
-    "VirtualNetworkId": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Local Password for the Virtual Machine."
-      }
-    },
-    "VirtualNetwork": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Local Password for the Virtual Machine."
-      }
-    },
     "subnetRef": {
       "type": "string",
       "minLength": 1,
@@ -41,33 +27,29 @@
     }
   },
   "variables": {
-      "apiVersion": "2015-06-15"
-    },
-    "resources": [
-      {
-
-        "name": "[concat(parameters('nicName'),'','nic1')]",
-        "type": "Microsoft.Network/networkInterfaces",
-        "location": "[parameters('VirtualNetwork').Location]",
-        "apiVersion": "[variables('apiVersion')]",
-        "dependsOn": [
-        ],
-        "tags": {
-          "displayName": "DomainControllerNic"
-        },
-        "properties": {
-          "ipConfigurations": [
-            {
-              "name": "ipconfig1",
-              "properties": {
-                "privateIPAllocationMethod": "Static",
-                "privateIPAddress": "[parameters('ipAddress')]",
-                "subnet": {
-                  "id": "[parameters('subnetRef')]"
-                }
+    "apiVersion": "2015-06-15"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('nicName'),'','nic1')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('ipAddress')]",
+              "subnet": {
+                "id": "[parameters('subnetRef')]"
               }
             }
-          ]
-        }
+          }
         ]
       }
+
+    }
+  ]
+}
