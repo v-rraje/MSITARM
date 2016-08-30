@@ -41,33 +41,35 @@
     }
   },
   "variables": {
-      "apiVersion": "2015-06-15"
-    },
-    "resources": [
-      {
+    "apiVersion": "2015-06-15"
+  },
+  "resources": [
+    {
 
-        "name": "[concat(parameters('nicName'),'','nic1')]",
-        "type": "Microsoft.Network/networkInterfaces",
-        "location": "[parameters('VirtualNetwork').Location]",
-        "apiVersion": "[variables('apiVersion')]",
-        "dependsOn": [
-        ],
-        "tags": {
-          "displayName": "DomainControllerNic"
-        },
-        "properties": {
-          "ipConfigurations": [
-            {
-              "name": "ipconfig1",
-              "properties": {
-                "privateIPAllocationMethod": "Static",
-                "privateIPAddress": "[parameters('ipAddress')]",
-                "subnet": {
-                  "id": "[parameters('subnetRef')]"
-                }
+      "name": "[concat(parameters('nicName'),'','nic1')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('VirtualNetwork').Location]",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+      ],
+      "tags": {
+        "displayName": "DomainControllerNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('ipAddress')]",
+              "subnet": {
+                "id": "[parameters('subnetRef')]"
               }
             }
-          ]
-        }
+          }
         ]
       }
+
+    }
+  ]
+}
