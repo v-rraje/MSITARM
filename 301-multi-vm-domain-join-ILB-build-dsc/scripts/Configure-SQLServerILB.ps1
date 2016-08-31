@@ -3,22 +3,10 @@
 [CmdletBinding()]
 param
     (
-[parameter(Mandatory=$true, Position=0)]
-[string] $SQLServerAccount,
-
 [parameter(Mandatory=$true, Position=1)]
-[string] $SQLServerPassword,
-
-[parameter(Mandatory=$true, Position=2)]
-[string] $SQLAgentAccount,
-
-[parameter(Mandatory=$true, Position=3)]
-[string] $SQLAgentPassword,
-
-[parameter(Mandatory=$true, Position=4)]
 [string] $SQLAdmin,
 
-[parameter(Mandatory=$true, Position=5)]
+[parameter(Mandatory=$true, Position=2)]
 [string] $SQLAdminPwd,
 
 [Parameter(Mandatory)]
@@ -225,8 +213,7 @@ param
    
             if($sqlInstances -ne $null){
 
-                write-verbose "Add SQL account $SQLServerAccount on $server"
- 
+                
                 $secpasswd = ConvertTo-SecureString $SQLAdminPwd -AsPlainText -Force
                 $credential = New-Object System.Management.Automation.PSCredential ($SQLAdmin, $secpasswd)
                                     
@@ -271,6 +258,8 @@ param
          } else { write-error "win32_service::MSSQLServer not found"}
 
         } catch{
+            $status = "Failed"
+
             [string]$errorMessage = $_.Exception.Message
             if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
                 Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
@@ -286,43 +275,7 @@ param
   ###############################################################
   # update the services
   ###############################################################
-  try {
-
-        $ServerN = $env:COMPUTERNAME
-        $Service = "SQL Server (MSSQLServer)"
-    
-        if($SQLServerAccount -and $SQLServerPassword) {
-            
-            $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
-            $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
-            $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
-
-             $ret = Restart-Service -displayname $Service -Force  -WarningAction Ignore
-             
-
-        }
-        
-        $Service = "SQL Server Agent (MSSQLServer)"
-
-        if($SQLAgentAccount -and $SQLAgentPassword) {
-
-          $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
-            $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
-            $svc.SetServiceAccount($SQLAgentAccount,$SQLAgentPassword)
-
-             $ret =  Restart-Service -displayname $Service -Force -WarningAction Ignore
-            
-        }
-
-     } catch{
-            [string]$errorMessage = $_.Exception.Message
-            if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
-            }else {$error}
-
-            write-error $errorMessage
-        }
-    
+ 
     
   ###############################################################
   ###############################################################
@@ -333,18 +286,6 @@ param
 
   if($ret1) {write-host "[Pass] NT Service\Mssqlserver to SeManageVolumePrivilege" } else {write-host "[Failed] NT Service\Mssqlserver to SeManageVolumePrivilege"; $status="Failed"}
 
-  $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
-  
-  $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
-  if($svc.ServiceAccount -ne  $SQLServerAccount) {
-    write-host "[Failed] SQL Service Account not set to $SQLServerAccount"; $status="Failed"
-  } else {write-host "[pass] SQL Service Account set to $SQLServerAccount"}
-
-  $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
-  if($svc.ServiceAccount -ne  $SQLAgentAccount) {
-    write-host "[Failed] SQL Agent Account not set to $SQLAgentAccount"; $status="Failed"
-  }else {write-host "[Pass] SQL Agent Account set to $SQLAgentAccount"}
-              
 
   if($status -eq "Failed") {
     write-error "[Failed] Deployment failed."
