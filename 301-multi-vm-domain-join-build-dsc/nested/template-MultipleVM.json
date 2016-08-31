@@ -227,7 +227,7 @@
   "variables": {
     "apiVersion": "2015-06-15",
 
-    "branch": "master",
+    "branch": "develop",
     "folder": "/301-multi-vm-domain-join-build-dsc/",
     "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
 
@@ -235,9 +235,11 @@
     "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
     "formatDiskstemplate": "nested/template-DataDisks.json",
     "diskarrayTemplate": "nested/DiskArray.json",
+    "SetStaticIP": "nested/template-SetStaticIP.json",
 
     "modulesUrl": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]",
     "FormatDisksUrl": "[concat(variables('BaseURL'), variables('formatDiskstemplate'))]",
+    "SetStaticIPUrl": "[concat(variables('BaseURL'),variables('SetStaticIP'))]",
 
     "vnetSubscriptionid": "[subscription().subscriptionId]",
     "vnetID": "[concat('/subscriptions/',variables('vnetSubscriptionid'),'/resourceGroups/',parameters('vnetResourceGroup'),'/providers/Microsoft.Network/virtualnetworks/',parameters('virtualNetwork'))]",
@@ -468,6 +470,37 @@
       }
     },
     {
+      "name": "[concat(variables('nicName'),copyindex(1),'','-SetStaticIP')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat(parameters('vmName'),copyindex(1),'nic1')]",
+        "[concat(parameters('vmName'),copyindex(1))]"
+      ],
+      "copy": {
+        "name": "StaticIPLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('SetStaticIPUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+         "nicName": {
+            "value": "[concat(parameters('vmName'),copyindex(1))]"
+          },
+          "ipAddress": {
+            "value": "[reference(concat(parameters('vmName'),copyindex(1),'nic1')).ipConfigurations[0].properties.privateIPAddress]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          }
+        }
+      }
+    },
+    {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),copyindex(1),'/', variables('vmExtensionName'))]",
       "apiVersion": "2015-06-15",
@@ -546,6 +579,26 @@
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('vmName'),copyindex(1)),variables('vmExtensionName'))]"
 
       ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),copyindex(1),'/BGInfo')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),copyindex(1))]"
+      ],
+      "copy": {
+        "name": "BGInfoLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "BGInfo",
+        "typeHandlerVersion": "2.1",
+        "settings": { },
+        "protectedSettings": null
+      }
     }
   ]
 }
