@@ -211,7 +211,7 @@ param
         if($(test-path -path 'C:\SQLStartup\PostConfiguration.sql') -eq $true) {break;}
 
         }catch{
-            Write-Host "Error : $_.Exception.Message"
+            throw "Error : $_.Exception.Message"
             continue;
         }
         $cnt +=1;
@@ -254,7 +254,14 @@ param
 
                     write-verbose "Added SQL account $SQLServerAccount"
 
-                    }catch {}
+                    }catch {
+                        [string]$errorMessage = $_.Exception.Message
+                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
+                        }else {$error}
+
+                        throw $errorMessage
+                    }
                 }
                 
                 Invoke-Command -script  $Scriptblock  -ComputerName $server -Credential $Credential -ArgumentList $SQLServerAccount
@@ -271,12 +278,13 @@ param
          } else { write-error "win32_service::MSSQLServer not found"}
 
         } catch{
+
             [string]$errorMessage = $_.Exception.Message
             if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
                 Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
             }else {$error}
 
-            write-error $errorMessage
+            throw $errorMessage
         }
     
  
@@ -299,7 +307,6 @@ param
 
              $ret = Restart-Service -displayname $Service -Force  -WarningAction Ignore
              
-
         }
         
         $Service = "SQL Server Agent (MSSQLServer)"
@@ -315,12 +322,13 @@ param
         }
 
      } catch{
+
             [string]$errorMessage = $_.Exception.Message
             if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
                 Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
             }else {$error}
 
-            write-error $errorMessage
+            throw $errorMessage
         }
     
     
@@ -328,6 +336,7 @@ param
   ###############################################################
 
   $status="Started"
+
   ## Audit Section
   if($ret1) {write-host "[Pass] NT Service\Mssqlserver to SeLockMemoryPrivilege" } else {write-host "[Failed] NT Service\Mssqlserver to SeLockMemoryPrivilege"; $status="Failed"}
 
@@ -335,6 +344,7 @@ param
 
   $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
   
+
   $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
   if($svc.ServiceAccount -ne  $SQLServerAccount) {
     write-host "[Failed] SQL Service Account not set to $SQLServerAccount"; $status="Failed"
