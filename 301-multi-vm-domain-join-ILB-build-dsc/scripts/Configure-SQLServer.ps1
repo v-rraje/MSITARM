@@ -3,10 +3,22 @@
 [CmdletBinding()]
 param
     (
+[parameter(Mandatory=$true, Position=0)]
+[string] $SQLServerAccount,
+
 [parameter(Mandatory=$true, Position=1)]
-[string] $SQLAdmin,
+[string] $SQLServerPassword,
 
 [parameter(Mandatory=$true, Position=2)]
+[string] $SQLAgentAccount,
+
+[parameter(Mandatory=$true, Position=3)]
+[string] $SQLAgentPassword,
+
+[parameter(Mandatory=$true, Position=4)]
+[string] $SQLAdmin,
+
+[parameter(Mandatory=$true, Position=5)]
 [string] $SQLAdminPwd,
 
 [Parameter(Mandatory)]
@@ -129,7 +141,7 @@ param
                 #Import failed for some reason
                 Write-Verbose "Import from $TemporaryFolderPath\ApplyUserRights.inf failed."
                 Write-Output $false
-                Write-Error -Message "The import from$TemporaryFolderPath\ApplyUserRights using secedit failed. Full Text Below:
+                throw -Message "The import from$TemporaryFolderPath\ApplyUserRights using secedit failed. Full Text Below:
                 $SeceditApplyResults)"
             }
 
@@ -139,7 +151,7 @@ param
                 #Export failed for some reason.
                 Write-Verbose "Export to $TemporaryFolderPath\UserRightsAsTheyExist.inf failed."
                 Write-Output $false
-                Write-Error -Message "The export to $TemporaryFolderPath\UserRightsAsTheyExist.inf from secedit failed. Full Text Below: $SeceditResults)"
+                throw -Message "The export to $TemporaryFolderPath\UserRightsAsTheyExist.inf from secedit failed. Full Text Below: $SeceditResults)"
         
         }
 
@@ -199,8 +211,7 @@ param
         if($(test-path -path 'C:\SQLStartup\PostConfiguration.sql') -eq $true) {break;}
 
         }catch{
-            Write-Host "Error : $_.Exception.Message"
-            continue;
+            throw "Error : $_.Exception.Message"
         }
         $cnt +=1;
 
@@ -213,7 +224,8 @@ param
    
             if($sqlInstances -ne $null){
 
-                
+                write-verbose "Add SQL account $SQLServerAccount on $server"
+ 
                 $secpasswd = ConvertTo-SecureString $SQLAdminPwd -AsPlainText -Force
                 $credential = New-Object System.Management.Automation.PSCredential ($SQLAdmin, $secpasswd)
                                     
@@ -253,19 +265,17 @@ param
              
                  Invoke-Command -script  $scriptblock -ComputerName $server -Credential $Credential
               
-                } else { write-error "PostConfiguration.sql not found"}
+                } else { throw "PostConfiguration.sql not found"}
 
-         } else { write-error "win32_service::MSSQLServer not found"}
+         } else { throw "win32_service::MSSQLServer not found"}
 
         } catch{
-            $status = "Failed"
-
             [string]$errorMessage = $_.Exception.Message
             if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
                 Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
             }else {$error}
 
-            write-error $errorMessage
+            throw $errorMessage
         }
     
  
@@ -275,7 +285,44 @@ param
   ###############################################################
   # update the services
   ###############################################################
- 
+  try {
+
+        $ServerN = $env:COMPUTERNAME
+        $Service = "SQL Server (MSSQLServer)"
+    
+        if($SQLServerAccount -and $SQLServerPassword) {
+            
+            $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+            $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
+            $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
+
+             $ret = Restart-Service -displayname $Service -Force  -WarningAction Ignore
+             
+
+        }
+        
+        $Service = "SQL Server Agent (MSSQLServer)"
+
+        if($SQLAgentAccount -and $SQLAgentPassword) {
+
+          $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+            $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
+            $svc.SetServiceAccount($SQLAgentAccount,$SQLAgentPassword)
+
+             $ret =  Restart-Service -displayname $Service -Force -WarningAction Ignore
+            
+        }
+
+     } catch{
+        $status = "Failed"
+            [string]$errorMessage = $_.Exception.Message
+            if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 5001 -entrytype Error -message "Configure-SQLServer.ps1: $errorMessage"
+            }else {$error}
+
+            throw $errorMessage
+        }
+    
     
   ###############################################################
   ###############################################################
@@ -286,9 +333,21 @@ param
 
   if($ret1) {write-host "[Pass] NT Service\Mssqlserver to SeManageVolumePrivilege" } else {write-host "[Failed] NT Service\Mssqlserver to SeManageVolumePrivilege"; $status="Failed"}
 
+  $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+  
+  $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
+  if($svc.ServiceAccount -ne  $SQLServerAccount) {
+    write-host "[Failed] SQL Service Account not set to $SQLServerAccount"; $status="Failed"
+  } else {write-host "[pass] SQL Service Account set to $SQLServerAccount"}
+
+  $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
+  if($svc.ServiceAccount -ne  $SQLAgentAccount) {
+    write-host "[Failed] SQL Agent Account not set to $SQLAgentAccount"; $status="Failed"
+  }else {write-host "[Pass] SQL Agent Account set to $SQLAgentAccount"}
+              
 
   if($status -eq "Failed") {
-    write-error "[Failed] Deployment failed."
+    throw "[Failed] Deployment failed."
   } else {
     write-host "[Passed] Deployment passed."
   }
