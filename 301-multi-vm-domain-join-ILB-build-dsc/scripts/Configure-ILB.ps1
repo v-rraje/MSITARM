@@ -10,16 +10,22 @@ param
 [string] $AOAGName,
 
 [parameter(Mandatory=$true, Position=2)]
-[string] $Nodes,
+[string] $ServernamePart,
 
 [parameter(Mandatory=$true, Position=3)]
-[string] $FailoverClusterName,
+[string] $InstanceCount,
 
 [parameter(Mandatory=$true, Position=4)]
+[string] $FailoverClusterName,
+
+[parameter(Mandatory=$true, Position=5)]
 [string] $SubscriptionId,
 
-[Parameter(Mandatory)]
-[string] $uri="https://s1events.azure-automation.net/webhooks?token=jGBacOjhtiV7i1B0fdC3z4%2fZ596MvENZcXQ%2ftXsYqAA%3d"
+[Parameter(Mandatory=$true, Position=6)]
+[string] $uri,
+
+[Parameter(Mandatory=$true, Position=7)]
+[string] $SecretKey
         
 )
 {
@@ -27,6 +33,8 @@ param
 $response = $null
 
 $headers = @{"From"="user@contoso.com";"Date"="05/28/2015 15:47:00"}
+
+(1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_,"} else {$nodes += "$servernamepart$_"} }
 
 $Params  = @(
             @{ AOAGListenerName=$AOAGListenerName;AOAGName=$AOAGName;Nodes=$Nodes;FailoverClusterName=$FailoverClusterName;SubscriptionId=$SubscriptionId }

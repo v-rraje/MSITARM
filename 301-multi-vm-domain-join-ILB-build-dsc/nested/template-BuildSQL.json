@@ -1,59 +1,87 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {
-      "vmName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the existing VM to apply the DSC configuration to"
-            }
-        },
-      "DiskConfig": {
-          "type": "string",
-          "metadata": {
-            "description": "IIS/SQLStd, SQLPrem/Win"
-          }
-        },
-      "vmSize": {
-        "type": "string",
-        "defaultValue": "Standard_A2"
-        },
-      "DiskCount": {
-        "type": "string",
-        "allowedValues": [
-          "0",
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9",
-          "10",
-          "11",
-          "12",
-          "13",
-          "14",
-          "15",
-          "16"
-        ],
-        "defaultValue": "2",
-        "metadata": {
-          "description": "Number of Disks for vm."
-        }
-      },
-      "DiskSize": {
-        "type": "int",
-        "defaultValue": 200,
-        "minValue": 10,
-        "maxValue": 1024,
-        "metadata": {
-          "Description": "Azure VM size of the VM"
-        }
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VM to apply the DSC configuration to"
       }
     },
+    "DiskConfig": {
+      "type": "string",
+      "metadata": {
+        "description": "IIS/SQLStd, SQLPrem/Win"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2"
+    },
+    "DiskCount": {
+      "type": "string",
+      "allowedValues": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16"
+      ],
+      "defaultValue": "2",
+      "metadata": {
+        "description": "Number of Disks for vm."
+      }
+    },
+    "DiskSize": {
+      "type": "int",
+      "defaultValue": 200,
+      "minValue": 10,
+      "maxValue": 1024,
+      "metadata": {
+        "Description": "Azure VM size of the VM"
+      }
+    },
+    "SQLServerAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLServerPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLAgentAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLAgentPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    }
+  },
     "variables": {
     
       "branch": "master",
@@ -165,13 +193,17 @@
             "ModulesUrl": "[variables('modulesUrl')]",
             "SasToken": "",
             "ConfigurationFunction": "[variables('configurationFunction')]",
-            "Properties":  {
-                    "DataPath": "[variables('DiskSKU').SQLServer.DataPath]",
-                    "LogPath": "[variables('DiskSKU').SQLServer.LogPath]",
-                    "BackupPath": "[variables('DiskSKU').SQLServer.BackupPath]",
-                    "TempDBPath": "[variables('DiskSKU').SQLServer.TempDBPath]",
-                    "BaseURL": "[variables('BaseURL')]"
-                }
+            "Properties": {
+              "DataPath": "[variables('DiskSKU').SQLServer.DataPath]",
+              "LogPath": "[variables('DiskSKU').SQLServer.LogPath]",
+              "BackupPath": "[variables('DiskSKU').SQLServer.BackupPath]",
+              "TempDBPath": "[variables('DiskSKU').SQLServer.TempDBPath]",
+              "SQLServerAccount": "[parameters('SQLServerAccount')]",
+              "SQLServerPassword": "[parameters('SQLServerPassword')]",
+              "SQLAgentAccount": "[parameters('SQLAgentAccount')]",
+              "SQLAgentPassword": "[parameters('SQLAgentPassword')]",
+              "BaseURL": "[variables('BaseURL')]"
+            }
             
           }
         }
