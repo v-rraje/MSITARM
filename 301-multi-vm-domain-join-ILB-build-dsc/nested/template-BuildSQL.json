@@ -50,35 +50,49 @@
       "minValue": 10,
       "maxValue": 1024,
       "metadata": {
-        "Description": "Azure VM size of the VM"
+        "Description": "Size GB for the DiskSize"
       }
     },
     "SQLServerAccount": {
       "type": "string",
       "minLength": 1,
       "metadata": {
-        "description": "Password for domain joining"
+        "description": "Account for SQL Server"
       }
     },
     "SQLServerPassword": {
       "type": "securestring",
       "minLength": 1,
       "metadata": {
-        "description": "Password for domain joining"
+        "description": "Password for SQL Server"
       }
     },
     "SQLAgentAccount": {
       "type": "string",
       "minLength": 1,
       "metadata": {
-        "description": "Password for domain joining"
+        "description": "Account for SQL Agent"
       }
     },
     "SQLAgentPassword": {
       "type": "securestring",
       "minLength": 1,
       "metadata": {
-        "description": "Password for domain joining"
+        "description": "Password for SQL Agent"
+      }
+    },
+    "SQLAdmin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Account for SQL Acccess"
+      }
+    },
+    "SQLAdminPwd": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for SQL Access"
       }
     }
   },
@@ -202,6 +216,8 @@
               "SQLServerPassword": "[parameters('SQLServerPassword')]",
               "SQLAgentAccount": "[parameters('SQLAgentAccount')]",
               "SQLAgentPassword": "[parameters('SQLAgentPassword')]",
+              "SQLAdmin": "[parameters('SQLAdmin')]",
+              "SQLAdminPwd": "[parameters('SQLAdminPwd')]",
               "BaseURL": "[variables('BaseURL')]"
             }
             
