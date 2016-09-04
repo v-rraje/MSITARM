@@ -2847,7 +2847,9 @@ Configuration DeploySQLServer
                         try {
                
                          write-verbose "Extended Sprocs on $server"
-                                  
+                            $secpasswd = ConvertTo-SecureString $using:SQLAdminPwd -AsPlainText -Force
+                            $credential = New-Object System.Management.Automation.PSCredential ($using:SQLAdmin, $using:secpasswd)
+                        
                          $scriptblock = {Invoke-SQLCmd -ServerInstance $($env:computername) -Database 'master' -ConnectionTimeout 300 -QueryTimeout 600 -inputfile "C:\SQLStartup\PostConfiguration.sql" }
              
                          Invoke-Command -script  $scriptblock -ComputerName $($env:computername) -Credential $Credential
