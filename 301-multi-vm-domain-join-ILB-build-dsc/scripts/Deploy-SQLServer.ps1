@@ -2850,7 +2850,7 @@ Configuration DeploySQLServer
                                   
                          $scriptblock = {Invoke-SQLCmd -ServerInstance $($env:computername) -Database 'master' -ConnectionTimeout 300 -QueryTimeout 600 -inputfile "C:\SQLStartup\PostConfiguration.sql" }
              
-                         Invoke-Command -script  $scriptblock -ComputerName $server -Credential $Credential
+                         Invoke-Command -script  $scriptblock -ComputerName $($env:computername) -Credential $Credential
 
                         } catch{
                             [string]$errorMessage = $_.Exception.Message
