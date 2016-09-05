@@ -76,12 +76,9 @@
       }
     },
     "ILBAccount": {
-      "type": "string",
-      "reference": {
-        "keyVault": {
-          "id": "/subscriptions/43da4f4e-a9f5-4b87-bb48-94896414bf5a/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/CloudMSArmVault"
-        },
-        "secretName": "ILBAccount"
+     "type": "string",
+      "metadata": {
+        "description": "The ILB Runbook ResourceGroup"
       }
     }
   },
