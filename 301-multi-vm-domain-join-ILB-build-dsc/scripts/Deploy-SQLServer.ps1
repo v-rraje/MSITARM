@@ -2884,12 +2884,35 @@ Configuration DeploySQLServer
                 }
             }
             SetScript = {
-                 
+            
                 if($using:SQLServerAccount -and $using:SQLServerPassword) {
+                                
+                    ############################################             
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
+                    ############################################
+
                     try {
+
+                                                
                         $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
+
+                        # set all the others to stop/disabled
+                        $svc = $wmi.services | where {$_.DisplayName -match 'SQL' -and ($_.name -ne 'MSSQLSERVER' -and $_.Name -ne 'SQLSERVERAGENT')}
+                        $svc | %{$_.Stop()}
+                        $svc | %{$_.StartMode = "Disabled";}
+                        
+                        #set sql Service
+                        $svc.start()
                         $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
                         $svc.SetServiceAccount($using:SQLServerAccount,$using:SQLServerPassword)
+                        
+                        $svc = $wmi.services | where {$_.DisplayName -match 'SQL'}
+
+                        $svc | ft  name,displayname,serviceaccount,startmode,serviceState  -AutoSize
+                        
                     } catch {}
                 }
 
@@ -2928,11 +2951,20 @@ Configuration DeploySQLServer
             }
             SetScript = {
             
+                    ############################################             
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                    $null=[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SqlWmiManagement")
+                    ############################################
+
                 if($using:SQLAgentAccount -and $using:SQLAgentPassword) {
                     try {
                         $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
                         $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
+                        $svc.Start()
                         $svc.SetServiceAccount($using:SQLAgentAccount,$using:SQLAgentPassword)
+
                     } catch {}
                 }
 
@@ -2952,7 +2984,8 @@ Configuration DeploySQLServer
                         
                         $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
                         $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
-                    
+                        $svc.Start()
+
                         try {
                             $pass = $($svc.ServiceAccount -eq $using:SQLAgentAccount)
                         } catch {
