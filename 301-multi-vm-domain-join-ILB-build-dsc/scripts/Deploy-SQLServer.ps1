@@ -2889,7 +2889,7 @@ Configuration DeploySQLServer
                     try {
                         $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
                         $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
-                        $svc.SetServiceAccount($SQLServerAccount,$SQLServerPassword)
+                        $svc.SetServiceAccount($using:SQLServerAccount,$using:SQLServerPassword)
                     } catch {}
                 }
 
@@ -2910,7 +2910,7 @@ Configuration DeploySQLServer
                     $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
                     
                         try {
-                            $pass = $($svc.ServiceAccount -eq $SQLServerAccount)
+                            $pass = $($svc.ServiceAccount -eq $using:SQLServerAccount)
                         } catch {
                             $pass = $false
                         }
@@ -2928,11 +2928,11 @@ Configuration DeploySQLServer
             }
             SetScript = {
             
-                if($using:SQLServerAccount -and $using:SQLServerPassword) {
+                if($using:SQLAgentAccount -and $using:SQLAgentPassword) {
                     try {
                         $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
                         $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
-                        $svc.SetServiceAccount($SQLAgentAccount,$SQLAgentPassword)
+                        $svc.SetServiceAccount($using:SQLAgentAccount,$using:SQLAgentPassword)
                     } catch {}
                 }
 
@@ -2954,7 +2954,7 @@ Configuration DeploySQLServer
                         $svc = $wmi.services | where {$_.Type -eq 'SqlAgent'} 
                     
                         try {
-                            $pass = $($svc.ServiceAccount -eq $SQLServerAccount)
+                            $pass = $($svc.ServiceAccount -eq $using:SQLAgentAccount)
                         } catch {
                             $pass = $false
                         }
