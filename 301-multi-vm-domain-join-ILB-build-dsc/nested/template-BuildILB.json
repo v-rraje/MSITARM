@@ -1,0 +1,130 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VM to apply the DSC configuration to"
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "Description": "Number of Azure VM to create."
+      }
+    },
+    "AOAGListenerName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
+    "AOAGName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
+    "FailoverClusterName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
+    "ILBClientID": {
+      "type": "string",
+      "metadata": {
+        "description": "The ILB RunBook name"
+      }
+    },
+    "ILBUriKey": {
+      "type": "string",
+      "metadata": {
+        "description": "The ILB RunBook server URI key"
+      }
+    },
+    "ILBkey": {
+      "type": "string",
+      "metadata": {
+        "description": "The ILB Runbook key"
+      }
+    },
+    "ILBSubId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ILB Subscription"
+      }
+    },
+    "ILBTenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ILB Runbook Tenant"
+      }
+    },
+    "ILBResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The ILB Runbook ResourceGroup"
+      }
+    },
+    "ILBAccount": {
+      "type": "string",
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/43da4f4e-a9f5-4b87-bb48-94896414bf5a/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/CloudMSArmVault"
+        },
+        "secretName": "ILBAccount"
+      }
+    }
+  },
+  "variables": {
+
+    "branch": "develop",
+    "folder": "/301-multi-vm-domain-join-ILB-build-dsc/",
+    "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+
+    "vmILBExtensionName": "ConfigureILB",
+    "customILBScriptFileToRun": "Configure-ILB.ps1",
+    "customILBScriptFileUri": "[concat(variables('baseURL'),'scripts/',variables('customILBScriptFileToRun'))]",
+    "ILBarguments": "[concat(' -AOAGListenerName ', parameters('AOAGListenerName'), ' -AOAGName ', parameters('AOAGName'), ' -ServernamePart ', parameters('vmname'), ' -InstanceCount ', parameters('numberOfInstances'), ' -FailoverClusterName ', parameters('FailoverClusterName'), ' -SubscriptionId ',subscription().subscriptionId, ' -SecretUrikey ', parameters('ILBUriKey'), ' -secretkey ', parameters('ilbkey'), ' -SecretSubid ',parameters('ILBSubID'),' -SecretTenaantId ',parameters('ilbkey') ,' -SecretRG ',parameters('ILBResourceGroup'),' -SecretAcct ',parameters('ILBAccount'))]",
+    "ILBcommandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customILBScriptFileToRun'), ' ', variables('ILBarguments'))]"
+
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(parameters('vmName'),'1','/', variables('vmILBExtensionName'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": "true",
+        "forceUpdateTag": "v.1.4",
+        "settings": {
+          "fileUris": [
+            "[variables('customILBScriptFileUri')]"
+          ],
+          "commandToExecute": "[variables('ILBcommandToExecute')]"
+        },
+        "protectedSettings": {
+
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','AttachVMtoPullServer',parameters('DiskConfig'),'1')]"
+      ]
+    }
+  ]
+}
+
