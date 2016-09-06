@@ -40,43 +40,43 @@
       }
     },
     "ILBClientID": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "The ILB RunBook name"
       }
     },
     "ILBUriKey": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "The ILB RunBook server URI key"
       }
     },
     "ILBkey": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "The ILB Runbook key"
       }
     },
     "ILBSubId": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "The ILB Subscription"
       }
     },
     "ILBTenantId": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "The ILB Runbook Tenant"
       }
     },
     "ILBResourceGroup": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "The ILB Runbook ResourceGroup"
       }
     },
     "ILBAccount": {
-     "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "The ILB Runbook ResourceGroup"
       }
@@ -110,11 +110,10 @@
         "settings": {
           "fileUris": [
             "[variables('customILBScriptFileUri')]"
-          ],
-          "commandToExecute": "[variables('ILBcommandToExecute')]"
+          ]          
         },
         "protectedSettings": {
-
+          "commandToExecute": "[variables('ILBcommandToExecute')]"
         }
       }
     }
