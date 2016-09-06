@@ -70,5 +70,5 @@ try {
             if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
                 Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
             }
-            throw new Exception($errorMessage)
+            throw $errorMessageSEALS01-CORP-EUS2-VNET-1
     }
