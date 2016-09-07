@@ -6,6 +6,7 @@ param
 [string] $AOAGName,
 [string] $ServernamePart,
 [string] $InstanceCount,
+[string] $Domain,
 [string] $FailoverClusterName,
 [string] $SubscriptionId,
 [string] $SecretClientId,
@@ -18,14 +19,13 @@ param
 
 )
  $nodes=""
- (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_,"} else {$nodes += "$servernamepart$_"} }
+ (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_.$domain,"} else {$nodes += "$servernamepart$_.$domain"} }
      
     $i = 0
     $serversOnline=$false
 
+    Write-Host "$($(get-date).ToShortTimeString()) Testing Connections to $nodes"
     do {
-            Write-Host "Testing Connections to $nodes"
-
             $i++
             $Online=$true
                 foreach($Server in $Nodes.split(",")) {
@@ -33,19 +33,19 @@ param
                     $test1 = test-connection $Server -Count 1 -Quiet
                     
                     if(!$test1) {$Online=$false}
-                    if($test1) {write-host "$Server online"} else {write-host "$Server offline"}
+                    if(!$test1) {write-host "$($(get-date).ToShortTimeString()) $Server offline"}
                 }
             $serversOnline = $online
             if(!$Online) {sleep -Seconds 150}
 
             #1 sleep 300 seconds, 12 sleeps is one hour, 48 is 4 hrs,  300 sleeps is 25 hrs
-            if($i -gt 300) {throw "Servers $nodes are not resolving online" }
+            if($i -gt 300) {throw "$($(get-date).ToShortTimeString()) Servers $nodes are not resolving online" }
 
     } until($serversOnline)
 
 
     if($serversOnline) {
-        Write-Host "$nodes are online"
+        Write-Host "$($(get-date).ToShortTimeString()) $nodes are online"
 
         Import-Module cloudmsaad
 
