@@ -19,35 +19,10 @@ param
 
 )
  $nodes=""
- $FQDNnodes=""
- (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $FQDNnodes += "$servernamepart$_.$domain,"} else {$FQDNnodes += "$servernamepart$_.$domain"} }
+
  (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_,"} else {$nodes += "$servernamepart$_"} }
-     
-    $i = 0
-    $serversOnline=$false
-
-    Write-Host "$($(get-date).ToShortTimeString()) Testing Connections to $nodes"
-    do {
-            $i++
-            $Online=$true
-                foreach($Server in $FQDNnodes.split(",")) {
-        
-                    $test1 = test-connection $Server -Count 1 -Quiet
-                    
-                    if(!$test1) {$Online=$false}
-                    if(!$test1) {write-host "$($(get-date).ToShortTimeString()) $Server offline"}
-                }
-            $serversOnline = $online
-            if(!$Online) {sleep -Seconds 150}
-
-            #1 sleep 300 seconds, 12 sleeps is one hour, 48 is 4 hrs,  300 sleeps is 25 hrs
-            if($i -gt 300) {throw "$($(get-date).ToShortTimeString()) Servers $nodes are not resolving online" }
-
-    } until($serversOnline)
-
-
-    if($serversOnline) {
-        Write-Host "$($(get-date).ToShortTimeString()) $nodes are online"
+    
+ Write-Host "$($(get-date).ToShortTimeString()) $nodes are online"
 
         Import-Module cloudmsaad
 
@@ -78,8 +53,6 @@ param
                     $i++
                     $getRunbookStatus = Invoke-AzureRestGetAPI -Uri $jobstatusURL -clientId $SecretClientId -key $SecretKey -tenantId $SecretTenantId
                     
-                    $getRunbookStatus.properties
-
                     $runbookStatus = $getRunbookStatus.properties.status
             
                     if($runbookStatus) {
@@ -96,6 +69,4 @@ param
 
             }
 
-        } else {
-            throw "$nodes are offline"
-        }
+        
