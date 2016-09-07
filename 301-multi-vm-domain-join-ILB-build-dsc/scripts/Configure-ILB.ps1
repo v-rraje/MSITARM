@@ -17,7 +17,7 @@ param
 [string] $SecretAcct
 
 )
-
+ $nodes=""
  (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_,"} else {$nodes += "$servernamepart$_"} }
      
     $i = 0
@@ -28,16 +28,15 @@ param
 
             $i++
             $Online=$true
-                foreach($ComputerName in $Nodes.split(",")) {
+                foreach($Server in $Nodes.split(",")) {
         
-                    $test1 = test-connection $ComputerName -Count 1 -Quiet
-                    $Result = Invoke-Command -ComputerName $ComputerName -ScriptBlock {Get-Service | Where-Object {($_.Name -eq "WinRM") -and ($_.Status -eq "Running")}} -ErrorAction Stop 
-                    $test2 = !$Result?
-
-                    if(!$test1 -or !$test2) {$Online=$false}
+                    $test1 = test-connection $Server -Count 1 -Quiet
+                    
+                    if(!$test1) {$Online=$false}
+                    if($test1) {write-host "$Server online"} else {write-host "$Server offline"}
                 }
             $serversOnline = $online
-            if(!$Online) {sleep -Seconds 300}
+            if(!$Online) {sleep -Seconds 150}
 
             #1 sleep 300 seconds, 12 sleeps is one hour, 48 is 4 hrs,  300 sleeps is 25 hrs
             if($i -gt 300) {throw "Servers $nodes are not resolving online" }
@@ -76,7 +75,9 @@ param
                 do{
                     $i++
                     $getRunbookStatus = Invoke-AzureRestGetAPI -Uri $jobstatusURL -clientId $SecretClientId -key $SecretKey -tenantId $SecretTenantId
-        
+                    
+                    $getRunbookStatus.properties
+
                     $runbookStatus = $getRunbookStatus.properties.status
             
                     if($runbookStatus) {
@@ -93,4 +94,6 @@ param
 
             }
 
+        } else {
+            throw "$nodes are offline"
         }
