@@ -15,6 +15,12 @@
         "Description": "Number of Azure VM to create."
       }
     },
+    "DomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name Domain"
+      }
+    },
     "AOAGListenerName": {
       "type": "string",
       "defaultValue": "",
@@ -91,9 +97,9 @@
     "vmILBExtensionName": "ConfigureILB",
     "customILBScriptFileToRun": "Configure-ILB.ps1",
     "customILBScriptFileUri": "[concat(variables('baseURL'),'scripts/',variables('customILBScriptFileToRun'))]",
-    "ILBarguments": "[concat(' -AOAGListenerName ', parameters('AOAGListenerName'), ' -AOAGName ', parameters('AOAGName'), ' -ServernamePart ', parameters('vmname'), ' -InstanceCount ', parameters('numberOfInstances'), ' -FailoverClusterName ', parameters('FailoverClusterName'), ' -SubscriptionId ',subscription().subscriptionId,' -SecretClientId ',parameters('ILBClientID'), ' -SecretUrikey ', parameters('ILBUriKey'), ' -secretkey ', parameters('ilbkey'), ' -SecretSubid ',parameters('ILBSubID'),' -SecretTenantId ',parameters('ILBTenantId') ,' -SecretRG ',parameters('ILBResourceGroup'),' -SecretAcct ',parameters('ILBAccount'))]",
+    "ILBarguments": "[concat(' -AOAGListenerName ', parameters('AOAGListenerName'), ' -AOAGName ', parameters('AOAGName'), ' -ServernamePart ', parameters('vmname'), ' -InstanceCount ', parameters('numberOfInstances'),' -Domain ', parameters('DomainName'), ' -FailoverClusterName ', parameters('FailoverClusterName'), ' -SubscriptionId ',subscription().subscriptionId,' -SecretClientId ',parameters('ILBClientID'), ' -SecretUrikey ', parameters('ILBUriKey'), ' -secretkey ', parameters('ilbkey'), ' -SecretSubid ',parameters('ILBSubID'),' -SecretTenantId ',parameters('ILBTenantId') ,' -SecretRG ',parameters('ILBResourceGroup'),' -SecretAcct ',parameters('ILBAccount'))]",
     "ILBcommandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customILBScriptFileToRun'), ' ', variables('ILBarguments'))]"
-      
+
   },
   "resources": [
     {
