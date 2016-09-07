@@ -24,6 +24,8 @@ param
     $serversOnline=$false
 
     do {
+            Write-Host "Testing Connections to $nodes"
+
             $i++
             $Online=$true
                 foreach($ComputerName in $Nodes.split(",")) {
@@ -44,14 +46,14 @@ param
 
 
     if($serversOnline) {
+        Write-Host "$nodes are online"
 
         Import-Module cloudmsaad
 
         $response = $null
         $uri = "https://s1events.azure-automation.net/webhooks?token={0}" -f $Secreturikey
         $headers = @{"From"="user@contoso.com";"Date"="$($(get-date).ToShortDateString())"}
-
-       
+               
 
         $Params  = @(
                     @{ AOAGListenerName=$AOAGListenerName;AOAGName=$AOAGName;Nodes=$Nodes;FailoverClusterName=$FailoverClusterName;SubscriptionId=$SubscriptionId }
