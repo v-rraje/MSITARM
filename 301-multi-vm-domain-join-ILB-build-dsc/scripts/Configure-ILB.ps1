@@ -81,8 +81,8 @@ param
             
                     if($runbookStatus) {
                         write-output "$(Get-Date) JobID: $jobID Status: $runbookStatus"
-                        sleep -Seconds 5
-                        if ($i -ge 100)
+                        sleep -Seconds 300
+                        if ($i -ge 300)
                         {
                             Write-Output "Exceeded timeout, stopping status check of runbook"
                             $runbookStatus = "Failed"
