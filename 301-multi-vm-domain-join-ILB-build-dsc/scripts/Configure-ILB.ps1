@@ -19,7 +19,9 @@ param
 
 )
  $nodes=""
- (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_.$domain,"} else {$nodes += "$servernamepart$_.$domain"} }
+ $FQDNnodes=""
+ (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $FQDNnodes += "$servernamepart$_.$domain,"} else {$FQDNnodes += "$servernamepart$_.$domain"} }
+ (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_,"} else {$nodes += "$servernamepart$_"} }
      
     $i = 0
     $serversOnline=$false
@@ -28,7 +30,7 @@ param
     do {
             $i++
             $Online=$true
-                foreach($Server in $Nodes.split(",")) {
+                foreach($Server in $FQDNnodes.split(",")) {
         
                     $test1 = test-connection $Server -Count 1 -Quiet
                     
