@@ -66,7 +66,12 @@ configuration DomainJoin
         ############################################
         # Create Admin jobs and Janitors
         ############################################
-                
+        if($adminlist) {
+            $adminlist = $adminlist + ",$($DomainAccount.UserName)"
+         } else {
+            $adminlist =  "$($DomainAccount.UserName)"
+         }
+
         ## so these get added if not present after any reboot
         foreach($Account in $adminlist) {
                     
