@@ -41,32 +41,10 @@ param
         $jobID = $startRunbook.JobIds[0]
 
             if($jobID) {
-
-                write-host $jobID
-
-                $jobstatusURL = "https://management.azure.com/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Automation/automationAccounts/{2}/jobs/{3}?api-version=2015-10-31" -f $SecretSubId,$SecretRg,$SecretAcct,$jobID
-
-                $i=0
-    
-                #check status of runbook
-                do{
-                    $i++
-                    $getRunbookStatus = Invoke-AzureRestGetAPI -Uri $jobstatusURL -clientId $SecretClientId -key $SecretKey -tenantId $SecretTenantId
-                    
-                    $runbookStatus = $getRunbookStatus.properties.status
-            
-                    if($runbookStatus) {
-                        write-output "$(Get-Date) JobID: $jobID Status: $runbookStatus"
-                        sleep -Seconds 300
-                        if ($i -ge 300)
-                        {
-                            Write-Output "Exceeded timeout, stopping status check of runbook"
-                            $runbookStatus = "Failed"
-                        }
-                    }else {write-host "job failed..."; $runbookStatus = "Failed"; break;}
-                }
-                until($runbookStatus -eq "Completed" -or $runbookStatus -eq "Failed")
+                            
+               $jobstatusURL = "see Portal for status SubscriptionID: {0} resourceGroup: {1} automationAccount: {2} jobID: {3}" -f $SecretSubId,$SecretRg,$SecretAcct,$jobID
+                
+               write-host $jobstatusURL
 
             }
-
         
