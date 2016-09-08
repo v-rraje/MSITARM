@@ -23,9 +23,8 @@ try {
  $nodes=""
 
  (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_,"} else {$nodes += "$servernamepart$_"} }
-    
- Write-Host "$($(get-date).ToShortTimeString()) $nodes are online"
-
+   
+ 
         Import-Module cloudmsaad
 
         $response = $null
