@@ -71,13 +71,51 @@ Configuration DeploySQLServer
             }
 
         }
+         Script DriveCheck{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+                try {
+                    $diskArray = Get-Partition
+                    $diskArray | select DriveLetter | ? {$_ -eq 'H'}
+
+                    if($diskArray -eq $nothing) {
+
+                        Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "H Drive not found"
+                        throw "Drives not available as expected"
+
+                        }else{Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "Drives Ready"}
+
+                    } catch{}
+
+            }
+            TestScript = {
+                 try {
+                    $diskArray = Get-Partition
+                    $diskArray | select DriveLetter | ? {$_ -eq 'H'}
+
+                if($diskArray -eq $nothing) {                                    
+                        $pass = $true
+                    }else{
+                        $pass = $false
+                    }
+
+                } catch{}
+              
+              return $pass
+            }
+
+        }
 
         File StartupPath {
             Type = 'Directory'
             DestinationPath = "C:\SQLStartup"
             Ensure = "Present"
-            DependsOn = "[Script]ConfigureEventLog"
+            DependsOn = "[Script]DriveCheck"
         }
+
         Script ConfigureStartupPath{
             GetScript = {
                 @{
