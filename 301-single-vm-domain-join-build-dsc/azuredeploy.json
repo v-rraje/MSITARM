@@ -71,7 +71,7 @@
     },
     "DiskConfig": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "Win",
       "allowedValues": [
         "Win",
         "IIS",
@@ -123,10 +123,7 @@
     },
     "StorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS"
-      ],
+      "defaultValue": "",
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -181,13 +178,6 @@
         "description": "local admins that can login to the VMs. csv list of domain\\user,domain\\group "
       }
     },
-    "SQLAdmins": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "local admins that can login to the VMs. csv list of domain\\user,domain\\group "
-      }
-    },
     "virtualNetwork": {
       "type": "string",
       "defaultValue": "",
@@ -197,14 +187,14 @@
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "ERNetwork",
+      "defaultValue": "",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "Subnet-1",
+      "defaultValue": "",
       "metadata": {
         "description": "Name for the subnet"
       }
@@ -234,9 +224,9 @@
    "variables": {
       "apiVersion": "2015-01-01",
       
-      "branch": "master",
-      "folder":  "/301-single-vm-domain-join-build-dsc/",
-      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+     "branch": "develop", 
+     "folder":  "/301-single-vm-domain-join-build-dsc/", 
+     "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]", 
     
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
       "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
@@ -398,24 +388,24 @@
                     "uri": "[variables('AttachVMtoPullServerURL')]",
                     "contentVersion": "1.0.0.0"
                 },
-                   "parameters": {
-                  "vmName": {
-                    "value": "[parameters('vmName')]"
-                  },
-                 
-                  "RegistrationKey": {
-                    "value": "[variables('AzureAutomation').RegistrationKey]"
-                  },
-                  "registrationUrl": {
-                    "value": "[variables('AzureAutomation').registrationUrl]"
-                  },
-                  "nodeConfigurationName": {
-                     "value": "[variables('AzureAutomation').nodeConfigurationName]"
-                  },
-                  "timestamp": {
-                    "value":  "[variables('AzureAutomation').timestamp]"
-                  }
+              "parameters": {
+                "vmName": {
+                  "value": "[parameters('vmName')]"
+                },
+
+                "RegistrationKey": {
+                  "value": "[variables('AzureAutomation').RegistrationKey]"
+                },
+                "registrationUrl": {
+                  "value": "[variables('AzureAutomation').registrationUrl]"
+                },
+                "nodeConfigurationName": {
+                  "value": "[variables('AzureAutomation').nodeConfigurationName]"
+                },
+                "timestamp": {
+                  "value": "[variables('AzureAutomation').timestamp]"
                 }
+              }
             },
             "dependsOn": [
                 "[concat('Microsoft.Resources/deployments/',parameters('vmName'),'-BuildMachineRole-',variables('Role'))]"

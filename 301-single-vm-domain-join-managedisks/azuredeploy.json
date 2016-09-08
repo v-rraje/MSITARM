@@ -12,10 +12,7 @@
     },
     "localAdminUserName": {
       "type": "string",
-      "defaultValue": "ITSVC0",
-      "allowedValues": [
-        "ITSVC0"
-      ],
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "Local Username for the Virtual Machine."
@@ -43,105 +40,51 @@
         "description": "Password for domain joining"
       }
     },
-    "SQLServerAccount": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "SQL Server Service runas account"
-      }
-    },
-    "SQLServerPassword": {
-      "type": "securestring",
-      "minLength": 1,
-      "metadata": {
-        "description": "SQL Server Service runas account Password"
-      }
-    },
-    "SQLAgentAccount": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "SQL Agent Service runas account"
-      }
-    },
-    "SQLAgentPassword": {
-      "type": "securestring",
-      "minLength": 1,
-      "metadata": {
-        "description": "SQL Agent Service runas account Password"
-      }
-    },
-    "localAdmins": {
+    "vmSize": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "local admins that can login to the VMs. csv list of domain\\user"
-      }
-    },
-    "SQLAdmins": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "SQL SYS admins that can login to the Default SQL Instance instaqlled on the VM. csv list of domain\\user"
+        "description": "Size for the Virtual Machine."
       }
     },
     "imagePublisher": {
       "type": "string",
-      "defaultValue": "MicrosoftSQLServer",
-      "allowedValues": [
-        "MicrosoftSQLServer"
-      ],
+      "defaultValue": "",
       "metadata": {
         "description": "OS Image Publisher. https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-cli-ps-findimage/"
       }
     },
     "imageOffer": {
       "type": "string",
-      "defaultValue": "SQL2014SP1-WS2012R2",
-      "allowedValues": [
-        "SQL2012SP2-WS2012",
-        "SQL2014SP1-WS2012R2",
-        "SQL2014-WS2012R2",
-        "SQL2016CTP3-WS2012R2",
-        "SQL2016CTP3.1-WS2012R2",
-        "SQL2016CTP3.2-WS2012R2",
-        "SQL2016RC3-WS2012R2v2"
-      ],
+      "defaultValue": "",
       "metadata": {
-        "description": "Allowed Windows values: WindowsServer. Allowed SQL Values: SQL2012SP2-WS2012, SQL2012SP2-WS2012R2,SQL2014-WS2012R2, SQL2014SP1-WS2012R2, SQL2016CTP3-WS2012R2, SQL2016CTP3.1-WS2012R2, SQL2016CTP3.2-WS2012R2, SQL2016RC3-WS2012R2v2."
+        "description": ""
       }
     },
     "sku": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "Enterprise",
-      "allowedValues": [
-        "Enterprise",
-        "Web",
-        "Standard",
-        "Express"
-      ],
+      "defaultValue": "",
       "metadata": {
-        "description": "Allowed SQL values: Enterprise, Standard, Web, Express."
-      }
-    },
-    "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_A4",
-      "metadata": {
-        "description": "Size for the Virtual Machine."
+        "description": "Allowed Windows values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter. Allowed SQL values: Enterprise, Standard, Web, Express."
       }
     },
     "DiskConfig": {
       "type": "string",
-      "defaultValue": "SQLStd",
+      "defaultValue": "Win",
       "allowedValues": [
-        "SQLStd"
+        "Win",
+        "IIS",
+        "SQLStd",
+        "SQLPrem"
       ]
     },
     "DiskCount": {
       "type": "string",
       "allowedValues": [
+        "0",
+        "1",
+        "2",
         "3",
         "4",
         "5",
@@ -157,7 +100,7 @@
         "15",
         "16"
       ],
-      "defaultValue": "3",
+      "defaultValue": "1",
       "metadata": {
         "description": "Number of Disks for vm."
       }
@@ -180,10 +123,7 @@
     },
     "StorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS"
-      ],
+      "defaultValue": "",
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -231,6 +171,13 @@
         "description": "Snooze date"
       }
     },
+    "localAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "local admins that can login to the VMs. csv list of domain\\user,domain\\group "
+      }
+    },
     "virtualNetwork": {
       "type": "string",
       "defaultValue": "",
@@ -240,14 +187,14 @@
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "ERNetwork",
+      "defaultValue": "",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "Subnet-1",
+      "defaultValue": "",
       "metadata": {
         "description": "Name for the subnet"
       }
@@ -277,10 +224,9 @@
   "variables": {
     "apiVersion": "2015-01-01",
 
-    "branch": "develop",
-    "folder": "/301-single-vm-domain-join-managedisks/",
+    "branch": "master",
+    "folder": "/301-single-vm-domain-join-build-dsc/",
     "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
-
 
     "domainJoinzip": "scripts/DomainJoin.ps1.zip",
     "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
@@ -298,19 +244,13 @@
 
     "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
 
-    "vmExtensionName": "ConfigureSQLServer",
-    "customScriptFileToRun": "Configure-SQLServer.ps1",
-    "customScriptFileUri": "[concat(variables('baseURL'),'scripts/',variables('customScriptFileToRun'))]",
-    "arguments": "[concat(' -SQLServerAccount ', parameters('SQLServerAccount'), ' -SQLServerPassword ', parameters('SQLServerPassword'), ' -SQLAgentAccount ', parameters('SQLAgentAccount'), ' -SQLAgentPassword ', parameters('SQLAgentPassword'), ' -SQLAdmin ', parameters('domainJoinUserName'), ' -SQLAdminPwd ', parameters('domainJoinPassword'), ' -BaseURL ', variables('baseURL'))]",
-    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customScriptFileToRun'), ' ', variables('arguments'))]",
-
     "AzureAutomation": {
       "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
       "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
       "registrationUrl": "[parameters('PullServerRegistrationURI')]",
       "nodeConfigurationName": "MSITNoPAK.ISRM_GC",
       "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
-      "timestamp": "1/1/2016"
+      "timestamp": "1/1/2015"
     }
   },
   "resources": [
@@ -389,7 +329,7 @@
             "value": "[parameters('localAdmins')]"
           },
           "SQLAdmins": {
-            "value": "[parameters('SQLAdmins')]"
+            "value": ""
           },
           "virtualNetwork": {
             "value": "[parameters('virtualNetwork')]"
@@ -439,30 +379,6 @@
       ]
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.7",
-        "autoUpgradeMinorVersion": "true",
-        "forceUpdateTag": "v.1.4",
-        "settings": {
-          "fileUris": [
-            "[variables('customScriptFileUri')]"
-          ]
-        },
-        "protectedSettings": {
-          "commandToExecute": "[variables('commandToExecute')]"
-        }
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/',parameters('vmName'), '-BuildMachineRole-',variables('Role'))]"
-      ]
-    },
-    {
       "apiVersion": "2015-01-01",
       "name": "AttachVMtoPullServer",
       "type": "Microsoft.Resources/deployments",
@@ -492,7 +408,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), variables('vmExtensionName'))]"
+        "[concat('Microsoft.Resources/deployments/',parameters('vmName'),'-BuildMachineRole-',variables('Role'))]"
       ]
     }
   ]

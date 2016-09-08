@@ -36,14 +36,6 @@
         "description": "Number of Disks for vm."
       }
     },
-    "userImageStorageAccountName": {
-      "type": "string",
-      "defaultValue": "userImageStorageAccountName",
-      "minLength": 1,
-      "metadata": {
-        "description": "Local storageaccount for the Virtual Machine."
-      }
-    },
     "diskCaching": {
       "type": "string",
       "defaultValue": "None",

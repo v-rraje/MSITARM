@@ -19,7 +19,9 @@ configuration FormatDataDisks
             }
             SetScript = {
                try {
-               foreach($disk in $using:Disks.values) {
+                
+                #format the ones requested
+                foreach($disk in $using:Disks.values) {
 
                 $diskArray = get-disk 
                 $partArray = Get-Partition
@@ -51,6 +53,10 @@ configuration FormatDataDisks
                         Write-verbose "`t[PASS] $VM Drive $($Disk.DiskName) exists.`n"
                     }
                 }
+
+                #format the remaining using next available drive letter
+                get-disk | ? {$_.PartitionStyle -eq 'Raw'} | %{ Initialize-Disk -PartitionStyle GPT -Number $_.number -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Confirm:$false  }   
+
                } catch {}
             }
             TestScript = {
@@ -74,5 +80,3 @@ configuration FormatDataDisks
       }
 
     }
-
-

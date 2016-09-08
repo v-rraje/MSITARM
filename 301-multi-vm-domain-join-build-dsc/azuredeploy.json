@@ -65,7 +65,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Allowed Windows values: WindowsServer. Allowed SQL Values: SQL2012SP2-WS2012, SQL2012SP2-WS2012R2,SQL2014-WS2012R2, SQL2014SP1-WS2012R2, SQL2016CTP3-WS2012R2, SQL2016CTP3.1-WS2012R2, SQL2016CTP3.2-WS2012R2, SQL2016RC3-WS2012R2v2."
+        "description": ""
       }
     },
     "sku": {
@@ -73,12 +73,18 @@
       "minLength": 1,
       "defaultValue": "",
       "metadata": {
-        "description": "Allowed SQL values: Enterprise, Standard, Web, Express."
+        "description": ""
       }
     },
     "DiskConfig": {
       "type": "string",
-      "defaultValue": "SQLStd"
+      "defaultValue": "Win",
+      "allowedValues": [
+        "Win",
+        "IIS",
+        "SQLStd",
+        "SQLPrem"
+      ]
     },
     "DiskCount": {
       "type": "string",
@@ -124,10 +130,7 @@
     },
     "StorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS"
-      ],
+      "defaultValue": "",
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -182,13 +185,6 @@
         "description": "local admins that can login to the VMs. csv list of domain\\user"
       }
     },
-    "SQLAdmins": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "SQL SYS admins that can login to the Default SQL Instance instaqlled on the VM. csv list of domain\\user"
-      }
-    },
     "virtualNetwork": {
       "type": "string",
       "defaultValue": "",
@@ -198,14 +194,14 @@
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "ERNetwork",
+      "defaultValue": "",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "Subnet-1",
+      "defaultValue": "",
       "metadata": {
         "description": "Name for the subnet"
       }
@@ -232,12 +228,12 @@
         }
       }
   },
-    "variables": {
-      "apiVersion": "2015-01-01",
-
+   "variables": {
+     "apiVersion": "2015-01-01",
+      
       "branch": "master",
-      "folder": "/301-multi-vm-domain-join-build-dsc/",
-      "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
+      "folder":  "/301-multi-vm-domain-join-build-dsc/",
+      "baseURL":  "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
   
       "domainJoinzip": "scripts/DomainJoin.ps1.zip",
       "formatDiskszip": "scripts/FormatDataDisk.ps1.zip",
@@ -245,6 +241,7 @@
       "createVMtemplate": "nested/template-MultipleVM.json",
       "configurePullTemplate":  "nested/template-ConfigureDscPull.json",
       "configurationFunction": "FormatDataDisks.ps1\\FormatDataDisks",
+
       "Role": "[substring(parameters('DiskConfig'),0,3)]",
            
       "moduleURL": "[concat(variables('BaseURL'),variables('formatDiskszip'))]",
@@ -258,7 +255,7 @@
         "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
         "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
         "registrationUrl": "[parameters('PullServerRegistrationURI')]",
-        "nodeConfigurationName": "MSITNoPAK2.Corpnet",
+        "nodeConfigurationName": "MSITNoPAK.ISRM_GC",
         "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
         "timestamp": "1/1/2015"
       }
@@ -339,7 +336,7 @@
                   "value": "[parameters('localAdmins')]"
                 },
                 "SQLAdmins": {
-                  "value": "[parameters('SQLAdmins')]"
+                  "value": ""
                 },
                 "virtualNetwork": {
                   "value": "[parameters('virtualNetwork')]"
