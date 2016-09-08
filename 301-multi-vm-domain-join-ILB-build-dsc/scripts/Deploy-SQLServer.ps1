@@ -106,7 +106,7 @@ Configuration DeploySQLServer
               
               return $pass
             }
-
+            DependsOn = "[Script]ConfigureEventLog"
         }
 
         File StartupPath {
