@@ -18,6 +18,8 @@ param
 [string] $SecretAcct
 
 )
+try {
+
  $nodes=""
 
  (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_,"} else {$nodes += "$servernamepart$_"} }
@@ -47,4 +49,11 @@ param
                write-host $jobstatusURL
 
             }
-        
+
+        } catch {
+         [string]$errorMessage = $_.Exception.Message
+         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
+         }
+            throw $errorMessage
+        }
