@@ -43,7 +43,7 @@ try {
 
             if($jobID) {
                             
-               $jobstatusURL = "see Portal for status SubscriptionID: {0} resourceGroup: {1} automationAccount: {2} jobID: {3}" -f $SecretSubId,$SecretRg,$SecretAcct,$jobID
+               $jobstatusURL = "see Dashboard for statushttp://co1cptdevweb01:4433/?searchText={0}&f_mtype=SQLAO-Configuration&f_dateType=all" -f $AOAGListenerNam
                 
                write-host $jobstatusURL
 
