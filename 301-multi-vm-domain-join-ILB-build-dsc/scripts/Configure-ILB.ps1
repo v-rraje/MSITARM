@@ -43,7 +43,7 @@ try {
 
             if($jobID) {
                             
-               $jobstatusURL = "see Dashboard for status http://co1cptdevweb01:4433/?searchText={0}&f_mtype=SQLAO-Configuration&f_dateType=all" -f $AOAGListenerNam
+               $jobstatusURL = "see Dashboard for status http://co1cptdevweb01:4433/?searchText={0}&f_mtype=SQLAO-Configuration&f_dateType=all" -f $AOAGListenerName
                 
                write-host $jobstatusURL
 
