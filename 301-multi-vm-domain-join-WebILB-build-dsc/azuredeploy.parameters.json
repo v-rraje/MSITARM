@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appID": {
+      "value": "dev"
+    },
+    "domainName": {
+      "value": ""
+    },
+    "env": {
+      "value": "dev"
+    },
+    "orgID": {
+      "value": "dev"
+    },
+    "imagePublisher": {
+      "value": "MicrosoftWindowsServer"
+    },
+    "imageOffer": {
+      "value": "WindowsServer"
+    },
+    "sku": {
+      "value": "2012-R2-Datacenter"
+    },
+    "snoozeDate": {
+      "value": "1/1/17"
+    },
+    "storageAccountType": {
+      "value": "Standard_LRS"
+    },
+    "virtualNetwork": {
+      "value": ""
+    },
+    "vnetResourceGroup": {
+      "value": "ERNetwork"
+    },
+    "vmSize": {
+      "value": "Standard_D3_v2"
+    },
+    "DiskSize": {
+      "value": 200
+    },
+    "DiskConfig": {
+      "value": "IIS"
+    },
+    "DiskCount": {
+      "value": "1"
+    },
+    "ouPath": {
+      "value": ""
+    },
+    "PullServerRegistrationKey": {
+      "value": ""
+    },
+    "PullServerRegistrationURI": {
+      "value": ""
+    }
+  }
+}
