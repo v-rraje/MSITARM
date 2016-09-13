@@ -485,7 +485,7 @@
         "probes": [
           {
             "properties": {
-              "protocol": "Http",
+              "protocol": "Tcp",
               "port": 59999,
               "requestPath": "/Probetest/testpage.aspx",
               "intervalInSeconds": 15,
