@@ -2938,7 +2938,7 @@ Configuration DeploySQLServer
                         $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
                                                 
                         $SQLsvc = get-service| where {$_.DisplayName -match 'SQL' -and ($_.name -ne 'MSSQLSERVER' -and $_.Name -ne 'SQLSERVERAGENT')}
-                        $SQLsvc  | %{Set-Service $_.Name -StartupType disabled; -Status Stopped}
+                        $SQLsvc  | %{Set-Service $_.Name -StartupType disabled -Status Stopped}
                         
                         #set sql Service
                       

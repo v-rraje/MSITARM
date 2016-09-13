@@ -2936,14 +2936,12 @@ Configuration DeploySQLServer
 
                                                 
                         $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
-
-                        # set all the others to stop/disabled
-                        $svc = $wmi.services | where {$_.DisplayName -match 'SQL' -and ($_.name -ne 'MSSQLSERVER' -and $_.Name -ne 'SQLSERVERAGENT')}
-                        $svc | %{$_.Stop()}
-                        $svc | %{$_.StartMode = "Disabled";}
+                                                
+                        $SQLsvc = get-service| where {$_.DisplayName -match 'SQL' -and ($_.name -ne 'MSSQLSERVER' -and $_.Name -ne 'SQLSERVERAGENT')}
+                        $SQLsvc  | %{Set-Service $_.Name -StartupType disabled -Status Stopped}
                         
                         #set sql Service
-                        $svc.start()
+                      
                         $svc = $wmi.services | where {$_.Type -eq 'SqlServer'} 
                         $svc.SetServiceAccount($using:SQLServerAccount,$using:SQLServerPassword)
                         
