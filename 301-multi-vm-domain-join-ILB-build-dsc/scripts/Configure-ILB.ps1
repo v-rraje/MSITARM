@@ -43,16 +43,18 @@ try {
 
             if($jobID) {
                             
-               $jobstatusURL = "see Dashboard. copy/paste this link-> 'http://co1cptdevweb01:4433/?searchText={0}&f_mtype=SQLAO-Configuration&f_dateType=all'  " -f $AOAGListenerName
+               $jobstatusURL = "see Dashboard. Copy/paste this link-> 'http://co1cptdevweb01:4433/?searchText={0}&f_mtype=SQLAO-Configuration&f_dateType=all'  " -f $AOAGListenerName
                 
                write-host $jobstatusURL
 
             }
 
         } catch {
-         [string]$errorMessage = $_.Exception.Message
-         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
-         }
+
+             [string]$errorMessage = $_.Exception.Message
+             if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
+             }
+
             throw $errorMessage
         }
