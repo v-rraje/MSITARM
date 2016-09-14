@@ -439,7 +439,6 @@
       "tags": {
         "displayName": "LoadBalancer"
       },
-
       "properties": {
         "frontendIPConfigurations": [
           {
@@ -447,8 +446,7 @@
               "subnet": {
                 "id": "[variables('subnetRef')]"
               },
-
-
+              
               "privateIPAllocationMethod": "Dynamic"
             },
             "name": "LoadBalancerFrontend"
@@ -571,37 +569,6 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(1),'nic1'))]"
             }
           ]
-        }
-      }
-    },
-    {
-      "name": "[concat(variables('nicName'),copyindex(1),'','-SetStaticIP')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "[concat(parameters('vmName'),copyindex(1),'nic1')]",
-        "[concat(parameters('vmName'),copyindex(1))]"
-      ],
-      "copy": {
-        "name": "StaticIPLoop",
-        "count": "[parameters('numberOfInstances')]"
-      },
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('SetStaticIPUrl')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "nicName": {
-            "value": "[concat(parameters('vmName'),copyindex(1))]"
-          },
-          "ipAddress": {
-            "value": "[reference(concat(parameters('vmName'),copyindex(1),'nic1')).ipConfigurations[0].properties.privateIPAddress]"
-          },
-          "subnetRef": {
-            "value": "[variables('subnetRef')]"
-          }
         }
       }
     },
