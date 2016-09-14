@@ -245,7 +245,7 @@
     "apiVersion": "2015-06-15",
 
     "branch": "develop",
-    "folder": "/301-multi-vm-domain-join-ILB-build-dsc/",
+    "folder": "/301-multi-vm-domain-join-WebILB-build-dsc/",
     "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
 
     "availabilitySetName": "[parameters('AvailabilitySet')]",
@@ -473,7 +473,7 @@
               "probe": {
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/lbprobe')]"
               },
-              "protocol": "Tcp",
+              "protocol": "http",
               "frontendPort": 80,
               "backendPort": 80,
               "loadDistribution": "SourceIPProtocol",
@@ -485,9 +485,8 @@
         "probes": [
           {
             "properties": {
-              "protocol": "Http",
-              "port": 8085,
-              "requestPath": "/Probetest/testpage.aspx",
+              "protocol": "Tcp",
+              "port": 80,
               "intervalInSeconds": 15,
               "numberOfProbes": 2
             },
