@@ -66,7 +66,12 @@ configuration DomainJoin
         ############################################
         # Create Admin jobs and Janitors
         ############################################
-                
+        if($adminlist) {
+            $adminlist = $adminlist + ",$($DomainAccount.UserName)"
+         } else {
+            $adminlist =  "$($DomainAccount.UserName)"
+         }
+
         ## so these get added if not present after any reboot
         foreach($Account in $adminlist) {
                     
@@ -238,11 +243,15 @@ configuration DomainJoin
                             $login = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Login -ArgumentList $Srv, $SysAdmin
                             $login.LoginType = 'WindowsUser'
                             $login.PasswordExpirationEnabled = $false
-                            $login.Create()
-
-                            #  Next two lines to give the new login a server role, optional
-                            $login.AddToRole('sysadmin')
-                            $login.Alter()           
+                           
+                            $Exists = $srv.Logins | ?{$_.name -eq $SysAdmin}
+                             if(!$Exists) {
+                                $login.Create()
+                                
+                                #  Next two lines to give the new login a server role, optional
+                                $login.AddToRole('sysadmin')
+                                $login.Alter()           
+                            }
                          }
                         }catch{} #nice to have but dont want it to be fatal.
 
@@ -274,28 +283,43 @@ configuration DomainJoin
                 if($sqlInstances -ne $null -and $sqlInstances -gt 0){
                    try{
                         
-                        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
-                        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
-                        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+                        $null= [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                        $null= [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                        $null= [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
 
                         $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
             
                         $NtLogin =$($using:DomainAccount.UserName) 
-
+                        
                         $srvConn.connect();
                         $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
-                        $Exists = $srv.Logins | ?{$_.name -eq $NtLogin}
 
+                        $Exists = $srv.Logins | ?{$_.name -eq $NtLogin}
                         if($Exists) {$ret=$true} else {$ret=$false}
-           
-                    } catch{$ret=$false}                            
+
+                         ########################## +SQLSvcAccounts ##################################### 
+                     
+                        if($ret)  {
+                                                                                         
+                            $SQLAdminsList = $($using:SQLAdmins).split(",")
+                                                          
+                                foreach($SysAdmin in $SQLAdminsList) {
+                                                            
+                                    $Exists = $srv.Logins | ?{$_.name -eq $SysAdmin}
+                                    if($Exists) {$ret=$true} else {$ret=$false; break;}
+                            
+                                }
+                            }
+
+                    } catch{$ret=$false}   
+                                             
                 } else {$ret=$true}
 
             Return $ret
             }    
             DependsOn= '[xWaitForADDomain]DscForestWait'
         }
-
+              
         ############################################
         # End
         ############################################
