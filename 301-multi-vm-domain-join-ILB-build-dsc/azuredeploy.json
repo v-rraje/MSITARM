@@ -40,7 +40,7 @@
       "type": "string",
       "defaultValue": "",
       "minLength": 3,
-      "maxLength": 15,
+      "maxLength": 20,
       "metadata": {
         "description": "Name for the Availability Group."
       }
@@ -49,7 +49,7 @@
       "type": "string",
       "defaultValue": "",
       "minLength": 3,
-      "maxLength": 15,
+      "maxLength": 10,
       "metadata": {
         "description": "Name for the FailoverCluster."
       }
@@ -135,21 +135,19 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "Standard_D3_v2",
       "metadata": {
         "description": "Size for the Virtual Machine."
       }
     },
     "imagePublisher": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
         "description": "See Azure for available ImagePublisher for your Location. Sample Code: <p><a target=new href=https://msitwiki/get-imagepublisher-imageoffer-imagesku-for-arm-templates/>Get-AzureRMVMImagePublisher</a></p> Example: <p>MicrosoftSQLServer or MicrosoftWindowsServer</p>"
       }
     },
     "imageOffer": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
         "description": "See ImagePublisher link for more details."
       }
@@ -157,21 +155,17 @@
     "sku": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "",
       "metadata": {
         "description": "See Azure for available ImageSKU for your Location. Sample Code: <p><a target=new href=https://msitwiki/get-imagepublisher-imageoffer-imagesku-for-arm-templates/>Get-AzureRmVMImageSku</a></p> Example: <p>Enterprise, Standard, Web, Express.<p>"
       }
     },
     "DiskConfig": {
       "type": "string",
-      "defaultValue": ""
+      "defaultValue": "SQLStd"
     },
     "DiskCount": {
       "type": "string",
       "allowedValues": [
-        "0",
-        "1",
-        "2",
         "3",
         "4",
         "5",
@@ -210,7 +204,10 @@
     },
     "StorageAccountType": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS"
+      ],
       "metadata": {
         "description": "The Storage Account where the VM image(s) will be created"
       }
@@ -241,7 +238,12 @@
     "env": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "",
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "test",
+        "prod"
+      ],
       "metadata": {
         "description": "environment tag for the Virtual Machine."
       }
@@ -262,14 +264,14 @@
     },
     "vnetResourceGroup": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "ERNetwork",
       "metadata": {
         "description": "Name for the Resource Group that contains VirtualNetwork"
       }
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "Subnet-1",
       "metadata": {
         "description": "Name for the subnet"
       }
@@ -486,6 +488,12 @@
           },
           "SQLAgentPassword": {
             "value": "[parameters('SQLAgentPassword')]"
+          },
+          "SQLAdmin": {
+            "value": "[parameters('domainJoinUserName')]"
+          },
+          "SQLAdminPwd": {
+            "value": "[parameters('domainJoinPassword')]"
           }
         }
       },
