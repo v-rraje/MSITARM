@@ -253,7 +253,6 @@
     "CreateVMUrl": "[concat(variables('BaseURL'),variables('createVMtemplate'))]",
     "FormatDisksUrl": "[concat(variables('BaseURL'),variables('formatDiskstemplate'))]",
     "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),variables('configurePullTemplate'))]",
-
     "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
 
     "AzureAutomation": {
