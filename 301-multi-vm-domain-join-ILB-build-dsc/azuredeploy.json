@@ -486,14 +486,7 @@
           },
           "SQLAgentPassword": {
             "value": "[parameters('SQLAgentPassword')]"
-          },
-          "SQLAdmin": {
-            "value": "[parameters('domainJoinUserName')]"
-          },
-          "SQLAdminPwd": {
-            "value": "[parameters('domainJoinPassword')]"
           }
-
         }
       },
       "dependsOn": [
