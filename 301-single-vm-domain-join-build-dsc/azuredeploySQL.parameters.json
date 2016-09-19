@@ -17,6 +17,18 @@
     "domainJoinPassword": {
       "value": ""
     },
+    "SQLServerAccount": {
+      "value": ""
+    },
+    "SQLServerPassword": {
+      "value": ""
+    },
+    "SQLAgentAccount": {
+      "value": ""
+    },
+    "SQLAgentPassword": {
+      "value": ""
+    },
     "localAdmins": {
       "value": ""
     },
@@ -26,13 +38,13 @@
     "appID": {
       "value": ""
     },
+    "orgID": {
+      "value": ""
+    },
     "domainName": {
       "value": ""
     },
     "env": {
-      "value": ""
-    },
-    "orgID": {
       "value": ""
     },
     "imagePublisher": {
@@ -48,13 +60,10 @@
       "value": ""
     },
     "storageAccountType": {
-      "value": "Standard_LRS"
+      "value": ""
     },
     "userImageStorageAccountName": {
       "value": ""
-    },
-    "numberOfInstances": {
-      "value": 1
     },
     "virtualNetwork": {
       "value": ""
@@ -62,17 +71,20 @@
     "vnetResourceGroup": {
       "value": ""
     },
+    "subnetName": {
+      "value": ""
+    },
     "vmSize": {
-      "value": "Standard_A2"
+      "value": ""
     },
     "DiskConfig": {
-      "value": "win"
+      "value": ""
     },
     "DiskSize": {
-      "value": "200"
+      "value": 200
     },
     "DiskCount": {
-      "value": "1"
+      "value": ""
     },
     "ouPath": {
       "value": ""

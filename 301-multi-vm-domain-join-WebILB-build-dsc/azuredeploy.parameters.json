@@ -1,59 +1,83 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
   "parameters": {
+    "vmName": {
+      "value": ""
+    },
+    "localAdminUserName": {
+      "value": ""
+    },
+    "localAdminPassword": {
+      "value": ""
+    },
+    "domainJoinUserName": {
+      "value": ""
+    },
+    "domainJoinPassword": {
+      "value": ""
+    },
+    "localAdmins": {
+      "value": ""
+    },
+    "SQLAdmins": {
+      "value": ""
+    },
     "appID": {
-      "value": "dev"
+      "value": ""
     },
     "domainName": {
       "value": ""
     },
     "env": {
-      "value": "dev"
+      "value": ""
     },
     "orgID": {
-      "value": "dev"
+      "value": ""
     },
     "imagePublisher": {
-      "value": "MicrosoftWindowsServer"
+      "value": ""
     },
     "imageOffer": {
-      "value": "WindowsServer"
+      "value": ""
     },
     "sku": {
-      "value": "2012-R2-Datacenter"
+      "value": ""
     },
     "snoozeDate": {
-      "value": "1/1/17"
+      "value": ""
     },
     "storageAccountType": {
       "value": "Standard_LRS"
+    },
+    "userImageStorageAccountName": {
+      "value": ""
+    },
+    "numberOfInstances": {
+      "value": 2
     },
     "virtualNetwork": {
       "value": ""
     },
     "vnetResourceGroup": {
-      "value": "ERNetwork"
+      "value": ""
+    },
+    "subnetName": {
+      "value": "Subnet-1"
     },
     "vmSize": {
-      "value": "Standard_D3_v2"
-    },
-    "DiskSize": {
-      "value": 200
+      "value": "Standard_A2"
     },
     "DiskConfig": {
       "value": "IIS"
+    },
+    "DiskSize": {
+      "value": "200"
     },
     "DiskCount": {
       "value": "1"
     },
     "ouPath": {
-      "value": ""
-    },
-    "PullServerRegistrationKey": {
-      "value": ""
-    },
-    "PullServerRegistrationURI": {
       "value": ""
     }
   }

@@ -231,20 +231,6 @@
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
-    },
-    "vaultname": {
-      "type": "string",
-      "defaultValue": "CloudMSArmVault",
-      "metadata": {
-        "description": "The vault Name"
-      }
-    },
-    "vaultkey": {
-      "type": "string",
-      "defaultValue": "43da4f4e-a9f5-4b87-bb48-94896414bf5a",
-      "metadata": {
-        "description": "The Vault key"
-      }
     }
   },
   "variables": {
@@ -264,10 +250,7 @@
     "modulesUrl": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]",
     "FormatDisksUrl": "[concat(variables('BaseURL'), variables('formatDiskstemplate'))]",
     "SetStaticIPUrl": "[concat(variables('BaseURL'),variables('SetStaticIP'))]",
-    "vaultsecret": "CloudMSArmCertificate",
-    
-    "certURL": "[concat('https://',parameters('vaultname'),'.vault.azure.net:443/secrets/',variables('vaultsecret'),'/',parameters('vaultkey'))]",
-
+      
     "vnetSubscriptionid": "[subscription().subscriptionId]",
     "vnetID": "[concat('/subscriptions/',variables('vnetSubscriptionid'),'/resourceGroups/',parameters('vnetResourceGroup'),'/providers/Microsoft.Network/virtualnetworks/',parameters('virtualNetwork'))]",
     "imageOffer": "[parameters('imageOffer')]",
@@ -481,10 +464,6 @@
               "listeners": [
                 {
                   "protocol": "Http"
-                },
-                {
-                  "protocol": "https",
-                  "certificateUrl": "[variables('certURL')]"
                 }
               ]
             }
