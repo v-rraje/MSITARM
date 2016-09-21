@@ -26,7 +26,7 @@
       "defaultValue": "",
       "minLength": 3,
       "metadata": {
-        "description": "Name for the LoadBalancer."
+        "description": "Name for the Listener."
       }
     },
     "AOAGName": {
@@ -34,7 +34,7 @@
       "defaultValue": "",
       "minLength": 3,
       "metadata": {
-        "description": "Name for the LoadBalancer."
+        "description": "Name for the AvailabilityGroup."
       }
     },
     "FailoverClusterName": {
@@ -42,13 +42,15 @@
       "defaultValue": "",
       "minLength": 3,
       "metadata": {
-        "description": "Name for the LoadBalancer."
+        "description": "Name for the FailoverCluster."
       }
     },
-    "ILBClientID": {
-      "type": "securestring",
+    "LoadBalancerName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
       "metadata": {
-        "description": "The ILB RunBook name"
+        "description": "Name for the LoadBalancer."
       }
     },
     "ILBUriKey": {
@@ -67,12 +69,6 @@
       "type": "securestring",
       "metadata": {
         "description": "The ILB Subscription"
-      }
-    },
-    "ILBTenantId": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The ILB Runbook Tenant"
       }
     },
     "ILBResourceGroup": {
@@ -97,7 +93,7 @@
     "vmILBExtensionName": "ConfigureILB",
     "customILBScriptFileToRun": "Configure-ILB.ps1",
     "customILBScriptFileUri": "[concat(variables('baseURL'),'scripts/',variables('customILBScriptFileToRun'))]",
-    "ILBarguments": "[concat(' -AOAGListenerName ', parameters('AOAGListenerName'), ' -AOAGName ', parameters('AOAGName'), ' -ServernamePart ', parameters('vmname'), ' -InstanceCount ', parameters('numberOfInstances'),' -Domain ', parameters('DomainName'), ' -FailoverClusterName ', parameters('FailoverClusterName'), ' -SubscriptionId ',subscription().subscriptionId,' -SecretClientId ',parameters('ILBClientID'), ' -SecretUrikey ', parameters('ILBUriKey'), ' -secretkey ', parameters('ilbkey'), ' -SecretSubid ',parameters('ILBSubID'),' -SecretTenantId ',parameters('ILBTenantId') ,' -SecretRG ',parameters('ILBResourceGroup'),' -SecretAcct ',parameters('ILBAccount'))]",
+    "ILBarguments": "[concat(' -AOAGListenerName ', parameters('AOAGListenerName'),' -LoadBalancerName ',parameters('LoadBalancerName'), ' -AOAGName ', parameters('AOAGName'), ' -ServernamePart ', parameters('vmname'), ' -InstanceCount ', parameters('numberOfInstances'),' -Domain ', parameters('DomainName'), ' -FailoverClusterName ', parameters('FailoverClusterName'), ' -SubscriptionId ',subscription().subscriptionId,' -SecretUrikey ', parameters('ILBUriKey'), ' -secretkey ', parameters('ilbkey'), ' -SecretSubid ',parameters('ILBSubID'),' -SecretRG ',parameters('ILBResourceGroup'),' -SecretAcct ',parameters('ILBAccount'))]",
     "ILBcommandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customILBScriptFileToRun'), ' ', variables('ILBarguments'))]"
 
   },

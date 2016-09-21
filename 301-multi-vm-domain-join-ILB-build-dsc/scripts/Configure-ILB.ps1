@@ -4,16 +4,15 @@ param
     (
 [string] $AOAGListenerName,
 [string] $AOAGName,
+[string] $ILBName,
 [string] $ServernamePart,
 [string] $InstanceCount,
 [string] $Domain,
 [string] $FailoverClusterName,
 [string] $SubscriptionId,
-[string] $SecretClientId,
 [string] $Secreturikey,
 [string] $SecretKey,
 [string] $SecretSubId,
-[string] $SecretTenantId,
 [string] $SecretRg,
 [string] $SecretAcct
 
@@ -33,7 +32,7 @@ try {
                
 
         $Params  = @(
-                    @{ AOAGListenerName=$AOAGListenerName;AOAGName=$AOAGName;Nodes=$Nodes;FailoverClusterName=$FailoverClusterName;SubscriptionId=$SubscriptionId }
+                    @{ AOAGListenerName=$AOAGListenerName;ILBName=$ILBName;AOAGName=$AOAGName;Nodes=$Nodes;FailoverClusterName=$FailoverClusterName;SubscriptionId=$SubscriptionId }
                     )
 
         $body = ConvertTo-Json -InputObject $params
