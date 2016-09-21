@@ -19,6 +19,14 @@
         "description": "Name for the AvailabilitySet."
       }
     },
+    "loadBalancerName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
     "numberOfInstances": {
       "type": "int",
       "defaultValue": 2,
@@ -300,6 +308,9 @@
           },
           "AvailabilitySet": {
             "value": "[parameters('AvailabilitySet')]"
+          },
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
           },
           "DiskConfig": {
             "value": "[parameters('DiskConfig')]"
