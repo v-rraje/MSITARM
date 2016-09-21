@@ -566,13 +566,8 @@
           "FailoverClusterName": {
             "value": "[parameters('FailoverClusterName')]"
           },
-          "ILBClientID": {
-            "reference": {
-              "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
-              },
-              "secretName": "ILBClientId"
-            }
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
           },
           "ILBUriKey": {
             "reference": {
@@ -596,14 +591,6 @@
                 "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
               },
               "secretName": "ILBSubId"
-            }
-          },
-          "ILBTenantId": {
-            "reference": {
-              "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
-              },
-              "secretName": "ILBTenantId"
             }
           },
           "ILBResourceGroup": {
