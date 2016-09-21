@@ -32,7 +32,7 @@ try {
                
 
         $Params  = @(
-                    @{ AOAGListenerName=$AOAGListenerName;ILBName=$ILBName;AOAGName=$AOAGName;Nodes=$Nodes;FailoverClusterName=$FailoverClusterName;SubscriptionId=$SubscriptionId }
+                    @{ AOAGListenerName=$AOAGListenerName;ILBName=$LoadBalancerName;AOAGName=$AOAGName;Nodes=$Nodes;FailoverClusterName=$FailoverClusterName;SubscriptionId=$SubscriptionId }
                     )
 
         $body = ConvertTo-Json -InputObject $params
