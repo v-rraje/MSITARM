@@ -18,6 +18,14 @@
         "description": "Name for the AvailabilitySet."
       }
     },
+    "loadBalancerName": {
+      "type": "string",
+      "defaultValue": "WEBILB",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
     "numberOfInstances": {
       "type": "int",
       "defaultValue": 1,
@@ -246,11 +254,12 @@
     "formatDiskstemplate": "nested/template-DataDisks.json",
     "diskarrayTemplate": "nested/DiskArray.json",
     "SetStaticIP": "nested/template-SetStaticIP.json",
+    "loadBalancerName": "[parameters('loadBalancerName')]",
 
     "modulesUrl": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]",
     "FormatDisksUrl": "[concat(variables('BaseURL'), variables('formatDiskstemplate'))]",
     "SetStaticIPUrl": "[concat(variables('BaseURL'),variables('SetStaticIP'))]",
-      
+
     "vnetSubscriptionid": "[subscription().subscriptionId]",
     "vnetID": "[concat('/subscriptions/',variables('vnetSubscriptionid'),'/resourceGroups/',parameters('vnetResourceGroup'),'/providers/Microsoft.Network/virtualnetworks/',parameters('virtualNetwork'))]",
     "imageOffer": "[parameters('imageOffer')]",
@@ -397,7 +406,7 @@
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[variables('subnetRef')]"
-              }              
+              }
             }
           }
         ]
@@ -412,6 +421,66 @@
         "displayName": "AvailabilitySet"
       },
       "properties": {
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('loadBalancerName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "LoadBalancer"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+
+              "privateIPAllocationMethod": "Dynamic"
+            },
+            "name": "LoadBalancerFrontend"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackendPool1"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/frontendIPConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "loadDistribution": "SourceIPProtocol",
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule"
+          }
+        ],
+        "probes": [
+          {
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            },
+            "name": "lbprobe"
+          }
+        ]
       }
     },
     {
@@ -492,37 +561,6 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyindex(1),'nic1'))]"
             }
           ]
-        }
-      }
-    },
-    {
-      "name": "[concat(variables('nicName'),copyindex(1),'','-SetStaticIP')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "[concat(parameters('vmName'),copyindex(1),'nic1')]",
-        "[concat(parameters('vmName'),copyindex(1))]"
-      ],
-      "copy": {
-        "name": "StaticIPLoop",
-        "count": "[parameters('numberOfInstances')]"
-      },
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('SetStaticIPUrl')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "nicName": {
-            "value": "[concat(parameters('vmName'),copyindex(1))]"
-          },
-          "ipAddress": {
-            "value": "[reference(concat(parameters('vmName'),copyindex(1),'nic1')).ipConfigurations[0].properties.privateIPAddress]"
-          },
-          "subnetRef": {
-            "value": "[variables('subnetRef')]"
-          }
         }
       }
     },
