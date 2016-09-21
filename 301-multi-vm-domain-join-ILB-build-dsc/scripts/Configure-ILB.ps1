@@ -4,7 +4,7 @@ param
     (
 [string] $AOAGListenerName,
 [string] $AOAGName,
-[string] $ILBName,
+[string] $LoadBalancerName,
 [string] $ServernamePart,
 [string] $InstanceCount,
 [string] $Domain,
