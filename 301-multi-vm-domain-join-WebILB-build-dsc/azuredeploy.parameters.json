@@ -5,6 +5,12 @@
     "vmName": {
       "value": ""
     },
+    "AvailabilitySet": {
+      "value": ""
+    },
+    "loadBalancerName": {
+      "value": ""
+    },
     "localAdminUserName": {
       "value": ""
     },
