@@ -53,6 +53,12 @@
         "description": "Name for the LoadBalancer."
       }
     },
+     "ILBUriKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The ILB RunBook server URI key"
+      }
+    },
     "ILBkey": {
       "type": "securestring",
       "metadata": {
