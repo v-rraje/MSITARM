@@ -310,6 +310,13 @@
       "metadata": {
         "description": "The Vault key"
       }
+    },
+    "vaultResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Vault resource Group"
+      }
     }
   },
   "variables": {
@@ -569,10 +576,10 @@
           "loadBalancerName": {
             "value": "[parameters('loadBalancerName')]"
           },
-          "ILBUriKey": {
+         "ILBUriKey": {
             "reference": {
               "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
               },
               "secretName": "ILBUriKey"
             }
@@ -580,7 +587,7 @@
           "ILBkey": {
             "reference": {
               "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
               },
               "secretName": "ILBKey"
             }
@@ -588,7 +595,7 @@
           "ILBSubId": {
             "reference": {
               "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
               },
               "secretName": "ILBSubId"
             }
@@ -596,7 +603,7 @@
           "ILBResourceGroup": {
             "reference": {
               "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
               },
               "secretName": "ILBResourceGroup"
             }
@@ -604,7 +611,7 @@
           "ILBAccount": {
             "reference": {
               "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
               },
               "secretName": "ILBAccount"
             }
