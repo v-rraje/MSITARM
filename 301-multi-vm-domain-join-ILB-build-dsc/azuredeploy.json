@@ -576,14 +576,6 @@
           "loadBalancerName": {
             "value": "[parameters('loadBalancerName')]"
           },
-         "ILBUriKey": {
-            "reference": {
-              "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
-              },
-              "secretName": "ILBUriKey"
-            }
-          },
           "ILBkey": {
             "reference": {
               "keyVault": {

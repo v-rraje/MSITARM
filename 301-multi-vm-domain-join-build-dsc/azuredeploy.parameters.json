@@ -62,11 +62,14 @@
     "vnetResourceGroup": {
       "value": ""
     },
+    "subnetName": {
+      "value": ""
+    },
     "vmSize": {
-      "value": "Standard_A2"
+      "value": ""
     },
     "DiskConfig": {
-      "value": "win"
+      "value": "Win"
     },
     "DiskSize": {
       "value": "200"
