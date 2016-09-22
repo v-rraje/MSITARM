@@ -607,14 +607,14 @@
                 "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/SDO-Automation/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
               },
               "secretName": "ILBAccount"
-            },
-            "DashboardURL": {
-              "reference": {
-                "keyVault": {
-                  "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/DashboardURL', variables('vaultName'))]"
-                },
-                "secretName": "DashboardURL"
-              }
+            }
+          },
+          "DashboardURL": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/DashboardURL', variables('vaultName'))]"
+              },
+              "secretName": "DashboardURL"
             }
           }
         }
