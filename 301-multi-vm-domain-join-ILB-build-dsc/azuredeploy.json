@@ -611,7 +611,7 @@
           "DashboardURL": {
             "reference": {
               "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/DashboardURL', variables('vaultName'))]"
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
               },
               "secretName": "DashboardURL"
             }
