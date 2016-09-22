@@ -14,7 +14,8 @@ param
 [string] $SecretKey,
 [string] $SecretSubId,
 [string] $SecretRg,
-[string] $SecretAcct
+[string] $SecretAcct,
+[string] $dashboardURL
 
 )
 try {
@@ -42,7 +43,7 @@ try {
 
             if($jobID) {
                             
-               $jobstatusURL = "see Dashboard. Copy/paste this link-> 'http://co1cptdevweb01:4433/?searchText={0}&f_mtype=SQLAO-Configuration&f_dateType=all'  " -f $AOAGListenerName
+               $jobstatusURL = "see Dashboard. Copy/paste this link-> 'http://{0}/?searchText={1}&f_mtype=SQLAO-Configuration&f_dateType=all'  " -f $dashboardURL,$AOAGListenerName
                 
                write-host $jobstatusURL
 
