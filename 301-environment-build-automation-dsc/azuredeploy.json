@@ -256,7 +256,7 @@
   "variables": {
 
     "branch": "develop",
-    "SQLfolder": "/301-multi-vm-domain-join-ILB-build-dsc/",
+    "SQLfolder": "/301-multi-vm-domain-join-SQLILB-build-dsc/",
     "IISfolder": "/301-multi-vm-domain-join-WebILB-build-dsc/",
     "SQLbaseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('SQLfolder'))]",
     "IISbaseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('IISfolder'))]",
