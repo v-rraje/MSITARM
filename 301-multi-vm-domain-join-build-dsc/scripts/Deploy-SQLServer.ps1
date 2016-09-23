@@ -2884,13 +2884,9 @@ Configuration DeploySQLServer
                         ############################################
                         try {
                
-                         write-verbose "Extended Sprocs on $server"
-                            $secpasswd = ConvertTo-SecureString $using:SQLAdminPwd -AsPlainText -Force
-                            $credential = New-Object System.Management.Automation.PSCredential ($using:SQLAdmin, $using:secpasswd)
-                        
-                         $scriptblock = {Invoke-SQLCmd -ServerInstance $($env:computername) -Database 'master' -ConnectionTimeout 300 -QueryTimeout 600 -inputfile "C:\SQLStartup\PostConfiguration.sql" }
-             
-                         Invoke-Command -script  $scriptblock -ComputerName $($env:computername) -Credential $Credential
+                             write-verbose "Extended Sprocs on $server"
+                                                    
+                            Invoke-SQLCmd -ServerInstance $($env:computername) -Database 'master' -ConnectionTimeout 300 -QueryTimeout 600 -inputfile "C:\SQLStartup\PostConfiguration.sql"                       
 
                         } catch{
                             [string]$errorMessage = $_.Exception.Message
@@ -2916,6 +2912,75 @@ Configuration DeploySQLServer
             DependsOn = "[Script]ConfigureStartupJob"
         }
 
+          Script ConfigureSQLAccount{
+            GetScript = {
+                @{
+                }
+            }
+            SetScript = {
+
+                $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+                $ret = $false
+
+                if($sqlInstances -ne $null){
+                    try {                            
+                        
+                        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.ConnectionInfo") 
+                        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO")
+                        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SmoExtended")
+
+                        $srvConn = New-Object Microsoft.SqlServer.Management.Common.ServerConnection $env:computername
+ 
+                        $NtLogin = $($using:SQLServerAccount.UserName) 
+
+                        $srvConn.connect();
+                        $srv = New-Object Microsoft.SqlServer.Management.Smo.Server $srvConn
+            
+                        $login = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Login -ArgumentList $Srv, $NtLogin
+                        $login.LoginType = 'WindowsUser'
+                        $login.PasswordExpirationEnabled = $false
+                        $login.Create()
+
+                        #  Next two lines to give the new login a server role, optional
+
+                        $login.AddToRole('sysadmin')
+                        $login.Alter()
+
+                    } catch{
+                        [string]$errorMessage = $Error[0].Exception
+                        if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureBuiltInAdmins: $errorMessage"
+                        } else {$errorMessage}
+                    }
+                }
+            }
+            TestScript = { 
+                try{
+                    $sqlInstances = gwmi win32_service -computerName localhost -ErrorAction SilentlyContinue | ? { $_.Name -match "mssql*" -and $_.PathName -match "sqlservr.exe" } 
+
+                    if($sqlInstances -ne $null){
+
+                        $pass=$false
+                        $NtLogin = $($using:SQLServerAccount.UserName) 
+                        $q = "select count(*) as Instances from sys.syslogins where name='$ntLogin'"
+				        Invoke-Sqlcmd -Database master -Query $q            
+                        if(($q.Instances) -eq 1) {$pass=$true}else{$pass=$false} 
+                     
+                     }else{$pass=$false}
+                  
+                }catch{$pass=$false}
+            
+                if($Pass){
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "ConfigureSQLAccount $pass"
+                }else{
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Warning -message "ConfigureSQLAccount $pass"
+                }
+
+             return $pass
+            }
+            DependsOn = "[Script]ConfigureExtendedSprocs"
+        }
+
         Script ConfigureSQLServerService{
             GetScript = {
                 @{
@@ -2936,8 +3001,9 @@ Configuration DeploySQLServer
 
                                                 
                         $wmi = new-object ("Microsoft.SqlServer.Management.Smo.Wmi.ManagedComputer") $env:computername
-                                                
-                        $SQLsvc = get-service| where {$_.DisplayName -match 'SQL' -and ($_.name -ne 'MSSQLSERVER' -and $_.Name -ne 'SQLSERVERAGENT')}
+                           
+                        #disabling these until the user decides                     
+                        $SQLsvc = get-service| where {$_.DisplayName -match 'SQL' -and ($_.name -ne 'MSSQLSERVER' -and $_.Name -ne 'SQLSERVERAGENT' -and $_.Name -ne 'SQLWriter')}
                         $SQLsvc  | %{Set-Service $_.Name -StartupType disabled -Status Stopped}
                         
                         #set sql Service
@@ -2977,7 +3043,7 @@ Configuration DeploySQLServer
 
             return $pass
             }
-            DependsOn = "[Script]ConfigureExtendedSprocs"
+            DependsOn = "[Script]ConfigureSQLAccount"
         }
 
         Script ConfigureSQLAgentService{
@@ -3030,7 +3096,7 @@ Configuration DeploySQLServer
                     }
             return $pass
             }
-             DependsOn = "[Script]ConfigureSQLServerService"
+            DependsOn = "[Script]ConfigureSQLServerService"
         }
 
         Script ConfigureLocalPolicy{
