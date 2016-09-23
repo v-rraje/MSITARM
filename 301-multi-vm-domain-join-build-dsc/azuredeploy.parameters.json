@@ -23,6 +23,18 @@
     "SQLAdmins": {
       "value": ""
     },
+    "SQLServerAccount": {
+      "value": ""
+    },
+    "SQLServerPassword": {
+      "value": ""
+    },
+    "SQLAgentAccount": {
+      "value": ""
+    },
+    "SQLAgentPassword": {
+      "value": ""
+    },
     "appID": {
       "value": ""
     },
