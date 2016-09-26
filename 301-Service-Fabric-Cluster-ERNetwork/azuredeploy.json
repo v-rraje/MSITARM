@@ -211,7 +211,7 @@
 
 
     "branch": "develop",
-    "folder": "/301-multi-vm-domain-join-SQLILB-build-dsc/",
+    "folder": "/301-multi-vm-domain-join-ILB-build-dsc/",
     "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
 
     "vnetID": "[resourceId(parameters('virtualNetworkNameRG'), 'Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
