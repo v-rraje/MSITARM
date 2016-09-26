@@ -10,7 +10,7 @@
     },
     "localAdminUserName": {
       "type": "string",
-      "defaultValue": "ITSVC0",
+      "defaultValue": "",
       "minLength": 1,
       "metadata": {
         "description": "Local Username for the Virtual Machine."
@@ -47,14 +47,14 @@
     },
     "ouPath": {
       "type": "string",
-      "defaultValue": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com",
+      "defaultValue": "",
       "metadata": {
         "description": "The Organizational Unit the VM will join"
       }
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "redmond.corp.microsoft.com",
+      "defaultValue": "",
       "metadata": {
         "description": "The FQDN of the AD domain"
       }
@@ -89,7 +89,7 @@
     },
     "subnet0Prefix": {
       "type": "string",
-      "defaultValue": "10.138.137.128/25"
+      "defaultValue": ""
     },
     "vmStorageAccountName0": { "type": "string" },
     "publicIPAddressName": {
@@ -107,7 +107,7 @@
     },
     "virtualnetworkname": {
       "type": "string",
-      "defaultValue": "CPTARM-CORP-EUS2-VNET-1"
+      "defaultValue": ""
     },
     "virtualnetworknamerg": {
       "type": "string",
