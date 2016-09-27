@@ -239,8 +239,28 @@
       "metadata": {
         "description": "The pull server URI"
       }
+    },
+    "vaultname": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The vault Name"
+      }
+    },
+    "vaultkey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Vault key"
+      }
+    },
+    "vaultResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Vault resource Group"
+      }
     }
-
   },
   "variables": {
     "apiVersion": "2015-01-01",
@@ -262,6 +282,11 @@
     "FormatDisksUrl": "[concat(variables('BaseURL'),variables('formatDiskstemplate'))]",
     "AttachVMtoPullServerURL": "[concat(variables('BaseURL'),variables('configurePullTemplate'))]",
     "BuildMachineRoleURL": "[concat(variables('BaseURL'),'nested/template-Build',variables('Role'), '.json')]",
+    
+    "BuildwebILBCluster": "[concat(variables('BaseURL'),'nested/template-BuildwebILB.json')]",
+
+    "vaultname": "[parameters('vaultname')]",
+    "vaultkey": "[parameters('vaultkey')]",
 
     "AzureAutomation": {
       "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
@@ -442,6 +467,78 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/',parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]"
+      ]
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),'1','-BuildWebILBConfiguration')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('BuildWebILBCluster')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "numberOfInstances": {
+            "value": "[parameters('numberOfInstances')]"
+          },
+          "DomainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "WebILBName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "SQLILBName": {
+            "value": ""
+          },
+         "ILBkey": {
+          "reference": {
+            "keyVault": {
+              "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+            },
+            "secretName": "WebILBUriKey"
+          }
+          },
+          "ILBSubId": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+              },
+              "secretName": "ILBSubId"
+            }
+          },
+          "ILBResourceGroup": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+              },
+              "secretName": "ILBResourceGroup"
+            }
+          },
+          "ILBAccount": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+              },
+              "secretName": "ILBAccount"
+            }
+          },
+          "DashboardURL": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+              },
+              "secretName": "DashboardURL"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/','AttachVMtoPullServer',parameters('DiskConfig'),'1')]"
       ]
     }
   ]
