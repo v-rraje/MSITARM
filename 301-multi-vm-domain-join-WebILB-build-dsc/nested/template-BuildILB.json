@@ -45,34 +45,16 @@
         "description": "Name for the LoadBalancer."
       }
     },
-    "ILBClientID": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The ILB RunBook name"
-      }
-    },
     "ILBUriKey": {
       "type": "securestring",
       "metadata": {
         "description": "The ILB RunBook server URI key"
       }
     },
-    "ILBkey": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The ILB Runbook key"
-      }
-    },
     "ILBSubId": {
       "type": "securestring",
       "metadata": {
         "description": "The ILB Subscription"
-      }
-    },
-    "ILBTenantId": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The ILB Runbook Tenant"
       }
     },
     "ILBResourceGroup": {
