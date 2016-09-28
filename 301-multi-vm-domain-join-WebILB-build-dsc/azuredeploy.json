@@ -480,6 +480,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "DeploymentName": {
+            "value": "[deployment().name]"
+          },
           "vmName": {
             "value": "[parameters('vmName')]"
           },
@@ -495,13 +498,13 @@
           "SQLILBName": {
             "value": ""
           },
-         "ILBkey": {
-          "reference": {
-            "keyVault": {
-              "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
-            },
-            "secretName": "WebILBUriKey"
-          }
+          "ILBkey": {
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
+              },
+              "secretName": "WebILBUriKey"
+            }
           },
           "ILBSubId": {
             "reference": {

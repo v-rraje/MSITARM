@@ -4,11 +4,12 @@ param
     (
 [string] $DeploymentName,
 [string] $servernamepart,
+[string] $domain,
 [int] $InstanceCount,
 [string] $WebILBName,
 [string] $SQLILBName,
-[string] $SubscriptionID,
-[string] $Secreturikey
+[string] $ILBSubId,
+[string] $ILBkey
 )
 try {
 
