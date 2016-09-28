@@ -498,7 +498,7 @@
           "SQLILBName": {
             "value": "none"
           },
-          "ILBkey": {
+          "WebILBUriKey": {
             "reference": {
               "keyVault": {
                 "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
