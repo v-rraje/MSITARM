@@ -84,7 +84,7 @@
     "vmILBExtensionName": "ConfigureWebILB",
     "customILBScriptFileToRun": "Configure-WebILB.ps1",
     "customILBScriptFileUri": "[concat(variables('baseURL'),'scripts/',variables('customILBScriptFileToRun'))]",
-    "ILBarguments": "[concat(' -DeploymentName ', parameters('DeploymentName'), ' -SubscriptionId ',subscription().subscriptionId, ' -servernamepart ', parameters('vmName'), ' -domain ', parameters('DomainName'), ' -InstanceCount ', parameters('numberOfInstances'),' -SQLILBName ', parameters('SQLILBName'), ' -WebILBName ', parameters('WebILBName'), ' -ILBSubId ',parameters('ILBSubId'), ' -ILBURIkey ', parameters('WebILBUriKey'))]",
+    "ILBarguments": "[concat(' -DeploymentName ', parameters('DeploymentName'), ' -SubscriptionId ',subscription().subscriptionId, ' -servernamepart ', parameters('vmName'), ' -domain ', parameters('DomainName'), ' -InstanceCount ', parameters('numberOfInstances'),' -SQLILBName ', parameters('SQLILBName'), ' -WebILBName ', parameters('WebILBName'), ' -WebILBSubId ',parameters('ILBSubId'), ' -WebILBUriKey ', parameters('WebILBUriKey'))]",
     "ILBcommandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customILBScriptFileToRun'), ' ', variables('ILBarguments'))]"
 
   },

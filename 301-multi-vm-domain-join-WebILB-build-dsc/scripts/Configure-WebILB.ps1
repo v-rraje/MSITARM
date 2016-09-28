@@ -9,12 +9,21 @@ param
 [string] $SubscriptionId,
 [string] $WebILBName,
 [string] $SQLILBName,
-[string] $ILBSubId,
-[string] $ILBkey
+[string] $WebILBSubId,
+[string] $WebILBUriKey
 )
 try {
 
  $nodes=""
+ write-host "deploymentName=$deploymentName"
+ write-host "servernamepart=$servernamepart"
+ write-host "domain=$domain"
+ write-host "InstanceCount=$InstanceCount"
+ write-host "SubscriptionId=$SubscriptionId"
+ write-host "WebILBName=$WebILBName"
+ write-host "SQLILBName=$SQLILBName"
+ write-host "WebILBSubId=$WebILBSubId"
+ write-host "WebILBUriKey=$WebILBUriKey"
 
  (1..$InstanceCount) | %{ if($_ -ne $instanceCount) { $nodes += "$servernamepart$_,"} else {$nodes += "$servernamepart$_"} }
    
@@ -22,7 +31,7 @@ try {
         Import-Module cloudmsaad
          
         $response = $null
-        $uri = "https://s1events.azure-automation.net/webhooks?token={0}" -f $ILBkey
+        $uri = "https://s1events.azure-automation.net/webhooks?token={0}" -f $WebILBUriKey
         
         $headers = @{"From"="user@contoso.com";"Date"="$($(get-date).ToShortDateString())"}
                
