@@ -4,18 +4,18 @@ param
     (
 [string] $AOAGListenerName,
 [string] $AOAGName,
+[string] $LoadBalancerName,
 [string] $ServernamePart,
 [string] $InstanceCount,
 [string] $Domain,
 [string] $FailoverClusterName,
 [string] $SubscriptionId,
-[string] $SecretClientId,
 [string] $Secreturikey,
 [string] $SecretKey,
 [string] $SecretSubId,
-[string] $SecretTenantId,
 [string] $SecretRg,
-[string] $SecretAcct
+[string] $SecretAcct,
+[string] $dashboardURL
 
 )
 try {
@@ -33,7 +33,7 @@ try {
                
 
         $Params  = @(
-                    @{ AOAGListenerName=$AOAGListenerName;AOAGName=$AOAGName;Nodes=$Nodes;FailoverClusterName=$FailoverClusterName;SubscriptionId=$SubscriptionId }
+                    @{ AOAGListenerName=$AOAGListenerName;ILBName=$LoadBalancerName;AOAGName=$AOAGName;Nodes=$Nodes;FailoverClusterName=$FailoverClusterName;SubscriptionId=$SubscriptionId }
                     )
 
         $body = ConvertTo-Json -InputObject $params
@@ -43,16 +43,18 @@ try {
 
             if($jobID) {
                             
-               $jobstatusURL = "see Dashboard. 'http://co1cptdevweb01:4433/?searchText={0}&f_mtype=SQLAO-Configuration&f_dateType=all'  " -f $AOAGListenerName
+               $jobstatusURL = "see Dashboard. Copy/paste this link-> 'http://{0}/?searchText={1}&f_mtype=SQLAO-Configuration&f_dateType=all'  " -f $dashboardURL,$AOAGListenerName
                 
                write-host $jobstatusURL
 
             }
 
         } catch {
-         [string]$errorMessage = $_.Exception.Message
-         if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
-            Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
-         }
+
+             [string]$errorMessage = $_.Exception.Message
+             if([string]::IsNullOrEmpty($errorMessage) -ne $true) {
+                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 3001 -entrytype Error -message "ConfigureDataPath: $errorMessage"
+             }
+
             throw $errorMessage
         }
