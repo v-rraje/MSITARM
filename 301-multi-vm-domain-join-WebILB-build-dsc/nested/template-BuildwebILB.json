@@ -41,7 +41,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Name for the LoadBalancer."
+        "description": "Optional Name for the LoadBalancer."
       }
     },
     "ILBkey": {
