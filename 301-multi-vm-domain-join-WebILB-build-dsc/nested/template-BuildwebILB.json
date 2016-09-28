@@ -39,7 +39,7 @@
     },
     "SQLILBName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "none",
       "metadata": {
         "description": "Optional Name for the LoadBalancer."
       }
