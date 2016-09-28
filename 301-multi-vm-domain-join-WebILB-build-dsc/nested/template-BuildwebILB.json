@@ -44,7 +44,7 @@
         "description": "Optional Name for the LoadBalancer."
       }
     },
-    "ILBkey": {
+    "ILBURIkey": {
       "type": "securestring",
       "metadata": {
         "description": "The ILB Runbook key"
@@ -84,7 +84,7 @@
     "vmILBExtensionName": "ConfigureWebILB",
     "customILBScriptFileToRun": "Configure-WebILB.ps1",
     "customILBScriptFileUri": "[concat(variables('baseURL'),'scripts/',variables('customILBScriptFileToRun'))]",
-    "ILBarguments": "[concat(' -DeploymentName ', parameters('DeploymentName'), ' -SubscriptionId ',subscription().subscriptionId, ' -servernamepart ', parameters('vmName'), ' -domain ', parameters('DomainName'), ' -InstanceCount ', parameters('numberOfInstances'),' -SQLILBName ', parameters('SQLILBName'), ' -WebILBName ', parameters('WebILBName'), ' -ILBSubId ',parameters('ILBSubId'), ' -ILBkey ', parameters('ilbkey'))]",
+    "ILBarguments": "[concat(' -DeploymentName ', parameters('DeploymentName'), ' -SubscriptionId ',subscription().subscriptionId, ' -servernamepart ', parameters('vmName'), ' -domain ', parameters('DomainName'), ' -InstanceCount ', parameters('numberOfInstances'),' -SQLILBName ', parameters('SQLILBName'), ' -WebILBName ', parameters('WebILBName'), ' -ILBSubId ',parameters('ILBSubId'), ' -ILBURIkey ', parameters('ILBURIkey'))]",
     "ILBcommandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customILBScriptFileToRun'), ' ', variables('ILBarguments'))]"
 
   },

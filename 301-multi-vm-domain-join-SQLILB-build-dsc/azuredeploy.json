@@ -584,14 +584,6 @@
               "secretName": "ILBURIkey"
             }
           },
-          "ILBkey": {
-            "reference": {
-              "keyVault": {
-                "id": "[concat('/subscriptions/',variables('vaultkey'),'/resourceGroups/',parameters('vaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', variables('vaultName'))]"
-              },
-              "secretName": "ILBKey"
-            }
-          },
           "ILBSubId": {
             "reference": {
               "keyVault": {
