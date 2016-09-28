@@ -5,7 +5,7 @@ param
 [string] $DeploymentName,
 [string] $servernamepart,
 [string] $domain,
-[int] $InstanceCount,
+[int]    $InstanceCount,
 [string] $WebILBName,
 [string] $SQLILBName,
 [string] $ILBSubId,
@@ -27,7 +27,7 @@ try {
                
 
         $Params  = @(
-                    @{ Nodes=$Nodes;DeploymentName=$DeploymentName;webilbname=$webilbname;sqlibname=$sqlibname;SubscriptionId=$SubscriptionId }
+                    @{ Nodes=$Nodes;DeploymentName=$DeploymentName;webilbname=$webilbname;sqlibname=$sqlibname;SubscriptionId=$ILBSubId }
                     )
 
         $body = ConvertTo-Json -InputObject $params
