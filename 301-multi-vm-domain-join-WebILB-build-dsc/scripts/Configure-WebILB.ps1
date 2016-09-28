@@ -19,9 +19,12 @@ try {
    
  
         Import-Module cloudmsaad
+         write-host uri
 
         $response = $null
         $uri = "https://s1events.azure-automation.net/webhooks?token={0}" -f $ILBkey
+        write-host $DeploymentName
+
         $headers = @{"From"="user@contoso.com";"Date"="$($(get-date).ToShortDateString())"}
                
 
