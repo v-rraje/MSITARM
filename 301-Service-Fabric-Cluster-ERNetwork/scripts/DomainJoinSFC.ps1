@@ -325,9 +325,9 @@ configuration DomainJoin
         {
             Ensure = 'Present'
             Name = 'Web-Server'
-            IncludeAllSubFeature = $true
             DependsOn= '[Script]ConfigureSQLServerDomain'
         }
+
         WindowsFeature InstallSAPNet45
         {
             Ensure = 'Present'
@@ -339,7 +339,6 @@ configuration DomainJoin
         {
             Ensure = 'Present'
             Name = 'Web-Mgmt-Tools'
-            IncludeAllSubFeature = $true
             DependsOn= '[WindowsFeature]InstallIIS'
         }    
 
