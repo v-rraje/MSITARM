@@ -353,7 +353,7 @@ configuration DomainJoin
             }
             TestScript = {
                 
-                $answer = Get-NetFirewallRule -DisplayName "HTTP ENGINE TCP"
+                $answer = Get-NetFirewallRule -DisplayName "HTTP ENGINE TCP" -ErrorAction SilentlyContinue
                 if($answer) { $true} else {$false}
              
             }    
@@ -370,7 +370,7 @@ configuration DomainJoin
             }
             TestScript = {
                 
-                $answer = Get-NetFirewallRule -DisplayName "HTTPS ENGINE TCP"
+                $answer = Get-NetFirewallRule -DisplayName "HTTPS ENGINE TCP" -ErrorAction SilentlyContinue
                 if($answer) { $true} else {$false}
              
             }    
