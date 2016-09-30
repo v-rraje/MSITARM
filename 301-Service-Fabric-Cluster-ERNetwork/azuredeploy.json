@@ -255,9 +255,8 @@
       "[concat('4', parameters('vmStorageAccountName0'))]"
     ],
     "vmExtensionName": "Microsoft.Powershell.DSC",
-    "DomainJoinzip": "scripts/DomainJoin.ps1.zip",
-    "DomainJoinModule": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]",
-    "IISInstallModule": "[concat(variables('BaseURL'),variables('IISDeployzip'))]"
+    "DomainJoinzip": "scripts/DomainJoinsfc.ps1.zip",
+    "DomainJoinModule": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]"
 
   },
     "resources": [
@@ -536,7 +535,7 @@
                     "settings": {
                       "ModulesUrl": "[variables('DomainJoinModule')]",
                       "SasToken": "",
-                      "ConfigurationFunction": "DomainJoin.ps1\\DomainJoin",
+                      "ConfigurationFunction": "DomainJoinsfc.ps1\\DomainJoin",
                       "Properties": {
                         "Domain": "[parameters('DomainName')]",
                         "LocalAccount": {
@@ -558,25 +557,6 @@
                         "DomainPassword": "[parameters('domainJoinPassword')]"
                       }
 
-                    }
-                  }
-                },
-                {
-                  "type": "Microsoft.Compute/virtualMachines/extensions",
-                  "name": "[concat(variables('vmNode0Name'),'/Microsoft.Powershell.DSC')]",
-                  "apiVersion": "2015-06-15",
-                  "location": "[resourceGroup().location]",
-                  "properties": {
-                    "publisher": "Microsoft.Powershell",
-                    "type": "DSC",
-                    "typeHandlerVersion": "2.18",
-                    "autoUpgradeMinorVersion": true,
-                    "protectedSettings": { },
-                    "settings": {
-                      "ModulesUrl": "[variables('IISInstallmodule')]",
-                      "SasToken": "",
-                      "ConfigurationFunction": "[variables('configurationFunction')]",
-                      "Properties": [ ]
                     }
                   }
                 }
