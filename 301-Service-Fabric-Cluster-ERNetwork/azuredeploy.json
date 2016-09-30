@@ -2,7 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
-
     "clusterName": {
       "type": "string",
       "defaultValue": "Cluster",
@@ -59,6 +58,35 @@
         "description": "The FQDN of the AD domain"
       }
     },
+    "appID": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "appID tag for the Virtual Machine."
+      }
+    },
+    "orgID": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "orgID tag for the Virtual Machine."
+      }
+    },
+    "env": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "test",
+        "prod"
+      ],
+      "metadata": {
+        "description": "environment tag for the Virtual Machine."
+      }
+    },
     "nt0applicationStartPort": {
       "type": "int",
       "defaultValue": 20000
@@ -83,15 +111,10 @@
       "type": "int",
       "defaultValue": 19080
     },
-    "subnet0Name": {
-      "type": "string",
-      "defaultValue": "Subnet-1"
-    },
-    "subnet0Prefix": {
+    "vmStorageAccountName0": {
       "type": "string",
       "defaultValue": ""
     },
-    "vmStorageAccountName0": { "type": "string" },
     "publicIPAddressName": {
       "type": "string",
       "defaultValue": "PublicIP-VM"
@@ -105,15 +128,26 @@
       "type": "string",
       "defaultValue": "vhds"
     },
-    "virtualnetworkname": {
+    "virtualNetwork": {
       "type": "string",
       "defaultValue": ""
     },
-    "virtualnetworknamerg": {
+    "vnetResourceGroup": {
       "type": "string",
       "defaultValue": "ERNetwork"
     },
-    "dnsName": { "type": "string" },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "Subnet-1"
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "dnsName": {
+      "type": "string",
+      "defaultValue": "NIC"
+    },
     "nicName": {
       "type": "string",
       "defaultValue": "NIC"
@@ -130,15 +164,15 @@
       "type": "string",
       "defaultValue": "false"
     },
-    "vmImagePublisher": {
+    "ImagePublisher": {
       "type": "string",
       "defaultValue": "MicrosoftWindowsServer"
     },
-    "vmImageOffer": {
+    "ImageOffer": {
       "type": "string",
       "defaultValue": "WindowsServer"
     },
-    "vmImageSku": {
+    "Sku": {
       "type": "string",
       "defaultValue": "2012-R2-Datacenter"
     },
@@ -173,22 +207,14 @@
       "defaultValue": "Standard_LRS",
       "metadata": { "description": "Replication option for the support log storage account" }
     },
-    "supportLogStorageAccountName": {
-      "type": "string",
-      "defaultValue": "[toLower( concat('sflogs', uniqueString(resourceGroup().id),'2'))]",
-      "metadata": { "description": "Name for the storage account that contains support logs from the cluster" }
-    },
+   
     "applicationDiagnosticsStorageAccountType": {
       "type": "string",
       "allowedValues": [ "Standard_LRS", "Standard_GRS" ],
       "defaultValue": "Standard_LRS",
       "metadata": { "description": "Replication option for the application diagnostics storage account" }
     },
-    "applicationDiagnosticsStorageAccountName": {
-      "type": "string",
-      "defaultValue": "[toLower(concat(uniqueString(resourceGroup().id), '3' ))]",
-      "metadata": { "description": "Name for the storage account that contains application diagnostics data from the cluster" }
-    },
+    
     "vmNodeType0Name": {
       "type": "string",
       "defaultValue": "NodeType3"
@@ -208,14 +234,18 @@
     "vNetApiVersion": "2015-06-15",
     "storageApiVersion": "2015-06-15",
     "publicIPApiVersion": "2015-06-15",
-
+    "supportLogStorageAccountName": "[toLower( concat('sflogs', uniqueString(resourceGroup().id),'2'))]",
+    "applicationDiagnosticsStorageAccountName": "[toLower(concat(uniqueString(resourceGroup().id), '3' ))]",
 
     "branch": "develop",
-    "folder": "/301-multi-vm-domain-join-ILB-build-dsc/",
+    "folder": "/301-Service-Fabric-Cluster-ERNetwork/",
     "baseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('folder'))]",
 
-    "vnetID": "[resourceId(parameters('virtualNetworkNameRG'), 'Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "subnet0Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnet0Name'))]",
+    "IISDeployzip": "scripts/Deploy-WebServer.ps1.zip",
+    "configurationFunction": "Deploy-WebServer.ps1\\DeployWebServer",
+
+    "vnetID": "[resourceId(parameters('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks',parameters('virtualNetwork'))]",
+    "subnet0Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
     "vmNode0Name": "SFC3",
     "uniqueStringArray0": [
       "[concat('0', parameters('vmStorageAccountName0'))]",
@@ -226,7 +256,8 @@
     ],
     "vmExtensionName": "Microsoft.Powershell.DSC",
     "DomainJoinzip": "scripts/DomainJoin.ps1.zip",
-    "modulesUrl": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]"
+    "DomainJoinModule": "[concat(variables('BaseURL'),variables('DomainJoinzip'))]",
+    "IISInstallModule": "[concat(variables('BaseURL'),variables('IISDeployzip'))]"
 
   },
     "resources": [
@@ -248,7 +279,7 @@
       {
         "apiVersion": "[variables('storageApiVersion')]",
         "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('supportLogStorageAccountName')]",
+        "name": "[variables('supportLogStorageAccountName')]",
         "location": "[resourceGroup().location]",
         "properties": { "accountType": "[parameters('supportLogStorageAccountType')]" },
         "tags": {
@@ -259,7 +290,7 @@
       {
         "apiVersion": "[variables('storageApiVersion')]",
         "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('applicationDiagnosticsStorageAccountName')]",
+        "name": "[variables('applicationDiagnosticsStorageAccountName')]",
         "location": "[resourceGroup().location]",
         "properties": { "accountType": "[parameters('applicationDiagnosticsStorageAccountType')]" },
         "tags": {
@@ -420,8 +451,8 @@
           "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray0')[2])]",
           "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray0')[3])]",
           "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray0')[4])]",
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('supportLogStorageAccountName'))]",
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('applicationDiagnosticsStorageAccountName'))]",
+          "[concat('Microsoft.Storage/storageAccounts/', variables('supportLogStorageAccountName'))]",
+          "[concat('Microsoft.Storage/storageAccounts/', variables('applicationDiagnosticsStorageAccountName'))]",
           "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
         ],
         "properties": {
@@ -436,8 +467,8 @@
                     "type": "ServiceFabricNode",
                     "autoUpgradeMinorVersion": false,
                     "protectedSettings": {
-                      "StorageAccountKey1": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('supportLogStorageAccountName')),'2015-05-01-preview').key1]",
-                      "StorageAccountKey2": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('supportLogStorageAccountName')),'2015-05-01-preview').key2]"
+                      "StorageAccountKey1": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('supportLogStorageAccountName')),'2015-05-01-preview').key1]",
+                      "StorageAccountKey2": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('supportLogStorageAccountName')),'2015-05-01-preview').key2]"
                     },
                     "publisher": "Microsoft.Azure.ServiceFabric",
                     "settings": {
@@ -455,8 +486,8 @@
                     "type": "IaaSDiagnostics",
                     "autoUpgradeMinorVersion": true,
                     "protectedSettings": {
-                      "storageAccountName": "[parameters('applicationDiagnosticsStorageAccountName')]",
-                      "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('applicationDiagnosticsStorageAccountName')),'2015-05-01-preview').key1]",
+                      "storageAccountName": "[variables('applicationDiagnosticsStorageAccountName')]",
+                      "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('applicationDiagnosticsStorageAccountName')),'2015-05-01-preview').key1]",
                       "storageAccountEndPoint": "https://core.windows.net/"
                     },
                     "publisher": "Microsoft.Azure.Diagnostics",
@@ -490,7 +521,7 @@
                           }
                         }
                       },
-                      "StorageAccount": "[parameters('applicationDiagnosticsStorageAccountName')]"
+                      "StorageAccount": "[variables('applicationDiagnosticsStorageAccountName')]"
                     },
                     "typeHandlerVersion": "1.5"
                   }
@@ -503,7 +534,7 @@
                     "typeHandlerVersion": "2.0",
                     "autoUpgradeMinorVersion": true,
                     "settings": {
-                      "ModulesUrl": "[variables('modulesUrl')]",
+                      "ModulesUrl": "[variables('DomainJoinModule')]",
                       "SasToken": "",
                       "ConfigurationFunction": "DomainJoin.ps1\\DomainJoin",
                       "Properties": {
@@ -527,6 +558,25 @@
                         "DomainPassword": "[parameters('domainJoinPassword')]"
                       }
 
+                    }
+                  }
+                },
+                {
+                  "type": "Microsoft.Compute/virtualMachines/extensions",
+                  "name": "[concat(variables('vmNode0Name'),'/Microsoft.Powershell.DSC')]",
+                  "apiVersion": "2015-06-15",
+                  "location": "[resourceGroup().location]",
+                  "properties": {
+                    "publisher": "Microsoft.Powershell",
+                    "type": "DSC",
+                    "typeHandlerVersion": "2.18",
+                    "autoUpgradeMinorVersion": true,
+                    "protectedSettings": { },
+                    "settings": {
+                      "ModulesUrl": "[variables('IISInstallmodule')]",
+                      "SasToken": "",
+                      "ConfigurationFunction": "[variables('configurationFunction')]",
+                      "Properties": [ ]
                     }
                   }
                 }
@@ -569,9 +619,9 @@
             },
             "storageProfile": {
               "imageReference": {
-                "publisher": "[parameters('vmImagePublisher')]",
-                "offer": "[parameters('vmImageOffer')]",
-                "sku": "[parameters('vmImageSku')]",
+                "publisher": "[parameters('ImagePublisher')]",
+                "offer": "[parameters('ImageOffer')]",
+                "sku": "[parameters('Sku')]",
                 "version": "[parameters('vmImageVersion')]"
               },
               "osDisk": {
@@ -604,17 +654,17 @@
         "type": "Microsoft.ServiceFabric/clusters",
         "name": "[parameters('clusterName')]",
         "location": "[resourceGroup().location]",
-        "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/', parameters('supportLogStorageAccountName'))]" ],
+        "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/', variables('supportLogStorageAccountName'))]" ],
         "properties": {
           "clientCertificateCommonNames": [ ],
           "clientCertificateThumbprints": [ ],
           "clusterState": "Default",
           "diagnosticsStorageAccountConfig": {
-            "blobEndpoint": "[concat('https://',parameters('supportLogStorageAccountName'),'.blob.core.windows.net/')]",
+            "blobEndpoint": "[concat('https://',variables('supportLogStorageAccountName'),'.blob.core.windows.net/')]",
             "protectedAccountKeyName": "StorageAccountKey1",
-            "queueEndpoint": "[concat('https://',parameters('supportLogStorageAccountName'),'.queue.core.windows.net/')]",
-            "storageAccountName": "[parameters('supportLogStorageAccountName')]",
-            "tableEndpoint": "[concat('https://',parameters('supportLogStorageAccountName'),'.table.core.windows.net/')]"
+            "queueEndpoint": "[concat('https://',variables('supportLogStorageAccountName'),'.queue.core.windows.net/')]",
+            "storageAccountName": "[variables('supportLogStorageAccountName')]",
+            "tableEndpoint": "[concat('https://',variables('supportLogStorageAccountName'),'.table.core.windows.net/')]"
           },
           "fabricSettings": [ ],
           "managementEndpoint": "[concat('http://',parameters('clusterName'),':',parameters('nt0fabricHttpGatewayPort'))]",
