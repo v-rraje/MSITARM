@@ -27,12 +27,14 @@
       "value": ""
     },
     "appID": {
-      "value": "dev"
+      "value": ""
     },
     "orgID": {
       "value": ""
     },
-
+    "vmStorageAccountName0": {
+      "value": ""
+    },
     "nt0applicationStartPort": {
       "value": 20000
     },
@@ -51,9 +53,6 @@
     "nt0fabricHttpGatewayPort": {
       "value": 19080
     },
-    "vmStorageAccountName0": {
-      "value": ""
-    },
     "publicIPAddressName": {
       "value": "PublicIP-VM"
     },
@@ -67,7 +66,7 @@
       "value": ""
     },
     "vnetResourceGroup": {
-      "value": "ERNetwork"
+      "value": ""
     },
     "subnetName": {
       "value": "Subnet-1"
@@ -79,7 +78,7 @@
       "value": ""
     },
     "nicName": {
-      "value": "Nic1"
+      "value": ""
     },
     "lbName": {
       "value": "Loadbalancer"
@@ -103,13 +102,13 @@
       "value": "latest"
     },
     "loadBalancedAppPort1": {
-      "value": "80"
+      "value": 80
     },
     "loadBalancedAppPort2": {
-      "value": "8505"
+      "value": 8505
     },
     "loadBalancedAppPort3": {
-      "value": "8506"
+      "value": 8506
     },
     "storageAccountType0": {
       "value": "Standard_LRS"
@@ -119,7 +118,7 @@
     },
 
     "applicationDiagnosticsStorageAccountType": {
-      "value": ""
+      "value": "Standard_LRS"
     },
 
     "vmNodeType0Name": {
@@ -129,9 +128,20 @@
       "value": "Standard_D2"
     },
     "vmNodeType0Count": {
-      "value": "3"
+      "value": 5
+    },
+    "certificateThumbprint": {
+      "value": ""
+    },
+    "certificateStoreValue": {
+      "value": ""
+    },
+    "sourceVaultvalue": {
+      "value": ""
+    },
+    "sourceVaultSecret": {
+      "value": ""
     }
-
 
   }
 }
