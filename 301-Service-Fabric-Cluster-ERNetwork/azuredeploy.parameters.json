@@ -3,37 +3,37 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterName": {
-      "value": "cptc1a"
+      "value": ""
     },
     "localAdminUserName": {
-      "value": "ITSVC0"
+      "value": ""
     },
     "localAdminPassword": {
-      "value": "!P@ssword"
+      "value": ""
     },
     "domainJoinUserName": {
-      "value": "redmond\\trworth"
+      "value": ""
     },
     "domainJoinPassword": {
-      "value": "whereig0next?"
+      "value": ""
     },
     "localAdmins": {
-      "value": "redmond\\trworth"
+      "value": ""
     },
     "domainName": {
-      "value": "redmond.corp.microsoft.com"
+      "value": ""
     },
     "OuPath": {
-      "value": "OU=ITManaged,OU=ITServices,DC=redmond,DC=corp,DC=microsoft,DC=com"
+      "value": ""
     },
     "appID": {
-      "value": "dev"
+      "value": ""
     },
     "orgID": {
-      "value": "org"
+      "value": ""
     },
     "vmStorageAccountName0": {
-      "value": "tworthsfcdisks"
+      "value": ""
     },
     "nt0applicationStartPort": {
       "value": 20000
@@ -63,22 +63,22 @@
       "value": "vhds"
     },
     "virtualNetwork": {
-      "value": "CPTARM-CORP-EUS2-VNET-1"
+      "value": ""
     },
     "vnetResourceGroup": {
-      "value": "ERNetwork"
+      "value": ""
     },
     "subnetName": {
       "value": "Subnet-1"
     },
     "subnetPrefix": {
-      "value": "10.138.137.128/25,"
+      "value": ""
     },
     "dnsName": {
-      "value": "cloudmssfcdev"
+      "value": ""
     },
     "nicName": {
-      "value": "Nic1"
+      "value": ""
     },
     "lbName": {
       "value": "Loadbalancer"
@@ -131,13 +131,13 @@
       "value": 5
     },
     "certificateThumbprint": {
-      "value": "a7af70971c745a05b579130363b52a83e5515f62"
+      "value": ""
     },
     "certificateStoreValue": {
-      "value": "My"
+      "value": ""
     },
     "sourceVaultvalue": {
-      "value": "/subscriptions/5d68ee96-7272-4664-b122-9bec5758ea8c/resourceGroups/cptV6RG0/providers/Microsoft.KeyVault/vaults/CloudMSSFCVault"
+      "value": ""
     },
     "sourceVaultSecret": {
       "value": ""
