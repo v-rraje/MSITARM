@@ -35,7 +35,6 @@ configuration DomainJoin
 
         if($domain -match 'partners') {
 
-                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "Configure for Partners Access" 
                      try{
                             $fw=New-object –comObject HNetCfg.FwPolicy2
                          

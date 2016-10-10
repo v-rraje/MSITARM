@@ -17,10 +17,10 @@
     "domainJoinPassword": {
       "value": ""
     },
-    "SQLAdmins": {
-      "value": ""
+    "numberOfInstances": {
+      "value": "1"
     },
-   "localAdmins": {
+    "localAdmins": {
       "value": ""
     },
     "appID": {

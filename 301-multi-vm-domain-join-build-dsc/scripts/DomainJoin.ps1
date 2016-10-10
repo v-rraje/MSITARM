@@ -34,8 +34,7 @@ configuration DomainJoin
         [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ($DomainAccount.UserName, $DomainAccount.Password)
 
         if($domain -match 'partners') {
-
-                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "Configure for Partners Access" 
+                            
                      try{
                             $fw=New-object –comObject HNetCfg.FwPolicy2
                          
