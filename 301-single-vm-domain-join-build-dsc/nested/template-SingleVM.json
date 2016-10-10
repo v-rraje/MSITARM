@@ -149,7 +149,7 @@
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "redmond.corp.microsoft.com",
+      "defaultValue": "",
       "metadata": {
         "description": "The FQDN of the AD domain"
       }
