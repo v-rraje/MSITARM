@@ -26,10 +26,7 @@
     "localAdmins": {
       "value": ""
     },
-    "SQLAdmins": {
-      "value": ""
-    },
-    "appID": {
+     "appID": {
       "value": ""
     },
     "domainName": {

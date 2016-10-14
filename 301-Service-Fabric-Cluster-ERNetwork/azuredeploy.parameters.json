@@ -5,6 +5,9 @@
     "clusterName": {
       "value": ""
     },
+    "VMScaleSetName": {
+      "value": ""
+    },
     "localAdminUserName": {
       "value": ""
     },
