@@ -34,7 +34,8 @@ configuration DomainJoin
         [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ($DomainAccount.UserName, $DomainAccount.Password)
 
         if($domain -match 'partners') {
-                            
+
+                    Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1000 -entrytype Information -message "Configure for Partners Access" 
                      try{
                             $fw=New-object –comObject HNetCfg.FwPolicy2
                          
@@ -234,11 +235,11 @@ configuration DomainJoin
                         $login.Alter()
                           
                         ########################## +SQLSvcAccounts ##################################### 
-                        try{                                                                    
+                                                                                        
                         $SQLAdminsList = $($using:SQLAdmins).split(",")
                         
                         foreach($SysAdmin in $SQLAdminsList) {
-
+                         try{   
                             $login = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Login -ArgumentList $Srv, $SysAdmin
                             $login.LoginType = 'WindowsUser'
                             $login.PasswordExpirationEnabled = $false
@@ -251,8 +252,11 @@ configuration DomainJoin
                                 $login.AddToRole('sysadmin')
                                 $login.Alter()           
                             }
+                             }catch{
+                                Write-EventLog -LogName Application -source AzureArmTemplates -eventID 1001 -entrytype Error -message "Failed to add: $($SysAdmin) $($_.exception.message)" 
+                             } #dont want it to be fatal for the rest.
                          }
-                        }catch{} #nice to have but dont want it to be fatal.
+                       
 
                         ########################## -[localadmin] #####################################
                         try{
