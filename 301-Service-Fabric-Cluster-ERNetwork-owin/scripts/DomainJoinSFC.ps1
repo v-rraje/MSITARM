@@ -12,8 +12,8 @@ configuration DomainJoin
         [System.Management.Automation.PSCredential] $DomainAccount,
         [string] $LocalAdmins='',
         [string] $SQLAdmins='',
-        [switch] $InstallIIS,
-        [switch] $InstallSFC
+        [int] $InstallIIS=0,
+        [int] $InstallSFC=0
     ) 
     
     
@@ -322,7 +322,7 @@ configuration DomainJoin
             DependsOn= '[xWaitForADDomain]DscForestWait'
         }
 
-        if($InstallIIS -eq $true) {
+        if($InstallIIS -eq 1) {
         WindowsFeature InstallIIS
         {
             Ensure = 'Present'
@@ -381,7 +381,7 @@ configuration DomainJoin
         }
     }
             
-        if($InstallSFC -eq $true) {    
+        if($InstallSFC -eq 1) {    
 
         Script ConfigureHTTPFirewall
         {
