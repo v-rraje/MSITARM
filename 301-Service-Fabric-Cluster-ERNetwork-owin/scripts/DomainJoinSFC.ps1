@@ -382,6 +382,13 @@ configuration DomainJoin
     }
             
         if($InstallSFC -eq 1) {    
+        WindowsFeature InstallSAPNet45
+        {
+            Ensure = 'Present'
+            Name = 'Web-Asp-Net45'
+            IncludeAllSubFeature = $true
+          DependsOn= '[Script]ConfigureSQLServerDomain'
+        }
 
         Script ConfigureHTTPFirewall
         {
