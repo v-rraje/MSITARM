@@ -38,7 +38,9 @@
     "vmStorageAccountName0": {
       "value": ""
     },
-   
+    "vmStorageAccountName1": {
+      "value": ""
+    },
     "nt0applicationStartPort": {
       "value": 20000
     },
@@ -57,7 +59,24 @@
     "nt0fabricHttpGatewayPort": {
       "value": 19080
     },
-   
+    "nt1applicationStartPort": {
+      "value": 30000
+    },
+    "nt1applicationEndPort": {
+      "value": 40000
+    },
+    "nt1ephemeralStartPort": {
+      "value": 49152
+    },
+    "nt1ephemeralEndPort": {
+      "value": 65534
+    },
+    "nt1fabricTcpGatewayPort": {
+      "value": 19000
+    },
+    "nt1fabricHttpGatewayPort": {
+      "value": 19080
+    },
     "publicIPAddressName": {
       "value": "PublicIP-VM"
     },
@@ -121,6 +140,9 @@
     "storageAccountType0": {
       "value": "Standard_LRS"
     },
+    "storageAccountType1": {
+      "value": "Standard_LRS"
+    },
     "supportLogStorageAccountType": {
       "value": "Standard_LRS"
     },
@@ -137,7 +159,16 @@
     "vmNodeType0Count": {
       "value": 5
     },
-     "certificateThumbprint": {
+    "vmNodeType2Name": {
+      "value": "Worker"
+    },
+    "vmNodeType2Size": {
+      "value": "Standard_D4"
+    },
+    "vmNodeType1Count": {
+      "value": 5
+    },
+    "certificateThumbprint": {
       "value": ""
     },
     "certificateStoreValue": {
