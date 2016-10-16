@@ -322,7 +322,7 @@ configuration DomainJoin
             DependsOn= '[xWaitForADDomain]DscForestWait'
         }
 
-      if($using:InstallIIS) {
+        if($InstallIIS) {
         WindowsFeature InstallIIS
         {
             Ensure = 'Present'
@@ -381,7 +381,7 @@ configuration DomainJoin
         }
     }
             
-    if($using:InstallSFC) {    
+        if($InstallSFC) {    
 
         Script ConfigureHTTPFirewall
         {
