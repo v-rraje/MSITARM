@@ -660,3 +660,4 @@ configuration DomainJoin
             }
        }   
     }
+}
