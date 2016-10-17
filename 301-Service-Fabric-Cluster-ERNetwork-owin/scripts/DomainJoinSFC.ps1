@@ -322,12 +322,226 @@ configuration DomainJoin
             DependsOn= '[xWaitForADDomain]DscForestWait'
         }
 
+        Script Install_Ne_4.6.2 {
+            GetScript = {
+               @{
+                }
+            }
+         
+            SetScript = {
+                
+                $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP462-KB3151802-Web.exe"
+               
+                $FileName = $SourceURI.Split('/')[-1]
+                $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
+
+                if (!(Test-Path $BinPath))
+                {
+                    Invoke-Webrequest -Uri $SourceURI -OutFile $BinPath
+                }
+
+                write-verbose "Installing .Net 4.6.2 from $BinPath"
+                write-verbose "Executing $binpath /q /norestart"
+                Sleep 5
+                Start-Process -FilePath $BinPath -ArgumentList "/q /norestart" -Wait -NoNewWindow            
+                Sleep 5
+                #Write-Verbose "Setting DSCMachineStatus to reboot server after DSC run is completed"
+                #$global:DSCMachineStatus = 1
+            }
+
+            TestScript = {
+                [int]$NetBuildVersion = 394806
+
+                if (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' | %{$_ -match 'Release'})
+                {
+                    [int]$CurrentRelease = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full').Release
+                    if ($CurrentRelease -lt $NetBuildVersion)
+                    {
+                        Write-Verbose "Current .Net build version is less than 4.6.2 ($CurrentRelease)"
+                        return $false
+                    }
+                    else
+                    {
+                        Write-Verbose "Current .Net build version is the same as or higher than 4.6.2 ($CurrentRelease)"
+                        return $true
+                    }
+                }
+                else
+                {
+                    Write-Verbose ".Net build version not recognised"
+                    return $false
+                }
+            }
+
+        }
+        
+        Script Install_Ne_4.6.1 {
+            GetScript = {
+               @{
+                }
+            }
+         
+            SetScript = {
+                
+                $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP461-KB3102438-Web.exe"
+               
+                $FileName = $SourceURI.Split('/')[-1]
+                $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
+
+                if (!(Test-Path $BinPath))
+                {
+                    Invoke-Webrequest -Uri $SourceURI -OutFile $BinPath
+                }
+
+                write-verbose "Installing .Net 4.6.1 from $BinPath"
+                write-verbose "Executing $binpath /q /norestart"
+                Sleep 5
+                Start-Process -FilePath $BinPath -ArgumentList "/q /norestart" -Wait -NoNewWindow            
+                Sleep 5
+                #Write-Verbose "Setting DSCMachineStatus to reboot server after DSC run is completed"
+                #$global:DSCMachineStatus = 1
+            }
+
+            TestScript = {
+                [int]$NetBuildVersion = 394271
+
+                if (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' | %{$_ -match 'Release'})
+                {
+                    [int]$CurrentRelease = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full').Release
+                    if ($CurrentRelease -lt $NetBuildVersion)
+                    {
+                        Write-Verbose "Current .Net build version is less than 4.6.1 ($CurrentRelease)"
+                        return $false
+                    }
+                    else
+                    {
+                        Write-Verbose "Current .Net build version is the same as or higher than 4.6.1 ($CurrentRelease)"
+                        return $true
+                    }
+                }
+                else
+                {
+                    Write-Verbose ".Net build version not recognised"
+                    return $false
+                }
+            }
+
+        }
+        
+        Script Install_Ne_4.6 {
+            GetScript = {
+               @{
+                }
+            }
+            SetScript = {
+                
+                $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP46-KB3045560-Web.exe"
+               
+                $FileName = $SourceURI.Split('/')[-1]
+                $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
+
+                if (!(Test-Path $BinPath))
+                {
+                    Invoke-Webrequest -Uri $SourceURI -OutFile $BinPath
+                }
+
+                write-verbose "Installing .Net 4.6 from $BinPath"
+                write-verbose "Executing $binpath /q /norestart"
+                Sleep 5
+                Start-Process -FilePath $BinPath -ArgumentList "/q /norestart" -Wait -NoNewWindow            
+                Sleep 5
+                #Write-Verbose "Setting DSCMachineStatus to reboot server after DSC run is completed"
+                #$global:DSCMachineStatus = 1
+            }
+
+            TestScript = {
+                [int]$NetBuildVersion = 393295
+
+                if (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' | %{$_ -match 'Release'})
+                {
+                    [int]$CurrentRelease = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full').Release
+                    if ($CurrentRelease -lt $NetBuildVersion)
+                    {
+                        Write-Verbose "Current .Net build version is less than 4.6 ($CurrentRelease)"
+                        return $false
+                    }
+                    else
+                    {
+                        Write-Verbose "Current .Net build version is the same as or higher than 4.6 ($CurrentRelease)"
+                        return $true
+                    }
+                }
+                else
+                {
+                    Write-Verbose ".Net build version not recognised"
+                    return $false
+                }
+            }
+
+        }
+        
+        Script Install_Net_4.5.2
+        {
+         GetScript = {
+               @{
+                }
+            }
+            SetScript = {
+                $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP452-KB2901954-Web.exe"
+                $FileName = $SourceURI.Split('/')[-1]
+               $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
+
+                if (!(Test-Path $BinPath))
+                {
+                    Invoke-Webrequest -Uri $SourceURI -OutFile $BinPath
+                }
+
+                write-verbose "Installing .Net 4.5.2 from $BinPath"
+                write-verbose "Executing $binpath /q /norestart"
+                Sleep 5
+                Start-Process -FilePath $BinPath -ArgumentList "/q /norestart" -Wait -NoNewWindow            
+                Sleep 5
+                #Write-Verbose "Setting DSCMachineStatus to reboot server after DSC run is completed"
+                #$global:DSCMachineStatus = 1
+            }
+
+            TestScript = {
+                [int]$NetBuildVersion = 379893
+
+                if (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' | %{$_ -match 'Release'})
+                {
+                    [int]$CurrentRelease = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full').Release
+                    if ($CurrentRelease -lt $NetBuildVersion)
+                    {
+                        Write-Verbose "Current .Net build version is less than 4.5.2 ($CurrentRelease)"
+                        return $false
+                    }
+                    else
+                    {
+                        Write-Verbose "Current .Net build version is the same as or higher than 4.5.2 ($CurrentRelease)"
+                        return $true
+                    }
+                }
+                else
+                {
+                    Write-Verbose ".Net build version not recognised"
+                    return $false
+                }
+            }
+
+        ############################################
+        # End
+        ############################################
+         
+      }
+              
         if($InstallIIS -eq 1) {
+
         WindowsFeature InstallIIS
         {
             Ensure = 'Present'
             Name = 'Web-Server'
-            DependsOn= '[Script]ConfigureSQLServerDomain'
+            DependsOn= '[Script]Install_Net_4.5.2'
         }
 
         WindowsFeature InstallSAPNet45
@@ -382,73 +596,67 @@ configuration DomainJoin
     }
             
         if($InstallSFC -eq 1) {    
-        WindowsFeature InstallSAPNet45
-        {
-            Ensure = 'Present'
-            Name = 'Web-Asp-Net45'
-            IncludeAllSubFeature = $true
-          DependsOn= '[Script]ConfigureSQLServerDomain'
-        }
 
-        Script ConfigureHTTPFirewall
-        {
-            GetScript = {
-               @{
+            WindowsFeature InstallSAPNet45
+            {
+                Ensure = 'Present'
+                Name = 'Web-Asp-Net45'
+                IncludeAllSubFeature = $true
+              DependsOn= '[Script]Install_Net_4.5.2'
+            }
+
+            Script ConfigureHTTPFirewall
+            {
+                GetScript = {
+                   @{
+                    }
                 }
-            }
-            SetScript = {
-                New-NetFirewallRule -DisplayName "HTTP ENGINE TCP" -Direction Inbound -LocalPort 80 -Protocol TCP -Action Allow
-            }
-            TestScript = {
-                
-                $answer = Get-NetFirewallRule -DisplayName "HTTP ENGINE TCP" -ErrorAction SilentlyContinue
-                if($answer) { $true} else {$false}
-             
-            }    
-            DependsOn= '[WindowsFeature]InstallSAPNet45'
-        }
-
-        Script ConfigureHTTPsFirewall
-        {
-            GetScript = {
-               @{
+                SetScript = {
+                    New-NetFirewallRule -DisplayName "HTTP ENGINE TCP" -Direction Inbound -LocalPort 80 -Protocol TCP -Action Allow
                 }
-            }
-            SetScript = {
-                New-NetFirewallRule -DisplayName "HTTPS ENGINE TCP" -Direction Inbound -LocalPort 443 -Protocol TCP -Action Allow
-            }
-            TestScript = {
+                TestScript = {
                 
-                $answer = Get-NetFirewallRule -DisplayName "HTTPS ENGINE TCP" -ErrorAction SilentlyContinue
-                if($answer) { $true} else {$false}
+                    $answer = Get-NetFirewallRule -DisplayName "HTTP ENGINE TCP" -ErrorAction SilentlyContinue
+                    if($answer) { $true} else {$false}
              
-            }    
-            DependsOn= '[Script]ConfigureHTTPFirewall'
-        }
+                }    
+                DependsOn= '[WindowsFeature]InstallSAPNet45'
+            }
 
-        Script ConfigureAppsFirewall
-        {
-            GetScript = {
-               @{
+            Script ConfigureHTTPsFirewall
+            {
+                GetScript = {
+                   @{
+                    }
                 }
-            }
-            SetScript = {
-                New-NetFirewallRule -DisplayName "Apps ENGINE TCP" -Direction Inbound -LocalPort "8000-9000" -Protocol TCP -Action Allow
-            }
-            TestScript = {
+                SetScript = {
+                    New-NetFirewallRule -DisplayName "HTTPS ENGINE TCP" -Direction Inbound -LocalPort 443 -Protocol TCP -Action Allow
+                }
+                TestScript = {
                 
-                $answer = Get-NetFirewallRule -DisplayName "Apps ENGINE TCP" -ErrorAction SilentlyContinue
-                if($answer) { $true} else {$false}
+                    $answer = Get-NetFirewallRule -DisplayName "HTTPS ENGINE TCP" -ErrorAction SilentlyContinue
+                    if($answer) { $true} else {$false}
              
-            }    
-            DependsOn= '[Script]ConfigureHTTPsFirewall'
-        }
+                }    
+                DependsOn= '[Script]ConfigureHTTPFirewall'
+            }
 
-    }
-        ############################################
-        # End
-        ############################################
-         
-      }
-       
+            Script ConfigureAppsFirewall
+            {
+                GetScript = {
+                   @{
+                    }
+                }
+                SetScript = {
+                    New-NetFirewallRule -DisplayName "Apps ENGINE TCP" -Direction Inbound -LocalPort "8000-9000" -Protocol TCP -Action Allow
+                }
+                TestScript = {
+                
+                    $answer = Get-NetFirewallRule -DisplayName "Apps ENGINE TCP" -ErrorAction SilentlyContinue
+                    if($answer) { $true} else {$false}
+             
+                }    
+                DependsOn= '[Script]ConfigureHTTPsFirewall'
+            }
+       }   
     }
