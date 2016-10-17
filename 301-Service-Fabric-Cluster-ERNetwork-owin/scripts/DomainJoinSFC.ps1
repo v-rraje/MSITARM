@@ -322,25 +322,24 @@ configuration DomainJoin
             DependsOn= '[xWaitForADDomain]DscForestWait'
         }
 
-        Script Install_Ne_4.6.2 {
-            GetScript = {
+        Script Install_Net_4.5.2 {
+         GetScript = {
                @{
                 }
             }
-         
             SetScript = {
-                
-                $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP462-KB3151802-Web.exe"
-               
-                $FileName = $SourceURI.Split('/')[-1]
-                $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
+
+               $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP452-KB2901954-Web.exe"
+              
+               $FileName = $SourceURI.Split('/')[-1]
+               $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
 
                 if (!(Test-Path $BinPath))
                 {
                     Invoke-Webrequest -Uri $SourceURI -OutFile $BinPath
                 }
 
-                write-verbose "Installing .Net 4.6.2 from $BinPath"
+                write-verbose "Installing .Net 4.5.2 from $BinPath"
                 write-verbose "Executing $binpath /q /norestart"
                 Sleep 5
                 Start-Process -FilePath $BinPath -ArgumentList "/q /norestart" -Wait -NoNewWindow            
@@ -350,19 +349,75 @@ configuration DomainJoin
             }
 
             TestScript = {
-                [int]$NetBuildVersion = 394806
+                [int]$NetBuildVersion = 379893
 
                 if (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' | %{$_ -match 'Release'})
                 {
                     [int]$CurrentRelease = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full').Release
                     if ($CurrentRelease -lt $NetBuildVersion)
                     {
-                        Write-Verbose "Current .Net build version is less than 4.6.2 ($CurrentRelease)"
+                        Write-Verbose "Current .Net build version is less than 4.5.2 ($CurrentRelease)"
                         return $false
                     }
                     else
                     {
-                        Write-Verbose "Current .Net build version is the same as or higher than 4.6.2 ($CurrentRelease)"
+                        Write-Verbose "Current .Net build version is the same as or higher than 4.5.2 ($CurrentRelease)"
+                        return $true
+                    }
+                }
+                else
+                {
+                    Write-Verbose ".Net build version not recognised"
+                    return $false
+                }
+            }
+
+        ############################################
+        # End
+        ############################################
+         
+      }
+         
+        Script Install_Ne_4.6 {
+            GetScript = {
+               @{
+                }
+            }
+            SetScript = {
+                
+                $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP46-KB3045560-Web.exe"
+               
+                $FileName = $SourceURI.Split('/')[-1]
+                $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
+
+                if (!(Test-Path $BinPath))
+                {
+                    Invoke-Webrequest -Uri $SourceURI -OutFile $BinPath
+                }
+
+                write-verbose "Installing .Net 4.6 from $BinPath"
+                write-verbose "Executing $binpath /q /norestart"
+                Sleep 5
+                Start-Process -FilePath $BinPath -ArgumentList "/q /norestart" -Wait -NoNewWindow            
+                Sleep 5
+                #Write-Verbose "Setting DSCMachineStatus to reboot server after DSC run is completed"
+                #$global:DSCMachineStatus = 1
+            }
+
+            TestScript = {
+                [int]$NetBuildVersion = 393295
+
+                if (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' | %{$_ -match 'Release'})
+                {
+                    [int]$CurrentRelease = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full').Release
+                    if ($CurrentRelease -lt $NetBuildVersion)
+                    {
+                        Write-Verbose "Current .Net build version is less than 4.6 ($CurrentRelease)"
+                        return $false
+                    }
+                    else
+                    {
+                        Write-Verbose "Current .Net build version is the same as or higher than 4.6 ($CurrentRelease)"
                         return $true
                     }
                 }
@@ -374,7 +429,7 @@ configuration DomainJoin
             }
 
         }
-        
+
         Script Install_Ne_4.6.1 {
             GetScript = {
                @{
@@ -427,15 +482,16 @@ configuration DomainJoin
             }
 
         }
-        
-        Script Install_Ne_4.6 {
+
+        Script Install_Ne_4.6.2 {
             GetScript = {
                @{
                 }
             }
+         
             SetScript = {
                 
-                $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP46-KB3045560-Web.exe"
+                $SourceURI = "https://download.microsoft.com/download/D/5/C/D5C98AB0-35CC-45D9-9BA5-B18256BA2AE6/NDP462-KB3151802-Web.exe"
                
                 $FileName = $SourceURI.Split('/')[-1]
                 $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
@@ -445,7 +501,7 @@ configuration DomainJoin
                     Invoke-Webrequest -Uri $SourceURI -OutFile $BinPath
                 }
 
-                write-verbose "Installing .Net 4.6 from $BinPath"
+                write-verbose "Installing .Net 4.6.2 from $BinPath"
                 write-verbose "Executing $binpath /q /norestart"
                 Sleep 5
                 Start-Process -FilePath $BinPath -ArgumentList "/q /norestart" -Wait -NoNewWindow            
@@ -455,19 +511,19 @@ configuration DomainJoin
             }
 
             TestScript = {
-                [int]$NetBuildVersion = 393295
+                [int]$NetBuildVersion = 394806
 
                 if (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' | %{$_ -match 'Release'})
                 {
                     [int]$CurrentRelease = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full').Release
                     if ($CurrentRelease -lt $NetBuildVersion)
                     {
-                        Write-Verbose "Current .Net build version is less than 4.6 ($CurrentRelease)"
+                        Write-Verbose "Current .Net build version is less than 4.6.2 ($CurrentRelease)"
                         return $false
                     }
                     else
                     {
-                        Write-Verbose "Current .Net build version is the same as or higher than 4.6 ($CurrentRelease)"
+                        Write-Verbose "Current .Net build version is the same as or higher than 4.6.2 ($CurrentRelease)"
                         return $true
                     }
                 }
@@ -479,62 +535,7 @@ configuration DomainJoin
             }
 
         }
-        
-        Script Install_Net_4.5.2
-        {
-         GetScript = {
-               @{
-                }
-            }
-            SetScript = {
-                $SourceURI = "https://download.microsoft.com/download/B/4/1/B4119C11-0423-477B-80EE-7A474314B347/NDP452-KB2901954-Web.exe"
-                $FileName = $SourceURI.Split('/')[-1]
-               $BinPath = Join-Path $env:SystemRoot -ChildPath "Temp\$FileName"
-
-                if (!(Test-Path $BinPath))
-                {
-                    Invoke-Webrequest -Uri $SourceURI -OutFile $BinPath
-                }
-
-                write-verbose "Installing .Net 4.5.2 from $BinPath"
-                write-verbose "Executing $binpath /q /norestart"
-                Sleep 5
-                Start-Process -FilePath $BinPath -ArgumentList "/q /norestart" -Wait -NoNewWindow            
-                Sleep 5
-                #Write-Verbose "Setting DSCMachineStatus to reboot server after DSC run is completed"
-                #$global:DSCMachineStatus = 1
-            }
-
-            TestScript = {
-                [int]$NetBuildVersion = 379893
-
-                if (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' | %{$_ -match 'Release'})
-                {
-                    [int]$CurrentRelease = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full').Release
-                    if ($CurrentRelease -lt $NetBuildVersion)
-                    {
-                        Write-Verbose "Current .Net build version is less than 4.5.2 ($CurrentRelease)"
-                        return $false
-                    }
-                    else
-                    {
-                        Write-Verbose "Current .Net build version is the same as or higher than 4.5.2 ($CurrentRelease)"
-                        return $true
-                    }
-                }
-                else
-                {
-                    Write-Verbose ".Net build version not recognised"
-                    return $false
-                }
-            }
-
-        ############################################
-        # End
-        ############################################
-         
-      }
-              
+                     
         if($InstallIIS -eq 1) {
 
         WindowsFeature InstallIIS
