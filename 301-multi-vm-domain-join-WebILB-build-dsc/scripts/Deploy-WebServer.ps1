@@ -12,6 +12,7 @@ Configuration DeployWebServer
     foreach ($Feature in @("Web-Server", `
                            "Web-App-Dev", `
                            "Web-Asp-Net45", `
+			   "NET-Framework-Core", `
                            "Web-Net-Ext45", `
                            "Web-Ftp-Server", `
                            "Web-Mgmt-Compat", `
@@ -26,7 +27,7 @@ Configuration DeployWebServer
                            "WAS-Config-APIs")){
             
         WindowsFeature "$Feature$Number"{  
-                        Ensure = “Present”  
+                        Ensure = Â“PresentÂ”  
                         Name = $Feature  
         } 
     } 
